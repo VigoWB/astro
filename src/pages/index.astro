@@ -1,0 +1,15 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Karta from "../components/ui/Karta.astro";
+import photo1 from "../../images/DSC_4968-Edytuj.jpg";
+import photo2 from "../../images/DSC_4971-Edytuj.jpg";
+import photo3 from "../../images/DSC_4975-Edytuj.jpg";
+---
+
+<Layout>
+	<div class="flex flex-row gap-12">
+		<Karta zrodlo={photo1} opis="Ja i koticzek" />
+		<Karta zrodlo={photo2} opis="Milli bobby brałn" />
+		<Karta zrodlo={photo3} opis="Stranger things" />
+	</div>
+</Layout>

@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+html,body {
+  font-family: "Noto Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+}

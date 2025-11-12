@@ -1,0 +1,13 @@
+---
+import {Image} from 'astro:assets';
+const {zrodlo, opis} = Astro.props;
+---
+<div class="bg-white border-1 border-neutral-300 p-4 flex flex-col gap-2">
+    <div class="max-h-60">
+        <!-- <img src={zrodlo} alt="" class="w-96 aspect-3/2 object-cover"> -->
+        <Image src={zrodlo} height="300" width="450" alt={opis}></Image>
+    </div>
+    <div class="text-center font-bold my-2">
+        <span>{opis}</span>
+    </div>
+</div>

@@ -15,12 +15,18 @@ const { zdjecia } = Astro.props;
 	</button>
 
 	<div class="flex max-h-full max-w-full flex-col items-center gap-4">
-		<img id="lightbox-img" src="" alt="" class="max-h-[80vh] max-w-full object-contain" />
+		<img
+			id="lightbox-img"
+			src=""
+			alt=""
+			draggable="false"
+			class="max-h-[80vh] max-w-full object-contain select-none"
+		/>
 		<div class="flex items-center gap-4 text-white">
 			<span id="lightbox-opis" class="font-bold"></span>
-			<button type="button" id="lightbox-toggle" class="hidden rounded bg-white/20 px-4 py-2 font-bold hover:bg-white/30">
-				Pokaż: przed
-			</button>
+			<span id="lightbox-hint" class="hidden text-sm text-white/70 italic select-none">
+				Najedź / przytrzymaj, aby zobaczyć: przed
+			</span>
 		</div>
 	</div>
 </div>
@@ -29,26 +35,20 @@ const { zdjecia } = Astro.props;
 	const lightbox = document.getElementById("lightbox")!;
 	const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
 	const lightboxOpis = document.getElementById("lightbox-opis")!;
-	const toggleBtn = document.getElementById("lightbox-toggle") as HTMLButtonElement;
+	const hint = document.getElementById("lightbox-hint")!;
 	const closeBtn = document.getElementById("lightbox-close")!;
 
-	let current = { po: "", przed: "", pokazujePrzed: false };
+	let current = { po: "", przed: "" };
 
 	function otworz(item: HTMLElement) {
 		current.po = item.dataset.po || "";
 		current.przed = item.dataset.przed || "";
-		current.pokazujePrzed = false;
 
 		lightboxImg.src = current.po;
 		lightboxImg.alt = item.dataset.opis || "";
 		lightboxOpis.textContent = item.dataset.opis || "";
 
-		if (current.przed) {
-			toggleBtn.classList.remove("hidden");
-			toggleBtn.textContent = "Pokaż: przed";
-		} else {
-			toggleBtn.classList.add("hidden");
-		}
+		hint.classList.toggle("hidden", !current.przed);
 
 		lightbox.classList.remove("hidden");
 		lightbox.classList.add("flex");
@@ -57,12 +57,15 @@ const { zdjecia } = Astro.props;
 	function zamknij() {
 		lightbox.classList.add("hidden");
 		lightbox.classList.remove("flex");
+		pokazPo();
 	}
 
-	function przelacz() {
-		current.pokazujePrzed = !current.pokazujePrzed;
-		lightboxImg.src = current.pokazujePrzed ? current.przed : current.po;
-		toggleBtn.textContent = current.pokazujePrzed ? "Pokaż: po" : "Pokaż: przed";
+	function pokazPrzed() {
+		if (current.przed) lightboxImg.src = current.przed;
+	}
+
+	function pokazPo() {
+		lightboxImg.src = current.po;
 	}
 
 	document.querySelectorAll<HTMLElement>("[data-gallery-item]").forEach((item) => {
@@ -70,7 +73,19 @@ const { zdjecia } = Astro.props;
 	});
 
 	closeBtn.addEventListener("click", zamknij);
-	toggleBtn.addEventListener("click", przelacz);
+
+	// Desktop – najechanie myszką
+	lightboxImg.addEventListener("mouseenter", pokazPrzed);
+	lightboxImg.addEventListener("mouseleave", pokazPo);
+
+	// Mobile – przytrzymanie palca
+	lightboxImg.addEventListener("touchstart", (e) => {
+		e.preventDefault();
+		pokazPrzed();
+	}, { passive: false });
+	lightboxImg.addEventListener("touchend", pokazPo);
+	lightboxImg.addEventListener("touchcancel", pokazPo);
+
 	lightbox.addEventListener("click", (e) => {
 		if (e.target === lightbox) zamknij();
 	});

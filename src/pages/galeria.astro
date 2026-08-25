@@ -1,15 +1,23 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Karta from "../components/ui/Karta.astro";
+import Galeria from "../components/Galeria.astro";
+
 import photo1 from "../../images/DSC_4968-Edytuj.jpg";
+import photo1Przed from "../../images/przed_DSC_4968-Edytuj.jpg";
+
 import photo2 from "../../images/DSC_4971-Edytuj.jpg";
+import photo2Przed from "../../images/przed_DSC_4971-Edytuj.jpg";
+
 import photo3 from "../../images/DSC_4975-Edytuj.jpg";
+import photo3Przed from "../../images/przed_DSC_4975-Edytuj.jpg";
 ---
 
 <Layout>
-	<div class="flex flex-row gap-12">
-		<Karta zrodlo={photo1} opis="Ja i koticzek" />
-		<Karta zrodlo={photo2} opis="Milli bobby brałn" />
-		<Karta zrodlo={photo3} opis="Stranger things" />
-	</div>
+	<Galeria
+		zdjecia={[
+			{ po: photo1, przed: photo1Przed, opis: "Ja i koticzek" },
+			{ po: photo2, przed: photo2Przed, opis: "Milli bobby brałn" },
+			{ po: photo3, przed: photo3Przed, opis: "Stranger things" },
+		]}
+	/>
 </Layout>

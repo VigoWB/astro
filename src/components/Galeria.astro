@@ -1,0 +1,80 @@
+---
+import Karta from "./ui/Karta.astro";
+const { zdjecia } = Astro.props;
+---
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+	{zdjecia.map((z: any) => (
+		<Karta po={z.po} przed={z.przed} opis={z.opis} />
+	))}
+</div>
+
+<div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 p-4">
+	<button type="button" id="lightbox-close" class="absolute top-4 right-4 text-white text-3xl leading-none" aria-label="Zamknij podgląd">
+		&times;
+	</button>
+
+	<div class="flex max-h-full max-w-full flex-col items-center gap-4">
+		<img id="lightbox-img" src="" alt="" class="max-h-[80vh] max-w-full object-contain" />
+		<div class="flex items-center gap-4 text-white">
+			<span id="lightbox-opis" class="font-bold"></span>
+			<button type="button" id="lightbox-toggle" class="hidden rounded bg-white/20 px-4 py-2 font-bold hover:bg-white/30">
+				Pokaż: przed
+			</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	const lightbox = document.getElementById("lightbox")!;
+	const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
+	const lightboxOpis = document.getElementById("lightbox-opis")!;
+	const toggleBtn = document.getElementById("lightbox-toggle") as HTMLButtonElement;
+	const closeBtn = document.getElementById("lightbox-close")!;
+
+	let current = { po: "", przed: "", pokazujePrzed: false };
+
+	function otworz(item: HTMLElement) {
+		current.po = item.dataset.po || "";
+		current.przed = item.dataset.przed || "";
+		current.pokazujePrzed = false;
+
+		lightboxImg.src = current.po;
+		lightboxImg.alt = item.dataset.opis || "";
+		lightboxOpis.textContent = item.dataset.opis || "";
+
+		if (current.przed) {
+			toggleBtn.classList.remove("hidden");
+			toggleBtn.textContent = "Pokaż: przed";
+		} else {
+			toggleBtn.classList.add("hidden");
+		}
+
+		lightbox.classList.remove("hidden");
+		lightbox.classList.add("flex");
+	}
+
+	function zamknij() {
+		lightbox.classList.add("hidden");
+		lightbox.classList.remove("flex");
+	}
+
+	function przelacz() {
+		current.pokazujePrzed = !current.pokazujePrzed;
+		lightboxImg.src = current.pokazujePrzed ? current.przed : current.po;
+		toggleBtn.textContent = current.pokazujePrzed ? "Pokaż: po" : "Pokaż: przed";
+	}
+
+	document.querySelectorAll<HTMLElement>("[data-gallery-item]").forEach((item) => {
+		item.addEventListener("click", () => otworz(item));
+	});
+
+	closeBtn.addEventListener("click", zamknij);
+	toggleBtn.addEventListener("click", przelacz);
+	lightbox.addEventListener("click", (e) => {
+		if (e.target === lightbox) zamknij();
+	});
+	document.addEventListener("keydown", (e) => {
+		if (e.key === "Escape") zamknij();
+	});
+</script>

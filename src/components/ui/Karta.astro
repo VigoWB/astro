@@ -1,13 +1,25 @@
 ---
-import {Image} from 'astro:assets';
-const {zrodlo, opis} = Astro.props;
+import { Image } from 'astro:assets';
+const { po, przed, opis } = Astro.props;
 ---
-<div class="bg-white border-1 border-neutral-300 p-4 flex flex-col gap-2">
-    <div class="max-h-60">
-        <!-- <img src={zrodlo} alt="" class="w-96 aspect-3/2 object-cover"> -->
-        <Image src={zrodlo} height="300" width="450" alt={opis}></Image>
-    </div>
-    <div class="text-center font-bold my-2">
-        <span>{opis}</span>
-    </div>
-</div>
+<button
+	type="button"
+	class="group text-left bg-white border border-neutral-300 p-4 flex flex-col gap-2 cursor-zoom-in"
+	data-gallery-item
+	data-po={po.src}
+	data-przed={przed?.src ?? ""}
+	data-opis={opis}
+>
+	<div class="max-h-60 overflow-hidden">
+		<Image
+			src={po}
+			height="300"
+			width="450"
+			alt={opis}
+			class="w-full h-full object-cover transition-transform group-hover:scale-105"
+		/>
+	</div>
+	<div class="text-center font-bold my-2">
+		<span>{opis}</span>
+	</div>
+</button>

@@ -2,22 +2,41 @@
 import Layout from "../layouts/Layout.astro";
 import Galeria from "../components/Galeria.astro";
 
-import photo1 from "../../images/DSC_4968-Edytuj.jpg";
-import photo1Przed from "../../images/przed_DSC_4968-Edytuj.jpg";
+// Podpisy zdjęć — klucz to nazwa pliku "po". Zdjęcie bez wpisu tutaj
+// po prostu nie będzie miało podpisu, nic się nie wywali.
+const opisy: Record<string, string> = {
+	"DSC_1111.jpg": "Zielony",
+	"DSC_1112.jpg": "Zielony2?",
+	"DSC_1113.jpg": "Fiolet",
+	"DSC_4968-Edytuj.jpg": "Ja i koticzek",
+	"DSC_4971-Edytuj.jpg": "Milli bobby brałn",
+	"DSC_4975-Edytuj.jpg": "Stranger things",
+};
 
-import photo2 from "../../images/DSC_4971-Edytuj.jpg";
-import photo2Przed from "../../images/przed_DSC_4971-Edytuj.jpg";
+// Wciąga wszystkie zdjęcia "po" (bez przedrostka przed_) z folderu images/
+const poModules = import.meta.glob<{ default: ImageMetadata }>(
+	"../../images/DSC_*.jpg",
+	{ eager: true }
+);
 
-import photo3 from "../../images/DSC_4975-Edytuj.jpg";
-import photo3Przed from "../../images/przed_DSC_4975-Edytuj.jpg";
+// Wciąga wszystkie zdjęcia "przed"
+const przedModules = import.meta.glob<{ default: ImageMetadata }>(
+	"../../images/przed_DSC_*.jpg",
+	{ eager: true }
+);
+
+const zdjecia = Object.entries(poModules).map(([sciezka, modul]) => {
+	const nazwaPliku = sciezka.split("/").pop()!;
+	const sciezkaPrzed = sciezka.replace(nazwaPliku, `przed_${nazwaPliku}`);
+
+	return {
+		po: modul.default,
+		przed: przedModules[sciezkaPrzed]?.default,
+		opis: opisy[nazwaPliku] ?? "",
+	};
+});
 ---
 
 <Layout title="Galeria — Wiktor">
-	<Galeria
-		zdjecia={[
-			{ po: photo1, przed: photo1Przed, opis: "Ja i koticzek" },
-			{ po: photo2, przed: photo2Przed, opis: "Milli bobby brałn" },
-			{ po: photo3, przed: photo3Przed, opis: "Stranger things" },
-		]}
-	/>
+	<Galeria zdjecia={zdjecia} />
 </Layout>

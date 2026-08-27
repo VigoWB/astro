@@ -1,10 +1,9 @@
 ---
-layout: ../layouts/Layout.astro
+layout: ../layouts/ArticleLayout.astro
 title: "Ja i kapibary"
 author: "Admin"
 date: "11-11-2025"
 ---
-
 # O mnie
 
 Mam na imie Wiktor i lubie Kapibary
@@ -26,6 +25,7 @@ Uwielbiam w nich
 
 To byl html!
 
+// ![Wiktor](../../images/moje-zdjecie.jpg)/
 
 **WAZNE**
 

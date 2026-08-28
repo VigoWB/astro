@@ -1,32 +1,20 @@
 ---
 layout: ../layouts/ArticleLayout.astro
-title: "Ja i kapibary"
-author: "Admin"
+title: "O mnie — Wiktor"
+author: "Wiktor"
 date: "11-11-2025"
 ---
+
 # O mnie
 
-Mam na imie Wiktor i lubie Kapibary
+![Wiktor](../../images/moje-zdjecie.jpg)
 
-## O kapibarach
+Cześć, mam na imię Wiktor. Fotografuję różne rzeczy — portrety, chwile ze znajomymi, cokolwiek akurat przyciągnie oko. Nie trzymam się jednego gatunku, wolę łapać to, co akurat warte jest zatrzymania.
 
-Jest to moja pasja
+## Zdjęcie to dopiero połowa
 
-Uwielbiam w nich
-- pyszczki
-- mordki
-- futerko
+To, co widzisz w galerii, to nie tylko surowe kadry — każde zdjęcie ma swoją wersję „przed" i „po". Lubię tę część procesu równie mocno co samo pstrykanie: dobór kolorów, światła, nastroju. Suwak przed/po w galerii to trochę mój sposób na pokazanie, że retusz to nie oszustwo, tylko druga połowa roboty.
 
-```html
-<html>
- <h1>Naglowek</h1> 
-</html>
-```
+## Poza obiektywem
 
-To byl html!
-
-// ![Wiktor](../../images/moje-zdjecie.jpg)/
-
-**WAZNE**
-
-Od wtorku nie pije Yerby
+Prywatnie jestem wielkim fanem kapibar — stąd akurat ta ikonka w zakładce przeglądarki. Jeśli chcesz pogadać o sesji albo po prostu o zdjęciach, dane kontaktowe znajdziesz w stopce strony.

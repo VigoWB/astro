@@ -1,14 +1,15 @@
 ---
 import Container from "../components/ui/Container.astro";
+const rok = new Date().getFullYear();
 ---
 
 <div class="border-t-5 h-15 border-green-400 bg-white text-indigo-800/60 text-xl font-extrabold">
     <Container>
-        <div class="copyright">Copyright 2025</div>
+        <div class="copyright">© {rok} Wiktor</div>
         <div class="links">
             <ul class="flex flex-row gap-4">
-                <li>1</li>
-                <li>2</li>
+                <li><a href="https://www.instagram.com/mabro_grawer/" target="_blank" rel="noopener">Instagram</a></li>
+                <li><a href="mailto:brzezinskiwiktor@outlok.com">Kontakt</a></li>
             </ul>
         </div>
     </Container>

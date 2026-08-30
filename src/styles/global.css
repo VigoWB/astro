@@ -1,10 +1,21 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@theme {
+	--color-paper: #eaf4f4;
+	--color-ink: #171512;
+	--color-muted: #55625a;
+	--color-card: #a4c3b2;
+	--color-accent: #6b9080;
+	--color-line: #cce3de;
+}
+
 html,body {
   font-family: "Noto Sans", sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
   font-variation-settings:
     "wdth" 100;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
 }

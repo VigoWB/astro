@@ -2,19 +2,19 @@
 import Container from "../components/ui/Container.astro";
 ---
 
-<header class="border-b-5 h-15 border-green-400 bg-white text-indigo-800/60 text-xl font-extrabold">
+<header class="h-15 border-b border-line bg-paper text-ink text-xl font-semibold">
     <Container>
         <div class="logo">WB</div>
         <nav aria-label="Główna nawigacja" class="menu">
             <ul class="flex flex-row gap-4">
                 <li>
-                    <a href="/">Homepage</a>
+                    <a href="/" class="hover:text-accent transition-colors">Homepage</a>
                 </li>
                 <li>
-                    <a href="/galeria">Galeria</a>
+                    <a href="/galeria" class="hover:text-accent transition-colors">Galeria</a>
                 </li>
                 <li>
-                    <a href="/o-mnie">
+                    <a href="/o-mnie" class="hover:text-accent transition-colors">
                         <span>O mnie</span>
                     </a>
                 </li>

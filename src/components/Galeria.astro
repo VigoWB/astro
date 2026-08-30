@@ -3,7 +3,7 @@ import Karta from "./ui/Karta.astro";
 const { zdjecia } = Astro.props;
 ---
 
-<div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+<div class="columns-2 md:columns-3 gap-6">
 	{zdjecia.map((z: any) => (
 		<Karta po={z.po} przed={z.przed} opis={z.opis} />
 	))}

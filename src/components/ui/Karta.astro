@@ -10,12 +10,17 @@ const { po, przed, opis } = Astro.props;
 	data-przed={przed?.src ?? ""}
 	data-opis={opis}
 >
-	<Image
-		src={po}
-		width={600}
-		alt={opis}
-		class="w-full h-auto object-cover transition-transform group-hover:scale-105"
-	/>
+	<div class="overflow-hidden bg-line">
+		<Image
+			src={po}
+			width={600}
+			alt={opis}
+			loading="lazy"
+			decoding="async"
+			class="w-full h-auto object-cover scale-105 opacity-0 blur-md transition-all duration-700 ease-out group-hover:scale-105"
+			onload="this.classList.remove('opacity-0','blur-md','scale-105')"
+		/>
+	</div>
 	<div class="text-center font-bold mt-2">
 		<span>{opis}</span>
 	</div>

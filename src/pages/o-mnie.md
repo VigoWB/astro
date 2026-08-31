@@ -17,4 +17,4 @@ To, co widzisz w galerii, to nie tylko surowe kadry — każde zdjęcie ma swoj�
 
 ## Poza obiektywem
 
-Prywatnie jestem wielkim fanem kapibar — stąd akurat ta ikonka w zakładce przeglądarki. Jeśli chcesz pogadać o sesji albo po prostu o zdjęciach, dane kontaktowe znajdziesz w stopce strony.
+Prywatnie jestem wielkim fanem kapibar. Jeśli chcesz pogadać o sesji albo po prostu o zdjęciach, dane kontaktowe znajdziesz w stopce strony.

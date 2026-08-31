@@ -3,14 +3,16 @@ import Container from "../components/ui/Container.astro";
 const rok = new Date().getFullYear();
 ---
 
-<footer class="h-15 border-t border-line bg-paper text-ink text-xl font-semibold">
+<footer class="h-15 flex items-center border-t border-line bg-paper text-ink text-xl font-semibold">
     <Container>
-        <div class="copyright">© {rok} Wiktor</div>
-        <div class="links">
-            <ul class="flex flex-row gap-4">
-                <li><a href="https://www.instagram.com/mabro_grawer/" target="_blank" rel="noopener" class="hover:text-accent transition-colors">Instagram</a></li>
-                <li><a href="mailto:brzezinskiwiktor@outlok.com" class="hover:text-accent transition-colors">Kontakt</a></li>
-            </ul>
+        <div class="flex flex-row items-center justify-between w-full">
+            <div class="copyright">© {rok} Wiktor</div>
+            <div class="links">
+                <ul class="flex flex-row gap-4">
+                    <li><a href="https://www.instagram.com/mabro_grawer/" target="_blank" rel="noopener" class="hover:text-accent transition-colors">Instagram</a></li>
+                    <li><a href="mailto:brzezinskiwiktor@outlok.com" class="hover:text-accent transition-colors">Kontakt</a></li>
+                </ul>
+            </div>
         </div>
     </Container>
 </footer>

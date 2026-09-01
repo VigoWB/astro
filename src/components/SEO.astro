@@ -1,0 +1,50 @@
+---
+// Komponent SEO — centralizuje meta tagi, Open Graph, Twitter Cards
+// oraz link kanoniczny. Ma trafiać w <head> layoutu.
+
+interface Props {
+	title: string;
+	description: string;
+	/** Ścieżka lub pełny URL do obrazka OG. Domyślnie /og-default.jpg (1200x630). */
+	image?: string;
+	/** Pełny URL kanoniczny. Jeśli nie podany, wyliczany z Astro.url + Astro.site. */
+	canonicalURL?: string;
+}
+
+const {
+	title,
+	description,
+	image = "/og-default.jpg",
+	canonicalURL,
+} = Astro.props;
+
+// Wyliczenie kanonicznego URL-a na podstawie aktualnego adresu, jeśli nie podano ręcznie.
+const kanoniczny = canonicalURL
+	? new URL(canonicalURL, Astro.site)
+	: new URL(Astro.url.pathname, Astro.site);
+
+// Obrazek OG musi być pełnym, absolutnym URL-em (wymóg specyfikacji OG/Twitter).
+const obrazekOG = new URL(image, Astro.site);
+---
+
+<!-- Podstawowe meta tagi -->
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={kanoniczny} />
+<meta name="theme-color" content="#eaf4f4" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={kanoniczny} />
+<meta property="og:image" content={obrazekOG} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content="pl_PL" />
+
+<!-- Twitter Cards -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={obrazekOG} />

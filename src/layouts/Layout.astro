@@ -3,8 +3,9 @@ import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import Container from "../components/ui/Container.astro";
+import SEO from "../components/SEO.astro";
 
-const { title, frontmatter, description } = Astro.props;
+const { title, frontmatter, description, image, canonicalURL } = Astro.props;
 const pageTitle = title ?? frontmatter?.title ?? "Wiktor — Fotografia";
 const pageDescription = description ?? frontmatter?.description ?? "Portfolio fotograficzne Wiktora.";
 ---
@@ -14,13 +15,9 @@ const pageDescription = description ?? frontmatter?.description ?? "Portfolio fo
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
-		<meta name="description" content={pageDescription} />
-		<meta property="og:title" content={pageTitle} />
-		<meta property="og:description" content={pageDescription} />
-		<meta property="og:type" content="website" />
+		<SEO title={pageTitle} description={pageDescription} image={image} canonicalURL={canonicalURL} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>{pageTitle}</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link

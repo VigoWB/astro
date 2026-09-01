@@ -1,0 +1,23 @@
+{
+	"person": {
+		"name": "Wiktor Brzeziński",
+		"alternateName": "Wiktor",
+		"jobTitle": "Fotograf",
+		"email": "BrzezinskiWiktor@outlook.com",
+		"sameAs": [
+			"https://www.instagram.com/mabro_grawer/"
+		],
+		"image": "/moje-zdjecie.jpg"
+	},
+	"business": {
+		"name": "Wiktor Brzeziński — Fotografia",
+		"description": "Portfolio fotograficzne — portrety, sesje okolicznościowe, kadry z życia codziennego.",
+		"addressLocality": "Warszawa",
+		"addressCountry": "PL",
+		"priceRange": "$$"
+	},
+	"gallery": {
+		"name": "Galeria — Wiktor",
+		"description": "Zbiór zdjęć z podglądem przed/po retuszu."
+	}
+}

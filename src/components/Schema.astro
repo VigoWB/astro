@@ -1,0 +1,80 @@
+---
+// Komponent Schema — wstrzykuje dane strukturalne JSON-LD (Schema.org).
+// Dane bazowe (osoba, firma, opis galerii) trzymane są w src/data/siteConfig.json,
+// żeby nie grzebać w komponencie za każdym razem, gdy coś się zmieni.
+//
+// Person i ProfessionalService lecą zawsze (są potrzebne na każdej stronie).
+// ImageGallery jest opcjonalny — podajesz go tylko na stronie /galeria,
+// przekazując listę zdjęć jako prop.
+
+import siteConfig from "../data/siteConfig.json";
+
+interface Zdjecie {
+	po: { src: string; width?: number; height?: number };
+	opis?: string;
+}
+
+interface Props {
+	/** Lista zdjęć do wygenerowania schematu ImageGallery. Pomiń, jeśli strona nie ma galerii. */
+	zdjecia?: Zdjecie[];
+}
+
+const { zdjecia } = Astro.props;
+
+const bazowyUrl = Astro.site ?? new URL(Astro.url.origin);
+
+// --- Person ---
+const person = {
+	"@context": "https://schema.org",
+	"@type": "Person",
+	name: siteConfig.person.name,
+	alternateName: siteConfig.person.alternateName,
+	jobTitle: siteConfig.person.jobTitle,
+	email: siteConfig.person.email,
+	image: new URL(siteConfig.person.image, bazowyUrl).toString(),
+	url: bazowyUrl.toString(),
+	sameAs: siteConfig.person.sameAs,
+};
+
+// --- ProfessionalService (podtyp LocalBusiness) ---
+// Świadomie bez pełnego adresu (ulica/numer) — to portfolio osobiste,
+// nie firma ze stacjonarnym lokalem. Samo miasto/kraj wystarczy do Rich Results.
+const business = {
+	"@context": "https://schema.org",
+	"@type": "ProfessionalService",
+	name: siteConfig.business.name,
+	description: siteConfig.business.description,
+	url: bazowyUrl.toString(),
+	image: new URL(siteConfig.person.image, bazowyUrl).toString(),
+	email: siteConfig.person.email,
+	priceRange: siteConfig.business.priceRange,
+	address: {
+		"@type": "PostalAddress",
+		addressLocality: siteConfig.business.addressLocality,
+		addressCountry: siteConfig.business.addressCountry,
+	},
+	sameAs: siteConfig.person.sameAs,
+};
+
+// --- ImageGallery (tylko jeśli przekazano zdjęcia) ---
+const gallery = zdjecia?.length
+	? {
+			"@context": "https://schema.org",
+			"@type": "ImageGallery",
+			name: siteConfig.gallery.name,
+			description: siteConfig.gallery.description,
+			url: new URL("/galeria", bazowyUrl).toString(),
+			image: zdjecia.map((z) => ({
+				"@type": "ImageObject",
+				contentUrl: new URL(z.po.src, bazowyUrl).toString(),
+				...(z.opis ? { name: z.opis } : {}),
+				...(z.po.width ? { width: z.po.width } : {}),
+				...(z.po.height ? { height: z.po.height } : {}),
+			})),
+		}
+	: null;
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(person)} />
+<script type="application/ld+json" set:html={JSON.stringify(business)} />
+{gallery && <script type="application/ld+json" set:html={JSON.stringify(gallery)} />}

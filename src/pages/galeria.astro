@@ -40,7 +40,7 @@ const zdjecia = Object.entries(poModules).map(([sciezka, modul]) => {
 });
 ---
 
-<Layout title="Galeria — Wiktor">
+<Layout title="Galeria — Wiktor" zdjecia={zdjecia}>
 	<h1 class="text-3xl text-ink font-bold text-indigo-800/60 py-8">Galeria</h1>
 	<Galeria zdjecia={zdjecia} />
 </Layout>

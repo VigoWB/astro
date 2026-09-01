@@ -32,6 +32,64 @@ const { zdjecia } = Astro.props;
 </div>
 
 <script>
+	// --- Fade-in zdjęć przy wjeździe w viewport ---
+	const elementyDoUjawnienia = Array.from(
+		document.querySelectorAll<HTMLElement>("[data-reveal]")
+	);
+
+	const preferujeMniejRuchu = window.matchMedia(
+		"(prefers-reduced-motion: reduce)"
+	).matches;
+
+	if (preferujeMniejRuchu) {
+		// Bez animacji — po prostu pokaż wszystko od razu.
+		elementyDoUjawnienia.forEach((el) => {
+			el.classList.remove("opacity-0", "translate-y-6");
+		});
+	} else {
+		// Opóźnienie liczymy z realnej pozycji Y karty, żeby "fala" szła
+		// rzędami (wizualnie), a nie kolumnami układu masonry.
+		function ustawKolejnoscWierszami() {
+			const posortowane = elementyDoUjawnienia
+				.map((el) => ({
+					el,
+					top: el.getBoundingClientRect().top + window.scrollY,
+				}))
+				.sort((a, b) => a.top - b.top);
+
+			let rzad = 0;
+			let ostatniTop: number | null = null;
+			const tolerancja = 24; // px — w tym zakresie liczy się jako ten sam "rząd"
+
+			posortowane.forEach(({ el, top }) => {
+				if (ostatniTop === null || Math.abs(top - ostatniTop) > tolerancja) {
+					rzad++;
+					ostatniTop = top;
+				}
+				el.style.transitionDelay = `${Math.min(rzad * 60, 360)}ms`;
+			});
+		}
+
+		ustawKolejnoscWierszami();
+		// Zdjęcia mogą jeszcze przesunąć układ po doładowaniu — przeliczamy raz jeszcze.
+		window.addEventListener("load", ustawKolejnoscWierszami, { once: true });
+
+		const obserwator = new IntersectionObserver(
+			(wpisy) => {
+				wpisy.forEach((wpis) => {
+					if (wpis.isIntersecting) {
+						wpis.target.classList.remove("opacity-0", "translate-y-6");
+						obserwator.unobserve(wpis.target);
+					}
+				});
+			},
+			{ threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
+		);
+
+		elementyDoUjawnienia.forEach((el) => obserwator.observe(el));
+	}
+
+	// --- Lightbox (bez zmian) ---
 	const lightbox = document.getElementById("lightbox")!;
 	const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
 	const lightboxOpis = document.getElementById("lightbox-opis")!;

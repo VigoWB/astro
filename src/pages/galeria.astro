@@ -3,7 +3,10 @@ import Layout from "../layouts/Layout.astro";
 import Galeria from "../components/Galeria.astro";
 
 // Podpisy zdjęć — klucz to nazwa pliku "po". Zdjęcie bez wpisu tutaj
-// po prostu nie będzie miało podpisu, nic się nie wywali.
+// po prostu nie będzie miało widocznego podpisu (build się nie wywali).
+// Atrybut alt ma jednak osobny, opisowy fallback w Karta.astro i w skrypcie
+// lightboxa w Galeria.astro, więc żadne zdjęcie nie zostaje bez tekstu
+// alternatywnego dla czytników ekranu.
 const opisy: Record<string, string> = {
 	"DSC_1111.jpg": "Zielony",
 	"DSC_1112.jpg": "Zielony2?",

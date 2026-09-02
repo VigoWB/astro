@@ -103,7 +103,7 @@ const { zdjecia } = Astro.props;
 		current.przed = item.dataset.przed || "";
 
 		lightboxImg.src = current.po;
-		lightboxImg.alt = item.dataset.opis || "";
+		lightboxImg.alt = item.dataset.opis || "Zdjęcie z portfolio fotograficznego Wiktora";
 		lightboxOpis.textContent = item.dataset.opis || "";
 
 		hint.classList.toggle("hidden", !current.przed);

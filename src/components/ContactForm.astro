@@ -1,0 +1,240 @@
+---
+// ContactForm.astro — formularz kontaktowy wysyłany do Formspree metodą AJAX (fetch),
+// bez przeładowania strony. ID formularza wczytywane jest z .env (PUBLIC_FORMSPREE_ID),
+// więc nic nie jest zaszyte na sztywno w kodzie — zob. .env.example.
+//
+// Atrybuty required/type/minlength zostają w markupie jako zabezpieczenie HTML5 i fallback
+// na wypadek wyłączonego JS-a (wtedy formularz i tak leci normalnym POST-em do Formspree).
+// Gdy JS jest dostępny, przejmuje walidację i pokazuje własne, polskie komunikaty błędów
+// zamiast natywnych dymków przeglądarki (które bywają po angielsku).
+
+const formspreeId = import.meta.env.PUBLIC_FORMSPREE_ID ?? "";
+const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : undefined;
+---
+
+<form
+	id="formularz-kontaktowy"
+	class="flex max-w-xl flex-col gap-6"
+	action={akcjaFormularza}
+	method="POST"
+	data-formspree-id={formspreeId}
+>
+	<div class="flex flex-col gap-1.5">
+		<label for="kontakt-name" class="text-sm font-medium text-ink">Imię i nazwisko</label>
+		<input
+			type="text"
+			id="kontakt-name"
+			name="name"
+			required
+			minlength="2"
+			autocomplete="name"
+			aria-describedby="kontakt-name-blad"
+			class="w-full border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+		/>
+		<p id="kontakt-name-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
+	</div>
+
+	<div class="flex flex-col gap-1.5">
+		<label for="kontakt-email" class="text-sm font-medium text-ink">Email</label>
+		<input
+			type="email"
+			id="kontakt-email"
+			name="email"
+			required
+			autocomplete="email"
+			aria-describedby="kontakt-email-blad"
+			class="w-full border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+		/>
+		<p id="kontakt-email-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
+	</div>
+
+	<div class="flex flex-col gap-1.5">
+		<label for="kontakt-message" class="text-sm font-medium text-ink">Wiadomość</label>
+		<textarea
+			id="kontakt-message"
+			name="message"
+			required
+			minlength="10"
+			rows="6"
+			aria-describedby="kontakt-message-blad"
+			class="w-full resize-y border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+		></textarea>
+		<p id="kontakt-message-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
+	</div>
+
+	<!-- Honeypot antyspamowy Formspree: pole ma zostać puste. Ukryte przed ludźmi i czytnikami ekranu,
+	     ale prosty bot skanujący HTML często wypełni je automatycznie i zdradzi się w ten sposób. -->
+	<input
+		type="text"
+		name="_gotcha"
+		tabindex="-1"
+		autocomplete="off"
+		class="hidden"
+		aria-hidden="true"
+	/>
+
+	<div class="flex flex-col items-start gap-3">
+		<button
+			type="submit"
+			id="przycisk-wyslij"
+			class="bg-accent px-6 py-3 font-semibold text-ink transition-colors hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:opacity-50"
+		>
+			Wyślij wiadomość
+		</button>
+		<p id="status-formularza" class="text-sm" role="status" aria-live="polite"></p>
+	</div>
+</form>
+
+<script>
+	const formularz = document.getElementById("formularz-kontaktowy") as HTMLFormElement;
+	const przycisk = document.getElementById("przycisk-wyslij") as HTMLButtonElement;
+	const tekstPrzycisku = przycisk.textContent ?? "Wyślij wiadomość";
+	const statusFormularza = document.getElementById("status-formularza")!;
+
+	// ID Formspree wraca do nas z serwera (Astro frontmatter) przez atrybut data-*,
+	// bo zwykła stała z frontmatteru nie jest widoczna w tym skrypcie (inne środowisko wykonania).
+	const formspreeId = formularz.dataset.formspreeId ?? "";
+
+	// JS przejmuje walidację od przeglądarki — patrz komentarz w markupie wyżej.
+	formularz.noValidate = true;
+
+	type KluczPola = "name" | "email" | "message";
+
+	const pola: Record<KluczPola, { input: HTMLInputElement | HTMLTextAreaElement; blad: HTMLElement }> = {
+		name: {
+			input: document.getElementById("kontakt-name") as HTMLInputElement,
+			blad: document.getElementById("kontakt-name-blad")!,
+		},
+		email: {
+			input: document.getElementById("kontakt-email") as HTMLInputElement,
+			blad: document.getElementById("kontakt-email-blad")!,
+		},
+		message: {
+			input: document.getElementById("kontakt-message") as HTMLTextAreaElement,
+			blad: document.getElementById("kontakt-message-blad")!,
+		},
+	};
+
+	// Prosty, ale skuteczny regex na email — dodatkowa warstwa poza type="email" z HTML5.
+	const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+	function walidujPole(klucz: KluczPola): { ok: boolean; komunikat?: string } {
+		const wartosc = pola[klucz].input.value.trim();
+
+		if (klucz === "name") {
+			if (!wartosc) return { ok: false, komunikat: "Podaj imię i nazwisko." };
+			if (wartosc.length < 2) return { ok: false, komunikat: "To imię wygląda na zbyt krótkie." };
+		}
+
+		if (klucz === "email") {
+			if (!wartosc) return { ok: false, komunikat: "Podaj adres email." };
+			if (!regexEmail.test(wartosc)) return { ok: false, komunikat: "Ten adres email wygląda na niepoprawny." };
+		}
+
+		if (klucz === "message") {
+			if (!wartosc) return { ok: false, komunikat: "Napisz treść wiadomości." };
+			if (wartosc.length < 10) return { ok: false, komunikat: "Wiadomość jest zbyt krótka (min. 10 znaków)." };
+		}
+
+		return { ok: true };
+	}
+
+	function pokazBlad(klucz: KluczPola, komunikat: string) {
+		const { input, blad } = pola[klucz];
+		blad.textContent = komunikat;
+		input.setAttribute("aria-invalid", "true");
+		input.classList.remove("border-line");
+		input.classList.add("border-red-700");
+	}
+
+	function ukryjBlad(klucz: KluczPola) {
+		const { input, blad } = pola[klucz];
+		blad.textContent = "";
+		input.removeAttribute("aria-invalid");
+		input.classList.remove("border-red-700");
+		input.classList.add("border-line");
+	}
+
+	// pokazujNoweBledy=true przy blur/submit (informujemy od razu o nowym błędzie).
+	// pokazujNoweBledy=false przy input (nie strasz błędem w trakcie pisania —
+	// ale jeśli błąd już był pokazany, aktualizuj go na bieżąco, aż zniknie).
+	function odswiezPole(klucz: KluczPola, pokazujNoweBledy: boolean): boolean {
+		const wynik = walidujPole(klucz);
+		const miałJużBlad = pola[klucz].blad.textContent !== "";
+
+		if (!wynik.ok && (pokazujNoweBledy || miałJużBlad)) {
+			pokazBlad(klucz, wynik.komunikat!);
+		} else if (wynik.ok) {
+			ukryjBlad(klucz);
+		}
+
+		return wynik.ok;
+	}
+
+	(Object.keys(pola) as KluczPola[]).forEach((klucz) => {
+		pola[klucz].input.addEventListener("blur", () => odswiezPole(klucz, true));
+		pola[klucz].input.addEventListener("input", () => odswiezPole(klucz, false));
+	});
+
+	function walidujCalyFormularz(): boolean {
+		let poprawny = true;
+		(Object.keys(pola) as KluczPola[]).forEach((klucz) => {
+			if (!odswiezPole(klucz, true)) poprawny = false;
+		});
+		return poprawny;
+	}
+
+	function ustawStatus(tekst: string, rodzaj: "wysylanie" | "sukces" | "blad" | "") {
+		statusFormularza.textContent = tekst;
+		statusFormularza.classList.remove("text-muted", "text-red-700", "text-green-700");
+		if (rodzaj === "wysylanie") statusFormularza.classList.add("text-muted");
+		if (rodzaj === "sukces") statusFormularza.classList.add("text-green-700");
+		if (rodzaj === "blad") statusFormularza.classList.add("text-red-700");
+	}
+
+	formularz.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		if (!walidujCalyFormularz()) {
+			ustawStatus("Popraw zaznaczone pola powyżej.", "blad");
+			return;
+		}
+
+		if (!formspreeId) {
+			ustawStatus("Formularz nie jest jeszcze skonfigurowany — brak PUBLIC_FORMSPREE_ID w .env.", "blad");
+			console.warn("ContactForm: uzupełnij PUBLIC_FORMSPREE_ID w pliku .env (zob. .env.example).");
+			return;
+		}
+
+		przycisk.disabled = true;
+		przycisk.textContent = "Wysyłanie...";
+		ustawStatus("Wysyłanie...", "wysylanie");
+
+		try {
+			const dane = new FormData(formularz);
+			const odpowiedz = await fetch(`https://formspree.io/f/${formspreeId}`, {
+				method: "POST",
+				body: dane,
+				headers: { Accept: "application/json" },
+			});
+
+			if (odpowiedz.ok) {
+				formularz.reset();
+				(Object.keys(pola) as KluczPola[]).forEach((klucz) => ukryjBlad(klucz));
+				ustawStatus("Dziękuję! Wiadomość została wysłana — odezwę się najszybciej, jak się da.", "sukces");
+			} else {
+				const wynik = await odpowiedz.json().catch(() => null);
+				const komunikat =
+					wynik && Object.hasOwn(wynik, "errors")
+						? wynik.errors.map((err: { message: string }) => err.message).join(", ")
+						: "Coś poszło nie tak. Spróbuj ponownie albo napisz bezpośrednio na maila.";
+				ustawStatus(komunikat, "blad");
+			}
+		} catch {
+			ustawStatus("Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.", "blad");
+		} finally {
+			przycisk.disabled = false;
+			przycisk.textContent = tekstPrzycisku;
+		}
+	});
+</script>

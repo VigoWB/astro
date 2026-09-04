@@ -1,55 +1,134 @@
 ---
 import Container from "../components/ui/Container.astro";
+
+const linkiNawigacji = [
+	{ href: "/", etykieta: "Homepage" },
+	{ href: "/galeria", etykieta: "Galeria" },
+	{ href: "/o-mnie", etykieta: "O mnie" },
+	{ href: "/kontakt", etykieta: "Kontakt" },
+];
 ---
 
 <header
 	id="glowny-naglowek"
-	class="sticky top-0 z-40 h-15 overflow-hidden flex items-center border-b border-line bg-paper text-ink text-xl font-semibold transition-shadow duration-300"
+	class="sticky top-0 z-40 bg-paper text-ink text-xl font-semibold"
 >
-	<div id="tresc-naglowka" class="w-full">
-		<Container>
-			<div class="flex flex-row items-center justify-between w-full">
-				<div class="logo">WB</div>
-				<nav aria-label="Główna nawigacja" class="menu">
-					<ul class="flex flex-row gap-4">
+	<!-- Pasek 60px — overflow-hidden i obcięcie siedzi tutaj (nie na całym
+	     <header>), żeby rozwijane menu mobilne poniżej mogło się swobodnie
+	     pokazać, zamiast zostać przycięte razem z paskiem. -->
+	<div
+		id="pasek-naglowka"
+		class="h-15 overflow-hidden border-b border-line flex items-center transition-shadow duration-300"
+	>
+		<div id="tresc-naglowka" class="w-full">
+			<Container>
+				<div class="flex flex-row items-center justify-between w-full">
+					<div class="logo">WB</div>
+
+					<nav aria-label="Główna nawigacja" class="hidden md:block">
+						<ul class="flex flex-row gap-4">
+							{linkiNawigacji.map((link) => (
+								<li>
+									<a href={link.href} class="hover:text-accent transition-colors">
+										{link.etykieta}
+									</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+
+					<button
+						type="button"
+						id="przycisk-menu"
+						class="relative h-8 w-8 md:hidden"
+						aria-expanded="false"
+						aria-controls="menu-mobilne"
+						aria-label="Otwórz menu"
+					>
+						<span aria-hidden="true"></span>
+						<span aria-hidden="true"></span>
+						<span aria-hidden="true"></span>
+					</button>
+				</div>
+			</Container>
+		</div>
+	</div>
+
+	<!-- Rozwijane menu mobilne. "md:hidden" zostaje na stałe w klasach —
+	     nawet gdyby JS nie zdążył zamknąć menu przy zmianie szerokości
+	     okna, na desktopie i tak się nie pokaże. -->
+	<div id="menu-mobilne" class="hidden md:hidden border-b border-line bg-paper">
+		<nav aria-label="Nawigacja mobilna">
+			<Container>
+				<ul class="flex flex-col py-2">
+					{linkiNawigacji.map((link) => (
 						<li>
-							<a href="/" class="hover:text-accent transition-colors">Homepage</a>
-						</li>
-						<li>
-							<a href="/galeria" class="hover:text-accent transition-colors">Galeria</a>
-						</li>
-						<li>
-							<a href="/o-mnie" class="hover:text-accent transition-colors">
-								<span>O mnie</span>
+							<a href={link.href} class="block py-3 hover:text-accent transition-colors">
+								{link.etykieta}
 							</a>
 						</li>
-						<li>
-							<a href="/kontakt" class="hover:text-accent transition-colors">Kontakt</a>
-						</li>
-					</ul>
-				</nav>
-			</div>
-		</Container>
+					))}
+				</ul>
+			</Container>
+		</nav>
 	</div>
 </header>
 
+<style>
+	#przycisk-menu span {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 20px;
+		height: 2px;
+		background-color: currentColor;
+		transition: transform 0.25s ease, opacity 0.25s ease;
+	}
+
+	#przycisk-menu span:nth-child(1) {
+		transform: translate(-50%, -50%) translateY(-6px);
+	}
+	#przycisk-menu span:nth-child(2) {
+		transform: translate(-50%, -50%);
+	}
+	#przycisk-menu span:nth-child(3) {
+		transform: translate(-50%, -50%) translateY(6px);
+	}
+
+	#przycisk-menu[aria-expanded="true"] span:nth-child(1) {
+		transform: translate(-50%, -50%) rotate(45deg);
+	}
+	#przycisk-menu[aria-expanded="true"] span:nth-child(2) {
+		opacity: 0;
+	}
+	#przycisk-menu[aria-expanded="true"] span:nth-child(3) {
+		transform: translate(-50%, -50%) rotate(-45deg);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#przycisk-menu span {
+			transition: none;
+		}
+	}
+</style>
+
 <script>
-	// Delikatny "parallax": treść nagłówka porusza się nieco wolniej niż
-	// przewijanie strony, a sam pasek dostaje cień po przewinięciu paru pikseli.
-	const header = document.getElementById("glowny-naglowek");
+	// --- Parallax paska nagłówka (logika 1:1 jak wcześniej — zmienił się
+	// tylko element z overflow-hidden/cieniem: pasek zamiast całego <header>). ---
+	const pasek = document.getElementById("pasek-naglowka");
 	const tresc = document.getElementById("tresc-naglowka");
 
 	const preferujeMniejRuchu = window.matchMedia(
 		"(prefers-reduced-motion: reduce)"
 	).matches;
 
-	if (header && tresc && !preferujeMniejRuchu) {
+	if (pasek && tresc && !preferujeMniejRuchu) {
 		let animujeSie = false;
 
 		function aktualizujNaglowek() {
 			const offset = Math.min(window.scrollY * 0.25, 10);
 			tresc.style.transform = `translateY(-${offset}px)`;
-			header.classList.toggle("shadow-md", window.scrollY > 12);
+			pasek.classList.toggle("shadow-md", window.scrollY > 12);
 			animujeSie = false;
 		}
 
@@ -63,5 +142,44 @@ import Container from "../components/ui/Container.astro";
 			},
 			{ passive: true }
 		);
+	}
+
+	// --- Menu mobilne (hamburger) ---
+	const przyciskMenu = document.getElementById("przycisk-menu");
+	const menuMobilne = document.getElementById("menu-mobilne");
+
+	if (przyciskMenu && menuMobilne) {
+		function otworzMenu() {
+			przyciskMenu.setAttribute("aria-expanded", "true");
+			przyciskMenu.setAttribute("aria-label", "Zamknij menu");
+			menuMobilne.classList.remove("hidden");
+		}
+
+		function zamknijMenu() {
+			przyciskMenu.setAttribute("aria-expanded", "false");
+			przyciskMenu.setAttribute("aria-label", "Otwórz menu");
+			menuMobilne.classList.add("hidden");
+		}
+
+		przyciskMenu.addEventListener("click", () => {
+			const jestOtwarte = przyciskMenu.getAttribute("aria-expanded") === "true";
+			jestOtwarte ? zamknijMenu() : otworzMenu();
+		});
+
+		// Zamknij po kliknięciu w link — inaczej menu zostaje "otwarte" w tle
+		// np. po powrocie przyciskiem "wstecz" w przeglądarce.
+		menuMobilne.querySelectorAll("a").forEach((link) => {
+			link.addEventListener("click", zamknijMenu);
+		});
+
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") zamknijMenu();
+		});
+
+		// Gdyby ktoś rozszerzył okno powyżej breakpointu md przy otwartym
+		// menu (np. obrót tabletu) — zresetuj stan przycisku i menu.
+		window.matchMedia("(min-width: 48rem)").addEventListener("change", (e) => {
+			if (e.matches) zamknijMenu();
+		});
 	}
 </script>

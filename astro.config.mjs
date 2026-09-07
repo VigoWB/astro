@@ -6,6 +6,7 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://foto.vigolab.ovh',
+  base: '/',
   integrations: [sitemap()],
   output: 'static',
   vite: {

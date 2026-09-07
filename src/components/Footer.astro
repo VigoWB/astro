@@ -1,5 +1,7 @@
 ---
 import Container from "../components/ui/Container.astro";
+import { navLinks } from "../data/nav.ts";
+
 const rok = new Date().getFullYear();
 ---
 
@@ -9,8 +11,15 @@ const rok = new Date().getFullYear();
             <div class="copyright">© {rok} Wiktor</div>
             <div class="links">
                 <ul class="flex flex-row gap-4">
-                    <li><a href="https://www.instagram.com/mabro_grawer/" target="_blank" rel="noopener" class="hover:text-accent transition-colors">Instagram</a></li>
-                    <li><a href="mailto:BrzezinskiWiktor@outlook.com" class="hover:text-accent transition-colors">Kontakt</a></li>
+                    {navLinks.map((link) => (
+                        <li>
+                            <a href={link.href} class="hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
+                                {link.label}
+                            </a>
+                        </li>
+                    ))}
+                    <li><a href="https://www.instagram.com/mabro_grawer/" target="_blank" rel="noopener" class="hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper">Instagram</a></li>
+                    <li><a href="mailto:BrzezinskiWiktor@outlook.com" class="hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper">Kontakt</a></li>
                 </ul>
             </div>
         </div>

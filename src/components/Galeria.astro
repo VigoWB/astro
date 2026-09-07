@@ -1,16 +1,40 @@
 ---
 import Karta from "./ui/Karta.astro";
-const { zdjecia } = Astro.props;
+
+interface Props {
+	zdjecia: Array<{
+		po: any;
+		przed: any;
+		opis: string;
+		kategoria: string[];
+	}>;
+	kategorie: string[];
+}
+
+const { zdjecia, kategorie } = Astro.props;
 ---
 
+<div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filtruj galerię">
+	{kategorie.map((kat) => (
+		<button
+			type="button"
+			data-filter={kat}
+			class={`px-4 py-2 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-accent text-paper border-accent" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
+			aria-pressed={kat === "Wszystkie"}
+		>
+			{kat}
+		</button>
+	))}
+</div>
+
 <div class="columns-2 md:columns-3 gap-6">
-	{zdjecia.map((z: any) => (
-		<Karta po={z.po} przed={z.przed} opis={z.opis} />
+	{zdjecia.map((z: any, index: number) => (
+		<Karta po={z.po} przed={z.przed} opis={z.opis} kategoria={z.kategoria} priority={index === 0} />
 	))}
 </div>
 
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 p-4">
-	<button type="button" id="lightbox-close" class="absolute top-4 right-4 text-white text-3xl leading-none" aria-label="Zamknij podgląd">
+	<button type="button" id="lightbox-close" class="absolute top-4 right-4 text-white text-3xl leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black" aria-label="Zamknij podgląd">
 		&times;
 	</button>
 
@@ -20,11 +44,12 @@ const { zdjecia } = Astro.props;
 			src=""
 			alt=""
 			draggable="false"
-			class="max-h-[80vh] max-w-full object-contain select-none"
+			tabindex="0"
+			class="max-h-[80vh] max-w-full object-contain select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black"
 		/>
 		<div class="flex items-center gap-4 text-white">
-			<span id="lightbox-opis" class="font-bold"></span>
-			<span id="lightbox-hint" class="hidden text-sm text-white/70 italic select-none">
+			<span id="lightbox-opis" class="font-bold" tabindex="0"></span>
+			<span id="lightbox-hint" class="hidden text-sm text-white/70 italic select-none" tabindex="0">
 				Najedź / przytrzymaj, aby zobaczyć: przed
 			</span>
 		</div>
@@ -89,7 +114,7 @@ const { zdjecia } = Astro.props;
 		elementyDoUjawnienia.forEach((el) => obserwator.observe(el));
 	}
 
-	// --- Lightbox (bez zmian) ---
+	// --- Lightbox z focus trap ---
 	const lightbox = document.getElementById("lightbox")!;
 	const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
 	const lightboxOpis = document.getElementById("lightbox-opis")!;
@@ -97,6 +122,15 @@ const { zdjecia } = Astro.props;
 	const closeBtn = document.getElementById("lightbox-close")!;
 
 	let current = { po: "", przed: "" };
+	let lastFocusedElement: HTMLElement | null = null;
+
+	// Elementy fokusowalne w lightboxie (kolejność Tab)
+	const focusableSelectors = [
+		"#lightbox-close",
+		"#lightbox-img",
+		"#lightbox-opis",
+		"#lightbox-hint"
+	].join(", ");
 
 	function otworz(item: HTMLElement) {
 		current.po = item.dataset.po || "";
@@ -108,14 +142,34 @@ const { zdjecia } = Astro.props;
 
 		hint.classList.toggle("hidden", !current.przed);
 
+		// Zapisz element, który miał focus przed otwarciem
+		lastFocusedElement = document.activeElement as HTMLElement;
+
 		lightbox.classList.remove("hidden");
 		lightbox.classList.add("flex");
+
+		// Focus trap: ustaw focus na przycisku zamknij (pierwszy w kolejności)
+		// Użyj requestAnimationFrame, by poczekać na render
+		requestAnimationFrame(() => {
+			closeBtn.focus();
+
+			// Dodaj listener focus trap
+			document.addEventListener("keydown", handleFocusTrap);
+		});
 	}
 
 	function zamknij() {
 		lightbox.classList.add("hidden");
 		lightbox.classList.remove("flex");
 		pokazPo();
+
+		// Usuń focus trap
+		document.removeEventListener("keydown", handleFocusTrap);
+
+		// Przywróć focus na karcie, z której otworzono
+		if (lastFocusedElement) {
+			lastFocusedElement.focus();
+		}
 	}
 
 	function pokazPrzed() {
@@ -128,6 +182,13 @@ const { zdjecia } = Astro.props;
 
 	document.querySelectorAll<HTMLElement>("[data-gallery-item]").forEach((item) => {
 		item.addEventListener("click", () => otworz(item));
+		// Obsługa klawiatury: Enter/Space otwiera lightbox
+		item.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " ") {
+				e.preventDefault();
+				otworz(item);
+			}
+		});
 	});
 
 	closeBtn.addEventListener("click", zamknij);
@@ -147,7 +208,74 @@ const { zdjecia } = Astro.props;
 	lightbox.addEventListener("click", (e) => {
 		if (e.target === lightbox) zamknij();
 	});
+
 	document.addEventListener("keydown", (e) => {
 		if (e.key === "Escape") zamknij();
 	});
+
+	// Focus trap handler dla Tab / Shift+Tab
+	function handleFocusTrap(e: KeyboardEvent) {
+		if (e.key !== "Tab") return;
+
+		const focusableElements = lightbox.querySelectorAll<HTMLElement>(focusableSelectors);
+		if (focusableElements.length === 0) return;
+
+		const firstElement = focusableElements[0];
+		const lastElement = focusableElements[focusableElements.length - 1];
+
+		if (e.shiftKey) {
+			// Shift+Tab – cofnij
+			if (document.activeElement === firstElement) {
+				e.preventDefault();
+				lastElement.focus();
+			}
+		} else {
+			// Tab – do przodu
+			if (document.activeElement === lastElement) {
+				e.preventDefault();
+				firstElement.focus();
+			}
+		}
+	}
+
+	// Helper do trackowania eventów Umami (jeśli dostępne)
+	function track(eventName: string, data?: Record<string, string | number>) {
+		if (typeof window !== "undefined" && (window as any).umami) {
+			(window as any).umami.track(eventName, data);
+		}
+	}
+
+	// --- Filtr kategorii ---
+	const filterButtons = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
+	const galleryItems = document.querySelectorAll<HTMLElement>("[data-gallery-item]");
+
+	let activeFilter = "Wszystkie";
+
+	filterButtons.forEach((btn) => {
+		btn.addEventListener("click", () => {
+			activeFilter = btn.dataset.filter || "Wszystkie";
+
+			// Update aria-pressed
+			filterButtons.forEach((b) => {
+				b.setAttribute("aria-pressed", b.dataset.filter === activeFilter ? "true" : "false");
+			});
+
+			// Filter items
+			galleryItems.forEach((item) => {
+				const itemCategories = item.dataset.kategoria?.split(" ") || [];
+				const matches = activeFilter === "Wszystkie" || itemCategories.includes(activeFilter);
+				item.classList.toggle("hidden", !matches);
+			});
+
+			// Track filter change
+			track("gallery_filter", { filter: activeFilter });
+		});
+	});
+
+	// Track lightbox open
+	const originalOtworz = otworz;
+	otworz = function(item: HTMLElement) {
+		originalOtworz(item);
+		track("lightbox_open", { image: item.dataset.opis || "unknown" });
+	};
 </script>

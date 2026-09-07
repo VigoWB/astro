@@ -1,12 +1,8 @@
 ---
 import Container from "../components/ui/Container.astro";
+import { navLinks } from "../data/nav.ts";
 
-const linkiNawigacji = [
-	{ href: "/", etykieta: "Homepage" },
-	{ href: "/galeria", etykieta: "Galeria" },
-	{ href: "/o-mnie", etykieta: "O mnie" },
-	{ href: "/kontakt", etykieta: "Kontakt" },
-];
+const currentPath = Astro.url.pathname;
 ---
 
 <header
@@ -27,20 +23,29 @@ const linkiNawigacji = [
 
 					<nav aria-label="Główna nawigacja" class="hidden md:block">
 						<ul class="flex flex-row gap-4">
-							{linkiNawigacji.map((link) => (
-								<li>
-									<a href={link.href} class="hover:text-accent transition-colors">
-										{link.etykieta}
-									</a>
-								</li>
-							))}
+							{navLinks.map((link) => {
+								const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
+								return (
+									<li>
+										<a
+											href={link.href}
+											class={isActive
+												? "text-accent font-medium pointer-events-none"
+												: "hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
+											aria-current={isActive ? "page" : undefined}
+										>
+											{link.label}
+										</a>
+									</li>
+								);
+							})}
 						</ul>
 					</nav>
 
 					<button
 						type="button"
 						id="przycisk-menu"
-						class="relative h-8 w-8 md:hidden"
+						class="relative h-8 w-8 md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 						aria-expanded="false"
 						aria-controls="menu-mobilne"
 						aria-label="Otwórz menu"
@@ -61,13 +66,20 @@ const linkiNawigacji = [
 		<nav aria-label="Nawigacja mobilna">
 			<Container>
 				<ul class="flex flex-col py-2">
-					{linkiNawigacji.map((link) => (
-						<li>
-							<a href={link.href} class="block py-3 hover:text-accent transition-colors">
-								{link.etykieta}
-							</a>
-						</li>
-					))}
+					{navLinks.map((link) => {
+						const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
+						return (
+							<li>
+								<a
+									href={link.href}
+									class={`block py-3 hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent font-medium" : ""}`}
+									aria-current={isActive ? "page" : undefined}
+								>
+									{link.label}
+								</a>
+							</li>
+						);
+					})}
 				</ul>
 			</Container>
 		</nav>
@@ -110,6 +122,11 @@ const linkiNawigacji = [
 			transition: none;
 		}
 	}
+
+	a[aria-current="page"] {
+		color: var(--color-accent);
+		font-weight: 600;
+	}
 </style>
 
 <script>
@@ -149,16 +166,38 @@ const linkiNawigacji = [
 	const menuMobilne = document.getElementById("menu-mobilne");
 
 	if (przyciskMenu && menuMobilne) {
+		let lastFocusedElement: HTMLElement | null = null;
+
 		function otworzMenu() {
 			przyciskMenu.setAttribute("aria-expanded", "true");
 			przyciskMenu.setAttribute("aria-label", "Zamknij menu");
 			menuMobilne.classList.remove("hidden");
+
+			// Zapisz element, który miał focus przed otwarciem
+			lastFocusedElement = document.activeElement as HTMLElement;
+
+			// Focus na pierwszym linku w menu
+			const firstLink = menuMobilne.querySelector("a") as HTMLElement;
+			requestAnimationFrame(() => {
+				firstLink?.focus();
+
+				// Focus trap
+				document.addEventListener("keydown", handleMenuFocusTrap);
+			});
 		}
 
 		function zamknijMenu() {
 			przyciskMenu.setAttribute("aria-expanded", "false");
 			przyciskMenu.setAttribute("aria-label", "Otwórz menu");
 			menuMobilne.classList.add("hidden");
+
+			// Usuń focus trap
+			document.removeEventListener("keydown", handleMenuFocusTrap);
+
+			// Przywróć focus na przycisku hamburgera
+			if (lastFocusedElement) {
+				lastFocusedElement.focus();
+			}
 		}
 
 		przyciskMenu.addEventListener("click", () => {
@@ -181,5 +220,30 @@ const linkiNawigacji = [
 		window.matchMedia("(min-width: 48rem)").addEventListener("change", (e) => {
 			if (e.matches) zamknijMenu();
 		});
+
+		// Focus trap handler dla menu mobilnego
+		function handleMenuFocusTrap(e: KeyboardEvent) {
+			if (e.key !== "Tab") return;
+
+			const links = menuMobilne.querySelectorAll<HTMLElement>("a");
+			if (links.length === 0) return;
+
+			const first = links[0];
+			const last = links[links.length - 1];
+
+			if (e.shiftKey) {
+				// Shift+Tab – cofnij
+				if (document.activeElement === first) {
+					e.preventDefault();
+					last.focus();
+				}
+			} else {
+				// Tab – do przodu
+				if (document.activeElement === last) {
+					e.preventDefault();
+					first.focus();
+				}
+			}
+		}
 	}
 </script>

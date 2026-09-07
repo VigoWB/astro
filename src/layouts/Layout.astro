@@ -9,6 +9,10 @@ import Schema from "../components/Schema.astro";
 const { title, frontmatter, description, image, canonicalURL, zdjecia } = Astro.props;
 const pageTitle = title ?? frontmatter?.title ?? "Wiktor — Fotografia";
 const pageDescription = description ?? frontmatter?.description ?? "Portfolio fotograficzne Wiktora.";
+
+// Umami analytics - konfiguracja przez .env
+const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
+const umamiScriptUrl = import.meta.env.PUBLIC_UMAMI_SCRIPT_URL;
 ---
 
 <!doctype html>
@@ -26,6 +30,13 @@ const pageDescription = description ?? frontmatter?.description ?? "Portfolio fo
 			href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
 			rel="stylesheet"
 		/>
+		{umamiWebsiteId && umamiScriptUrl && (
+			<script
+				defer
+				data-website-id={umamiWebsiteId}
+				src={umamiScriptUrl}
+			></script>
+		)}
 	</head>
 	<body class="flex flex-col min-h-dvh">
 		<Header/>

@@ -1,0 +1,1 @@
+export const kategorie = ["Wszystkie", "Portrety", "Pracownia", "Przyroda"] as const;

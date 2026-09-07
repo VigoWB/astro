@@ -3,12 +3,12 @@ import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
+import cloudflare from '@astrojs/cloudflare';
 
-// https://astro.build/config
 export default defineConfig({
-  // TODO: podmień na docelową domenę, gdy będzie znana (Etap 8 — wdrożenie)
-  site: 'https://twoja-domena.pl',
+  site: 'https://foto.vigolab.ovh',
   integrations: [sitemap()],
+  adapter: cloudflare(),
   vite: {
     plugins: [tailwindcss()]
   }

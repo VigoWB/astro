@@ -238,13 +238,6 @@ const { zdjecia, kategorie } = Astro.props;
 		}
 	}
 
-	// Helper do trackowania eventów Umami (jeśli dostępne)
-	function track(eventName: string, data?: Record<string, string | number>) {
-		if (typeof window !== "undefined" && (window as any).umami) {
-			(window as any).umami.track(eventName, data);
-		}
-	}
-
 	// --- Filtr kategorii ---
 	const filterButtons = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
 	const galleryItems = document.querySelectorAll<HTMLElement>("[data-gallery-item]");
@@ -266,16 +259,6 @@ const { zdjecia, kategorie } = Astro.props;
 				const matches = activeFilter === "Wszystkie" || itemCategories.includes(activeFilter);
 				item.classList.toggle("hidden", !matches);
 			});
-
-			// Track filter change
-			track("gallery_filter", { filter: activeFilter });
 		});
 	});
-
-	// Track lightbox open
-	const originalOtworz = otworz;
-	otworz = function(item: HTMLElement) {
-		originalOtworz(item);
-		track("lightbox_open", { image: item.dataset.opis || "unknown" });
-	};
 </script>

@@ -10,9 +10,8 @@ const { title, frontmatter, description, image, canonicalURL, zdjecia } = Astro.
 const pageTitle = title ?? frontmatter?.title ?? "Wiktor — Fotografia";
 const pageDescription = description ?? frontmatter?.description ?? "Portfolio fotograficzne Wiktora.";
 
-// Umami analytics - konfiguracja przez .env
-const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID;
-const umamiScriptUrl = import.meta.env.PUBLIC_UMAMI_SCRIPT_URL;
+// Cloudflare Web Analytics - opcjonalny, konfiguracja przez .env
+const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 ---
 
 <!doctype html>
@@ -30,11 +29,11 @@ const umamiScriptUrl = import.meta.env.PUBLIC_UMAMI_SCRIPT_URL;
 			href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
 			rel="stylesheet"
 		/>
-		{umamiWebsiteId && umamiScriptUrl && (
+		{cfBeaconToken && (
 			<script
 				defer
-				data-website-id={umamiWebsiteId}
-				src={umamiScriptUrl}
+				data-cf-beacon={`{"token": "${cfBeaconToken}"}`}
+				src="https://static.cloudflareinsights.com/beacon.min.js"
 			></script>
 		)}
 	</head>

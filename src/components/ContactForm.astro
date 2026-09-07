@@ -222,10 +222,6 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 				formularz.reset();
 				(Object.keys(pola) as KluczPola[]).forEach((klucz) => ukryjBlad(klucz));
 				ustawStatus("Dziękuję! Wiadomość została wysłana — odezwę się najszybciej, jak się da.", "sukces");
-				// Track form submit success
-				if (typeof window !== "undefined" && (window as any).umami) {
-					(window as any).umami.track("form_submit", { status: "success" });
-				}
 			} else {
 				const wynik = await odpowiedz.json().catch(() => null);
 				const komunikat =
@@ -233,17 +229,9 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 						? wynik.errors.map((err: { message: string }) => err.message).join(", ")
 						: "Coś poszło nie tak. Spróbuj ponownie albo napisz bezpośrednio na maila.";
 				ustawStatus(komunikat, "blad");
-				// Track form submit error
-				if (typeof window !== "undefined" && (window as any).umami) {
-					(window as any).umami.track("form_submit", { status: "error" });
-				}
 			}
 		} catch {
 			ustawStatus("Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.", "blad");
-			// Track form submit network error
-			if (typeof window !== "undefined" && (window as any).umami) {
-				(window as any).umami.track("form_submit", { status: "network_error" });
-			}
 		} finally {
 			przycisk.disabled = false;
 			przycisk.textContent = tekstPrzycisku;

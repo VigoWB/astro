@@ -15,7 +15,6 @@
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
-    "@astrojs/cloudflare": "^12.3.0",
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/typography": "^0.5.20",
@@ -24,5 +23,5 @@
   "allowScripts": {
     "esbuild@0.28.2": true,
     "esbuild@0.25.12": true
-  }
+}
 }

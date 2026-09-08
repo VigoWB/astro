@@ -12,6 +12,9 @@ interface Props {
 }
 
 const { zdjecia, kategorie } = Astro.props;
+
+// Load More configuration
+const ITEMS_PER_LOAD = 8;
 ---
 
 <div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filtruj galerię">
@@ -27,14 +30,26 @@ const { zdjecia, kategorie } = Astro.props;
 	))}
 </div>
 
-<div class="columns-2 md:columns-3 gap-6">
-	{zdjecia.map((z: any, index: number) => (
+<div class="columns-2 md:columns-3 gap-6" id="galeria-grid" data-zdjecia={JSON.stringify(zdjecia.map(z => ({ po: z.po, exif: z.po?.exif })))}>
+	{zdjecia.slice(0, ITEMS_PER_LOAD).map((z: any, index: number) => (
 		<Karta po={z.po} przed={z.przed} opis={z.opis} kategoria={z.kategoria} priority={index === 0} />
 	))}
 </div>
 
+<!-- Load More Button -->
+<div id="load-more-container" class="text-center mt-8">
+	<button
+		id="load-more-btn"
+		type="button"
+		class="px-8 py-3 bg-accent text-paper font-semibold rounded-full hover:bg-accent/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+		aria-label="Załaduj więcej zdjęć"
+	>
+		Załaduj więcej (<span id="load-more-count">0</span>)
+	</button>
+</div>
+
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 p-4">
-	<button type="button" id="lightbox-close" class="absolute top-4 right-4 text-white text-3xl leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black" aria-label="Zamknij podgląd">
+	<button type="button" id="lightbox-close" tabindex="0" class="absolute top-4 right-4 text-white text-3xl leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black" aria-label="Zamknij podgląd">
 		&times;
 	</button>
 
@@ -53,6 +68,8 @@ const { zdjecia, kategorie } = Astro.props;
 				Najedź / przytrzymaj, aby zobaczyć: przed
 			</span>
 		</div>
+		<!-- EXIF Data Display -->
+		<div id="lightbox-exif" class="text-sm text-white/70 font-mono hidden"></div>
 	</div>
 </div>
 
@@ -114,14 +131,93 @@ const { zdjecia, kategorie } = Astro.props;
 		elementyDoUjawnienia.forEach((el) => obserwator.observe(el));
 	}
 
+	// --- Load More Functionality ---
+	const ITEMS_PER_LOAD = 8;
+	const galeriaGrid = document.getElementById("galeria-grid")!;
+	const loadMoreBtn = document.getElementById("load-more-btn")!;
+	const loadMoreCount = document.getElementById("load-more-count")!;
+	const loadMoreContainer = document.getElementById("load-more-container")!;
+
+	// Get zdjecia data from data attribute
+	const zdjeciaData = JSON.parse(galeriaGrid.dataset.zdjecia || "[]");
+
+	// Store all gallery items data from the DOM
+	const allGalleryItems = Array.from(document.querySelectorAll<HTMLElement>("[data-gallery-item]"));
+	let visibleCount = ITEMS_PER_LOAD;
+
+	// Initialize load more count
+	function updateLoadMoreCount() {
+		const remaining = allGalleryItems.length - visibleCount;
+		loadMoreCount.textContent = remaining > 0 ? remaining.toString() : "0";
+		
+		if (remaining <= 0) {
+			loadMoreContainer.style.display = "none";
+		} else {
+			loadMoreContainer.style.display = "block";
+		}
+	}
+
+	// Initialize IntersectionObserver for new items
+	function observeNewItems(items: HTMLElement[]) {
+		if (preferujeMniejRuchu) {
+			items.forEach((el) => {
+				el.classList.remove("opacity-0", "translate-y-6");
+			});
+		} else {
+			const obserwator = new IntersectionObserver(
+				(wpisy) => {
+					wpisy.forEach((wpis) => {
+						if (wpis.isIntersecting) {
+							wpis.target.classList.remove("opacity-0", "translate-y-6");
+							obserwator.unobserve(wpis.target);
+						}
+					});
+				},
+				{ threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
+			);
+
+			items.forEach((el) => obserwator.observe(el));
+			// Recalculate row order for new items
+			ustawKolejnoscWierszami();
+		}
+	}
+
+	// Load more function
+	function loadMoreItems() {
+		const nextItems = allGalleryItems.slice(visibleCount, visibleCount + ITEMS_PER_LOAD);
+		
+		nextItems.forEach((item) => {
+			// Remove hidden class if it was filtered
+			if (item.classList.contains("hidden")) {
+				const activeFilter = document.querySelector<HTMLButtonElement>('[data-filter][aria-pressed="true"]')?.dataset.filter || "Wszystkie";
+				const itemCategories = item.dataset.kategoria?.split(" ") || [];
+				const matches = activeFilter === "Wszystkie" || itemCategories.includes(activeFilter);
+				if (matches) {
+					item.classList.remove("hidden");
+				}
+			}
+			galeriaGrid.appendChild(item);
+		});
+
+		visibleCount += nextItems.length;
+		observeNewItems(nextItems);
+		updateLoadMoreCount();
+	}
+
+	// Initialize
+	updateLoadMoreCount();
+
+	loadMoreBtn.addEventListener("click", loadMoreItems);
+
 	// --- Lightbox z focus trap ---
 	const lightbox = document.getElementById("lightbox")!;
 	const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
 	const lightboxOpis = document.getElementById("lightbox-opis")!;
 	const hint = document.getElementById("lightbox-hint")!;
+	const lightboxExif = document.getElementById("lightbox-exif")!;
 	const closeBtn = document.getElementById("lightbox-close")!;
 
-	let current = { po: "", przed: "" };
+	let current = { po: "", przed: "", exif: null as any };
 	let lastFocusedElement: HTMLElement | null = null;
 
 	// Elementy fokusowalne w lightboxie (kolejność Tab)
@@ -129,8 +225,28 @@ const { zdjecia, kategorie } = Astro.props;
 		"#lightbox-close",
 		"#lightbox-img",
 		"#lightbox-opis",
-		"#lightbox-hint"
+		"#lightbox-hint",
+		"#lightbox-exif"
 	].join(", ");
+
+	// Parse EXIF data from ImageMetadata
+	function parseExif(imageMeta: any): string | null {
+		if (!imageMeta || !imageMeta.exif) return null;
+		
+		const exif = imageMeta.exif;
+		const parts: string[] = [];
+		
+		if (exif.ISO) parts.push(`ISO ${exif.ISO}`);
+		if (exif.FNumber) parts.push(`f/${exif.FNumber}`);
+		if (exif.FocalLength) parts.push(`${exif.FocalLength}mm`);
+		if (exif.ExposureTime) {
+			const exp = exif.ExposureTime;
+			if (exp < 1) parts.push(`1/${Math.round(1/exp)}s`);
+			else parts.push(`${exp}s`);
+		}
+		
+		return parts.length > 0 ? parts.join(" • ") : null;
+	}
 
 	function otworz(item: HTMLElement) {
 		current.po = item.dataset.po || "";
@@ -142,6 +258,21 @@ const { zdjecia, kategorie } = Astro.props;
 
 		hint.classList.toggle("hidden", !current.przed);
 
+		// Parse and display EXIF data
+		const itemIndex = allGalleryItems.findIndex(el => el === item);
+		const originalImageData = zdjeciaData[itemIndex];
+		if (originalImageData?.po) {
+			const exifString = parseExif(originalImageData.po);
+			if (exifString) {
+				lightboxExif.textContent = exifString;
+				lightboxExif.classList.remove("hidden");
+			} else {
+				lightboxExif.classList.add("hidden");
+			}
+		} else {
+			lightboxExif.classList.add("hidden");
+		}
+
 		// Zapisz element, który miał focus przed otwarciem
 		lastFocusedElement = document.activeElement as HTMLElement;
 
@@ -149,13 +280,13 @@ const { zdjecia, kategorie } = Astro.props;
 		lightbox.classList.add("flex");
 
 		// Focus trap: ustaw focus na przycisku zamknij (pierwszy w kolejności)
-		// Użyj requestAnimationFrame, by poczekać na render
-		requestAnimationFrame(() => {
+		// Użyj setTimeout z krótkim opóźnieniem dla pewności renderowania
+		setTimeout(() => {
 			closeBtn.focus();
+		}, 10);
 
-			// Dodaj listener focus trap
-			document.addEventListener("keydown", handleFocusTrap);
-		});
+		// Dodaj listener focus trap
+		document.addEventListener("keydown", handleFocusTrap);
 	}
 
 	function zamknij() {
@@ -259,6 +390,10 @@ const { zdjecia, kategorie } = Astro.props;
 				const matches = activeFilter === "Wszystkie" || itemCategories.includes(activeFilter);
 				item.classList.toggle("hidden", !matches);
 			});
+
+			// Reset visible count when filter changes
+			visibleCount = ITEMS_PER_LOAD;
+			updateLoadMoreCount();
 		});
 	});
 </script>

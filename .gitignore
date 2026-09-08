@@ -22,3 +22,10 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Wrangler local state
+.wrangler/
+
+# Build/test artifacts
+lighthouse-report.json
+playwright-report/

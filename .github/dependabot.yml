@@ -1,0 +1,60 @@
+version: 2
+updates:
+  # npm dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Europe/Warsaw'
+    open-pull-requests-limit: 10
+    reviewers:
+      - 'VigoWB'
+    assignees:
+      - 'VigoWB'
+    labels:
+      - 'dependencies'
+      - 'npm'
+    allow:
+      - dependency-type: 'direct'
+      - dependency-type: 'indirect'
+    ignore:
+      # Ignore major version updates for these packages (require manual review)
+      - dependency-name: 'astro'
+        update-type: 'version-update:semver-major'
+      - dependency-name: '@astrojs/*'
+        update-type: 'version-update:semver-major'
+      - dependency-name: 'tailwindcss'
+        update-type: 'version-update:semver-major'
+      - dependency-name: '@tailwindcss/*'
+        update-type: 'version-update:semver-major'
+    commit-message:
+      prefix: 'chore(deps): '
+      include: 'scope'
+    pull-request-body: |
+      This PR updates dependencies automatically via Dependabot.
+      
+      **Checklist:**
+      - [ ] All tests pass
+      - [ ] Build succeeds
+      - [ ] No breaking changes (for minor/patch updates)
+      - [ ] Lighthouse scores maintained (if Performance < 90 or Accessibility < 100, investigate)
+
+  # GitHub Actions workflow updates
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Europe/Warsaw'
+    open-pull-requests-limit: 5
+    reviewers:
+      - 'VigoWB'
+    labels:
+      - 'dependencies'
+      - 'github-actions'
+    commit-message:
+      prefix: 'chore(deps): '
+      include: 'scope'

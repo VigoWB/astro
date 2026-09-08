@@ -6,6 +6,8 @@
 // Person i ProfessionalService lecą zawsze (są potrzebne na każdej stronie).
 // ImageGallery jest opcjonalny — podajesz go tylko na stronie /galeria,
 // przekazując listę zdjęć jako prop.
+// WebSite + SearchAction zawsze (dla wyszukiwarki w Google).
+// BreadcrumbList opcjonalny (dla stron z nawigacją hierarchiczną).
 
 import siteConfig from "../data/siteConfig.json";
 
@@ -14,12 +16,19 @@ interface Zdjecie {
 	opis?: string;
 }
 
+interface BreadcrumbItem {
+	name: string;
+	url: string;
+}
+
 interface Props {
 	/** Lista zdjęć do wygenerowania schematu ImageGallery. Pomiń, jeśli strona nie ma galerii. */
 	zdjecia?: Zdjecie[];
+	/** Breadcrumbs dla BreadcrumbList (opcjonalny). */
+	breadcrumbs?: BreadcrumbItem[];
 }
 
-const { zdjecia } = Astro.props;
+const { zdjecia, breadcrumbs } = Astro.props;
 
 const bazowyUrl = Astro.site ?? new URL(Astro.url.origin);
 
@@ -56,6 +65,22 @@ const business = {
 	sameAs: siteConfig.person.sameAs,
 };
 
+// --- WebSite + SearchAction (zawsze) ---
+const website = {
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	name: siteConfig.business.name,
+	url: bazowyUrl.toString(),
+	potentialAction: {
+		"@type": "SearchAction",
+		target: {
+			"@type": "EntryPoint",
+			urlTemplate: `${bazowyUrl.toString()}/galeria?search={search_term_string}`,
+		},
+		"query-input": "required name=search_term_string",
+	},
+};
+
 // --- ImageGallery (tylko jeśli przekazano zdjęcia) ---
 const gallery = zdjecia?.length
 	? {
@@ -73,8 +98,24 @@ const gallery = zdjecia?.length
 			})),
 		}
 	: null;
+
+// --- BreadcrumbList (tylko jeśli przekazano breadcrumbs) ---
+const breadcrumbList = breadcrumbs?.length
+	? {
+			"@context": "https://schema.org",
+			"@type": "BreadcrumbList",
+			itemListElement: breadcrumbs.map((item, index) => ({
+				"@type": "ListItem",
+				position: index + 1,
+				name: item.name,
+				item: item.url,
+			})),
+		}
+	: null;
 ---
 
 <script type="application/ld+json" set:html={JSON.stringify(person)} />
 <script type="application/ld+json" set:html={JSON.stringify(business)} />
+<script type="application/ld+json" set:html={JSON.stringify(website)} />
 {gallery && <script type="application/ld+json" set:html={JSON.stringify(gallery)} />}
+{breadcrumbList && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbList)} />}

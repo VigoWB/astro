@@ -2,7 +2,7 @@
 import Layout from "./Layout.astro";
 const { frontmatter } = Astro.props;
 ---
-<Layout title={frontmatter?.title}>
+<Layout title={frontmatter?.title} breadcrumbs={[{ name: "Home", url: "https://foto.vigolab.ovh/" }, { name: "O mnie", url: "https://foto.vigolab.ovh/o-mnie" }]}>
 	<article class="prose mx-auto py-12">
 		<slot />
 	</article>

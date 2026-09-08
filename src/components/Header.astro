@@ -123,6 +123,15 @@ const currentPath = Astro.url.pathname;
 		}
 	}
 
+	/* Mobile menu as overlay - absolute positioning so it doesn't push content/footer */
+	#menu-mobilne {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		z-index: 50;
+	}
+
 	a[aria-current="page"] {
 		color: var(--color-accent);
 		font-weight: 600;

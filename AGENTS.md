@@ -1,6 +1,5 @@
 # AGENTS.md — Astro Photography Portfolio
 
-> Quick-reference for AI agents. Structured for grep/ast scanning. No prose.
 
 > **INSTRUKCJA DLA AGENTA**: Wyjaśniaj mi dokładnie na czym polegają zmiany zanim je będę akceptował — nie znam się na pisaniu kodu.
 
@@ -366,3 +365,64 @@ astro build
 9. **Polish locale**: Hardcoded in Schema (`pl_PL`), SEO (`pl_PL`), date format in `o-mnie.md` frontmatter (`DD-MM-YYYY`).
 
 10. **No test framework**: Manual verification via `npm run dev` + `npm run preview`.
+
+---
+
+## Tłumaczenie zmian – użytkownik nie zna się na kodowaniu ani projektowaniu
+
+Po każdej zmianie w kodzie (nowa funkcja, poprawka, refaktor) opisz efekt 
+w prostym języku, bez żargonu technicznego jako jedynego wyjaśnienia:
+
+- Co się zmieniło "na oko" – jak to wygląda/działa teraz w przeglądarce, 
+  nie tylko nazwy plików/klas.
+- Dlaczego tak, a nie inaczej – jedno zdanie uzasadnienia, jeśli był wybór 
+  między podejściami.
+- Co user może/powinien sprawdzić – np. "odśwież stronę i zmniejsz okno 
+  przeglądarki, żeby zobaczyć wersję mobilną".
+- Jeśli coś wymaga decyzji usera (np. wybór layoutu, kolor, tekst) – 
+  zadaj pytanie wprost, nie zakładaj i nie idź dalej bez odpowiedzi.
+
+Unikaj rzucania samym kodem/diffem bez kontekstu. Traktuj usera jak osobę 
+zlecającą pracę wykonawcy, nie jak dewelopera – tłumacz efekt, nie 
+implementację, chyba że user sam dopyta "jak to zrobiłeś technicznie".
+
+---
+
+## Język komunikacji
+
+Zawsze odpowiadaj po polsku – wyjaśnienia, plany implementacji, pytania, 
+komentarze w czacie. Nazwy zmiennych/klas/plików w kodzie zostają po 
+angielsku (konwencja branżowa), ale cały opis słowny ma być PL.
+
+---
+
+## Responsible AI – zasady UI dla funkcji AI (wg Fluent 2 RAI)
+
+Gdy projektujesz/kodujesz UI dla funkcji opartych o AI, agent musi:
+
+1. **Transparentność** – oznacz wizualnie każde miejsce, gdzie działa AI 
+   (badge/ikona/label). AI ma być wizualnie odróżnialne od treści/akcji człowieka.
+   Nigdy nie maskuj że coś jest generowane przez model.
+
+2. **Ton głosu** – zero antropomorfizacji. Bez "czuję", "myślę", "chcę". 
+   Komunikaty opisują działanie faktycznie ("Wygenerowano podsumowanie"), 
+   nie emocjonalnie ("Cieszę się, że mogę pomóc!").
+
+3. **Ustaw oczekiwania** – przy każdym punkcie wejścia do funkcji AI pokaż 
+   krótko: co robi, jakich danych/źródeł używa, jakie ma ograniczenia. 
+   Dla agentów z autonomią: pokaż wyraźnie trigger, uprawnienia dostępu, 
+   zakres akcji zanim je wykona.
+
+4. **Przeciwdziałaj nadmiernemu zaufaniu** – output AI ma disclaimer 
+   ("może zawierać błędy, zweryfikuj"), źródła muszą być widoczne 
+   i możliwe do zweryfikowania. Nie prezentuj wyniku AI jako ostatecznego faktu.
+
+5. **Kontrola użytkownika** – każda akcja agenta wymaga jasnej etykiety 
+   co się stanie ("Usunie plik X" a nie "Wykonaj"). Akcje nieodwracalne 
+   wymagają potwierdzenia przed wykonaniem, nie po.
+
+6. **Feedback** – jeśli UI generuje output AI, dodaj mechanizm zgłoszenia 
+   problemu (błędne/nieprzydatne/stronnicze), nie tylko generyczne 
+   kciuk-góra/dół.
+
+Zero wyjątków dla "to tylko prototyp" – powyższe stosuj od razu w kodzie.

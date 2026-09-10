@@ -32,5 +32,7 @@ module.exports = {
   ],
   cleanupOutdatedCaches: true,
   skipWaiting: true,
-  clientsClaim: true
+  clientsClaim: true,
+  navigateFallback: '/offline.html',
+  navigateFallbackAllowlist: [/^(?!\/_astro\/).*/]
 };

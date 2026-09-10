@@ -29,3 +29,9 @@ pnpm-debug.log*
 # Build/test artifacts
 lighthouse-report.json
 playwright-report/
+
+# PWA generated files
+workbox-config.cjs
+dist/sw.js
+dist/workbox-*.js
+dist/workbox-*.js.map

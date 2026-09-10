@@ -16,7 +16,7 @@ const { po, przed, opis, kategoria = [], priority = false } = Astro.props;
 		<Image
 			src={po}
 			width={600}
-			alt=""
+			alt={opis || "Zdjęcie z portfolio fotograficznego Wiktora"}
 			loading={priority ? "eager" : "lazy"}
 			fetchpriority={priority ? "high" : undefined}
 			decoding="async"

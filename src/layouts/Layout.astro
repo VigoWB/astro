@@ -22,6 +22,11 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		<SEO title={pageTitle} description={pageDescription} image={image} canonicalURL={canonicalURL} />
 		<Schema zdjecia={zdjecia} breadcrumbs={breadcrumbs} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="apple-touch-icon" href="/icon-192.png" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="apple-mobile-web-app-title" content="Wiktor Foto" />
 		<meta name="generator" content={Astro.generator} />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -38,6 +43,16 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 				src="https://static.cloudflareinsights.com/beacon.min.js"
 			></script>
 		)}
+		<script>
+			// Rejestracja Service Workera (generowanego przez `workbox generateSW`
+			// jako krok po `astro build` -- zob. package.json i workbox-config.cjs).
+			// Cicho zawodzi w dev (plik nie istnieje poza buildem produkcyjnym).
+			if ("serviceWorker" in navigator) {
+				window.addEventListener("load", () => {
+					navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+				});
+			}
+		</script>
 	</head>
 	<body class="flex flex-col min-h-dvh">
 		<Header/>

@@ -5,9 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly on Monday 3 AM UTC - run Lighthouse CI
 
 env:
-  NODE_VERSION: '22.x'
+  NODE_VERSION: '24'
 
 jobs:
   build-and-test:
@@ -38,6 +40,12 @@ jobs:
           PUBLIC_FORMSPREE_ID: ${{ secrets.PUBLIC_FORMSPREE_ID }}
           PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
 
+      - name: Run Lighthouse (continue on error)
+        run: npx lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        continue-on-error: true
+
       - name: Run tests
         run: npm run test
         env:
@@ -49,47 +57,14 @@ jobs:
         if: always()
         with:
           name: lighthouse-report
-          path: lighthouse-report.json
+          path: |
+            lighthouse-report.json
+            .lighthouseci/
           retention-days: 7
-
-  lighthouse-ci:
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    timeout-minutes: 20
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Build
-        run: npm run build
-        env:
-          PUBLIC_FORMSPREE_ID: ${{ secrets.PUBLIC_FORMSPREE_ID }}
-          PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
-
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.14.x
-
-      - name: Run Lighthouse CI
-        run: lhci autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        continue-on-error: true
 
   deploy-preview:
     runs-on: ubuntu-latest
-    needs: [build-and-test, lighthouse-ci]
+    needs: build-and-test
     if: github.event_name == 'pull_request'
     timeout-minutes: 10
     

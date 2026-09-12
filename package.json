@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && npx workbox generateSW workbox-config.cjs",
+    "test": "playwright test",
     "preview": "astro preview",
     "astro": "astro"
   },

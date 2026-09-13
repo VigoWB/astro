@@ -8,7 +8,7 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: 'html',
 	use: {
-		baseURL: 'http://localhost:4321',
+		baseURL: 'http://localhost:4322',
 		trace: 'on-first-retry',
 	},
 	projects: [
@@ -16,7 +16,7 @@ export default defineConfig({
 		{ name: 'mobile-chrome', use: { ...devices['Pixel 5'] } },
 	],
 	webServer: {
-		command: 'npm run preview',
+		command: 'bash scripts/start-preview-if-needed.sh',
 		url: 'http://localhost:4322',
 		reuseExistingServer: !process.env.CI,
 		timeout: 120000,

@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && npx workbox generateSW workbox-config.cjs",
+    "build": "astro build",
     "test": "playwright test",
     "preview": "astro preview",
     "astro": "astro"
@@ -21,10 +21,7 @@
     "@playwright/test": "^1.63.0",
     "@tailwindcss/typography": "^0.5.20",
     "playwright": "^1.63.0",
-    "sharp": "^0.35.4",
-    "vite-plugin-pwa": "^1.3.0",
-    "workbox-cli": "^7.4.1",
-    "workbox-window": "^7.4.1"
+    "sharp": "^0.35.4"
   },
   "allowScripts": {
     "esbuild@0.28.2": true,

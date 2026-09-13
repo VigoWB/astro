@@ -44,9 +44,6 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 			></script>
 		)}
 		<script>
-			// Rejestracja Service Workera (generowanego przez `workbox generateSW`
-			// jako krok po `astro build` -- zob. package.json i workbox-config.cjs).
-			// Cicho zawodzi w dev (plik nie istnieje poza buildem produkcyjnym).
 			if ("serviceWorker" in navigator) {
 				window.addEventListener("load", () => {
 					navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});

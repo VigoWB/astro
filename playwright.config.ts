@@ -16,8 +16,8 @@ export default defineConfig({
 		{ name: 'mobile-chrome', use: { ...devices['Pixel 5'] } },
 	],
 	webServer: {
-		command: 'npm run dev',
-		url: 'http://localhost:4321',
+		command: 'npm run preview',
+		url: 'http://localhost:4322',
 		reuseExistingServer: !process.env.CI,
 		timeout: 120000,
 	},

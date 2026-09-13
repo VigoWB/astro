@@ -1,3 +1,21 @@
+# ⚠️ ZASADA #1 — JĘZYK: TYLKO POLSKI
+
+**Ta zasada jest nadrzędna wobec wszystkiego innego w tym pliku.**
+
+Cała treść Twojej odpowiedzi — wyjaśnienia, plan, pytania, komentarze do zmian, podsumowania — ma być w 100% po polsku. Bez wyjątków i bez mieszania języków w jednej odpowiedzi.
+
+Jedyne dopuszczalne fragmenty po angielsku:
+- nazwy zmiennych, funkcji, plików, klas CSS (konwencja programistyczna projektu)
+- sam kod źródłowy
+- nazwy technologii/bibliotek (Astro, Tailwind, itd.)
+- komendy terminala (`npm run build` itd.)
+
+Wszystko poza tym musi być po polsku — łącznie z komentarzami w kodzie, jeśli piszesz komentarz wyjaśniający coś człowiekowi.
+
+**Zanim wyślesz odpowiedź, sprawdź ją.** Jeśli zacząłeś pisać po angielsku — nie tłumacz połowy zdań, napisz odpowiedź od nowa po polsku. Częściowo przetłumaczona odpowiedź się nie liczy.
+
+---
+
 # AGENTS.md — Astro Photography Portfolio
 
 
@@ -368,31 +386,46 @@ astro build
 
 ---
 
+## 10. GIT_WORKFLOW (obowiązkowe zasady commitów)
+
+Po każdej zmianie w kodzie, którą zaakceptowałem:
+
+1. Wykonaj `git add <zmienione pliki>` (albo `git add -A`, jeśli zmiana obejmuje wiele plików naraz).
+2. Wykonaj `git commit -m "krótki, rzeczowy opis zmiany"`.
+3. **NIGDY nie wykonuj `git push`.** Wypchnięcie zmian na GitHub robię wyłącznie ja, ręcznie, kiedy sam zdecyduję.
+
+Zasady dodatkowe:
+- Rób `add` + `commit` **automatycznie**, bez pytania mnie o zgodę — o zgodę pytasz tylko przy akceptacji samej zmiany w kodzie, nie przy commicie.
+- Jeden commit = jedna sensowna, zamknięta zmiana (np. "dodanie filtra kategorii do galerii"), a nie jeden wielki commit na koniec sesji.
+- Jeśli zmiana obejmuje kilka plików, które logicznie do siebie pasują (np. komponent + jego test), wrzuć je do jednego commita.
+- Jeśli nie masz pewności, czy `git push` jest bezpieczne — nigdy nie zgaduj. Zawsze zakładaj "nie".
+
+---
+
 ## Tłumaczenie zmian – użytkownik nie zna się na kodowaniu ani projektowaniu
 
-Po każdej zmianie w kodzie (nowa funkcja, poprawka, refaktor) opisz efekt 
-w prostym języku, bez żargonu technicznego jako jedynego wyjaśnienia:
+Po **każdej** zmianie w kodzie (nowa funkcja, poprawka, refaktor, nawet jednolinijkowa) — bez wyjątków — kończysz odpowiedź poniższym szablonem. Nie pomijaj go, nawet gdy zmiana wydaje się banalna (literówka, kolor, tekst) — wtedy po prostu skróć go do 1 zdania, ale nie usuwaj całkowicie.
 
-- Co się zmieniło "na oko" – jak to wygląda/działa teraz w przeglądarce, 
-  nie tylko nazwy plików/klas.
-- Dlaczego tak, a nie inaczej – jedno zdanie uzasadnienia, jeśli był wybór 
-  między podejściami.
-- Co user może/powinien sprawdzić – np. "odśwież stronę i zmniejsz okno 
-  przeglądarki, żeby zobaczyć wersję mobilną".
-- Jeśli coś wymaga decyzji usera (np. wybór layoutu, kolor, tekst) – 
-  zadaj pytanie wprost, nie zakładaj i nie idź dalej bez odpowiedzi.
+**Obowiązkowy format:**
 
-Unikaj rzucania samym kodem/diffem bez kontekstu. Traktuj usera jak osobę 
-zlecającą pracę wykonawcy, nie jak dewelopera – tłumacz efekt, nie 
-implementację, chyba że user sam dopyta "jak to zrobiłeś technicznie".
+```
+Co się zmieniło: [jak to teraz wygląda/działa w przeglądarce — nie nazwy plików/klas, tylko efekt "na oko"]
+Dlaczego tak: [jedno zdanie uzasadnienia — TYLKO jeśli był realny wybór między podejściami, inaczej pomiń tę linię]
+Co sprawdzić: [konkretna czynność, np. "odśwież stronę i zmniejsz okno przeglądarki, żeby zobaczyć wersję mobilną"]
+```
+
+Dodatkowe zasady:
+- Jeśli coś wymaga mojej decyzji (wybór layoutu, kolor, tekst) — zadaj pytanie wprost, w ramach tego samego podsumowania, i nie idź dalej bez odpowiedzi.
+- Unikaj rzucania samym kodem/diffem bez tego kontekstu. Traktuj mnie jak osobę zlecającą pracę wykonawcy, nie jak dewelopera.
+- Tłumacz efekt, nie implementację — chyba że sam dopytam "jak to zrobiłeś technicznie".
 
 ---
 
 ## Język komunikacji
 
-Zawsze odpowiadaj po polsku – wyjaśnienia, plany implementacji, pytania, 
-komentarze w czacie. Nazwy zmiennych/klas/plików w kodzie zostają po 
-angielsku (konwencja branżowa), ale cały opis słowny ma być PL.
+Patrz **ZASADA #1 na samej górze tego pliku** — jest nadrzędna wobec wszystkiego poniżej.
+
+W skrócie: zawsze odpowiadaj po polsku – wyjaśnienia, plany, pytania, komentarze w czacie, podsumowania zmian. Nazwy zmiennych/klas/plików w kodzie zostają po angielsku (konwencja branżowa), ale każde zdanie skierowane do mnie ma być po polsku. Przed wysłaniem odpowiedzi sprawdź ją pod tym kątem.
 
 ---
 
@@ -426,3 +459,4 @@ Gdy projektujesz/kodujesz UI dla funkcji opartych o AI, agent musi:
    kciuk-góra/dół.
 
 Zero wyjątków dla "to tylko prototyp" – powyższe stosuj od razu w kodzie.
+

@@ -4,7 +4,7 @@ const { po, przed, opis, kategoria = [], priority = false } = Astro.props;
 ---
 <button
 	type="button"
-	class="group mb-6 block w-full break-inside-avoid text-left bg-card border-2 border-ink/30 p-4 cursor-zoom-in opacity-0 translate-y-6 transition-all duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+	class="group mb-6 block w-full break-inside-avoid text-left rounded-sm cursor-zoom-in opacity-0 translate-y-6 transition-all duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper border border-ink/10"
 	data-gallery-item
 	data-reveal
 	data-po={po.src}
@@ -12,7 +12,7 @@ const { po, przed, opis, kategoria = [], priority = false } = Astro.props;
 	data-opis={opis}
 	data-kategoria={kategoria.join(" ")}
 >
-	<div class="overflow-hidden bg-line">
+	<div class="relative overflow-hidden bg-black/5 group-hover:bg-black/20 transition-colors duration-300">
 		<Image
 			src={po}
 			width={600}
@@ -20,11 +20,14 @@ const { po, przed, opis, kategoria = [], priority = false } = Astro.props;
 			loading={priority ? "eager" : "lazy"}
 			fetchpriority={priority ? "high" : undefined}
 			decoding="async"
-			class="w-full h-auto object-cover scale-105 opacity-0 blur-md transition-all duration-700 ease-out group-hover:scale-105"
+			class="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
 			onload="this.classList.remove('opacity-0','blur-md','scale-105')"
 		/>
-	</div>
-	<div class="text-center font-bold mt-2 text-ink">
-		<span>{opis}</span>
+		<!-- Overlay with description on hover -->
+		<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end p-3">
+			<div class="w-full text-center text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+				{opis}
+			</div>
+		</div>
 	</div>
 </button>

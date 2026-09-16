@@ -31,3 +31,4 @@ lighthouse-report.json
 playwright-report/
 
 # PWA generated files
+images/

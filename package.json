@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "sync-images": "node scripts/sync-images.mjs",
     "pretest": "npm run build",
     "test": "playwright test",
     "preview": "astro preview",
@@ -12,8 +13,10 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
+    "@aws-sdk/client-s3": "^3.1133.0",
     "@tailwindcss/vite": "^4.1.17",
     "astro": "^7.2.10",
+    "exifr": "^7.1.3",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
@@ -21,6 +24,7 @@
     "@lhci/cli": "^0.14.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/typography": "^0.5.20",
+    "better-sqlite3": "^13.0.3",
     "playwright": "^1.63.0",
     "sharp": "^0.35.4"
   },

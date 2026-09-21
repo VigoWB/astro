@@ -8,7 +8,7 @@
     "sync-images": "node scripts/sync-images.mjs",
     "pretest": "npm run build",
     "test": "playwright test",
-    "preview": "astro preview",
+    "preview": "astro preview --port 4322",
     "astro": "astro"
   },
   "dependencies": {
@@ -24,7 +24,6 @@
     "@lhci/cli": "^0.14.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/typography": "^0.5.20",
-    "better-sqlite3": "^13.0.3",
     "playwright": "^1.63.0",
     "sharp": "^0.35.4"
   },

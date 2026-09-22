@@ -1,0 +1,47 @@
+# .claudeignore — mówi narzędziom AI (Claude Code, ewentualnie inne),
+# których plików nie muszą czytać/indeksować w tym repo.
+# Składnia identyczna jak w .gitignore.
+#
+# UWAGA: to jest sygnał "pomiń to", a nie twarde zabezpieczenie —
+# różne narzędzia różnie to respektują. Prawdziwe sekrety (.env)
+# i tak nie powinny nigdy trafiać do gita ani być pokazywane AI
+# wprost w rozmowie.
+
+# Zależności — tysiące plików, nic tu do czytania
+node_modules/
+
+# Wygenerowany build — odtwarzalny z kodu źródłowego
+dist/
+.astro/
+
+# Ogromny, automatycznie generowany plik — nieczytelny i nieprzydatny dla AI
+package-lock.json
+
+# Binarne zdjęcia — AI i tak nie odczyta treści obrazu jako tekstu
+images/
+
+# Binarna baza danych (SQLite) — nieczytelna jako tekst
+data/*.db
+data/**/*.sqlite
+
+# Stan lokalny Cloudflare Wrangler
+.wrangler/
+
+# Wygenerowane raporty testów wydajności i dostępności — duże, nieprzydatne do czytania
+.lighthouseci/
+lighthouse-report.json
+lighthouse-pwa-report.json
+playwright-report/
+test-results/
+
+# Artefakty testowe
+test.db
+*.log
+
+# Sekrety — nigdy nie powinny trafić do kontekstu AI ani do gita
+.env
+.env.*
+!.env.example
+
+# Systemowe śmieci
+.DS_Store

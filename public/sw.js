@@ -1,38 +1,42 @@
+// Minimalny service worker dla offline mode - bez sztywnych ścieżek do plików
+// Pliki statyczne są pobierane dynamicznie z public/ podczas buildu
+
 const CACHE_NAME = 'foto-v1';
 
-const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/galeria/',
-  '/galeria/index.html',
-  '/kontakt/',
-  '/kontakt/index.html',
-  '/o-mnie/',
-  '/o-mnie/index.html',
-  '/offline.html',
-  '/manifest.webmanifest',
-  '/favicon.svg',
-  '/og-default.jpg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/_astro/Layout.BiNkwaF5.css',
-  '/_astro/Galeria.astro_astro_type_script_index_0_lang.DayLQeJF.js',
-  '/_astro/DSC_1111.B-mgpPxa_27C4AB.webp',
-  '/_astro/DSC_1112.BGJXU5wu_e0tsf.webp',
-  '/_astro/DSC_1113.yI6TRw_9_2pv3r1.webp',
-  '/_astro/DSC_1114.DyausMpA_Z1H9dIH.webp',
-  '/_astro/DSC_1115.RUn8RtxQ_FRymg.webp',
-  '/_astro/DSC_1116.dsSkWFid_Z2yWSy.webp',
-  '/_astro/DSC_4968-Edytuj.BLdRUWDO_2aOrma.webp',
-  '/_astro/DSC_4971-Edytuj.fRu92MWm_ZkfdsW.webp',
-  '/_astro/moje-zdjecie.dwgqp2KI_1WHmiI.webp',
-];
-
 self.addEventListener('install', (event) => {
+  // Rejestrujemy service worker
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll([
+      '/',
+      '/index.html',
+      '/galeria/',
+      '/galeria/index.html',
+      '/kontakt/',
+      '/kontakt/index.html',
+      '/o-mnie/',
+      '/o-mnie/index.html',
+      '/offline.html',
+      '/manifest.webmanifest',
+      '/favicon.svg',
+      '/og-default.jpg',
+      '/icon-192.png',
+      '/icon-512.png',
+    ]))
   );
   self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  // Usuwamy stare cache'y przy nowej wersji
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('activate', (event) => {

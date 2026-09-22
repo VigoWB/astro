@@ -1,4 +1,12 @@
 ---
-title: "Nie znaleziono strony"
-description: "Strona nie została znaleziona. Powrót do strony głównej."
+import Layout from "../layouts/Layout.astro";
 ---
+
+<Layout title="Nie znaleziono strony" description="Strona nie została znaleziona. Powrót do strony głównej.">
+	<div class="py-12 text-center">
+		<h1 class="text-6xl font-bold text-ink">404</h1>
+		<p class="mt-4 text-xl text-muted">Nie znaleziono strony</p>
+		<p class="mt-2 text-muted">Przepraszamy, ale szukana strona nie istnieje.</p>
+		<a href="/" class="inline-block mt-6 underline text-ink hover:text-accent transition-colors">← Wróć na stronę główną</a>
+	</div>
+</Layout>

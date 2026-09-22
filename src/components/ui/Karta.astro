@@ -11,6 +11,7 @@ const { po, przed, opis, kategoria = [], priority = false } = Astro.props;
 	data-przed={przed?.src ?? ""}
 	data-opis={opis}
 	data-kategoria={kategoria.join(" ")}
+	data-testid="gallery-item"
 >
 	<div class="relative overflow-hidden bg-black/5 group-hover:bg-black/20 transition-colors duration-300">
 		<Image

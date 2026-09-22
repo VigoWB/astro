@@ -18,6 +18,7 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 	action={akcjaFormularza}
 	method="POST"
 	data-formspree-id={formspreeId}
+	data-testid="contact-form"
 >
 	<div class="flex flex-col gap-1.5">
 		<label for="kontakt-name" class="text-sm font-medium text-ink">Imię i nazwisko</label>
@@ -30,6 +31,7 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 			autocomplete="name"
 			aria-describedby="kontakt-name-blad"
 			class="w-full border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			data-testid="contact-name"
 		/>
 		<p id="kontakt-name-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
 	</div>
@@ -44,6 +46,7 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 			autocomplete="email"
 			aria-describedby="kontakt-email-blad"
 			class="w-full border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			data-testid="contact-email"
 		/>
 		<p id="kontakt-email-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
 	</div>
@@ -58,6 +61,7 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 			rows="6"
 			aria-describedby="kontakt-message-blad"
 			class="w-full resize-y border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			data-testid="contact-message"
 		></textarea>
 		<p id="kontakt-message-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
 	</div>
@@ -78,10 +82,11 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 			type="submit"
 			id="przycisk-wyslij"
 			class="bg-accent px-6 py-3 font-semibold text-paper transition-colors hover:bg-ink hover:text-paper disabled:pointer-events-none disabled:opacity-50"
+			data-testid="contact-submit"
 		>
 			Wyślij wiadomość
 		</button>
-		<p id="status-formularza" class="text-sm" role="status" aria-live="polite"></p>
+		<p id="status-formularza" class="text-sm" role="status" aria-live="polite" data-testid="contact-status"></p>
 	</div>
 </form>
 

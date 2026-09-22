@@ -17,11 +17,12 @@ const { zdjecia, kategorie } = Astro.props;
 const ITEMS_PER_LOAD = 12;
 ---
 
-<div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filtruj galerię">
+<div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
 	{kategorie.map((kat) => (
 		<button
 			type="button"
 			data-filter={kat}
+			data-testid={`filter-${kat.toLowerCase()}`}
 			class={`px-4 py-2 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-accent text-paper border-accent" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
 			aria-pressed={kat === "Wszystkie"}
 		>
@@ -37,14 +38,15 @@ const ITEMS_PER_LOAD = 12;
 </div>
 
 <!-- Load More Button -->
-<div id="load-more-container" class="text-center mt-8">
+<div id="load-more-container" class="text-center mt-8" data-testid="load-more-container">
 	<button
 		id="load-more-btn"
 		type="button"
 		class="px-8 py-3 bg-accent text-paper font-semibold rounded-full hover:bg-accent/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 		aria-label="Załaduj więcej zdjęć"
+		data-testid="load-more-btn"
 	>
-		Załaduj więcej (<span id="load-more-count">0</span>)
+		Załaduj więcej (<span id="load-more-count" data-testid="load-more-count">0</span>)
 	</button>
 </div>
 

@@ -396,4 +396,9 @@ const ITEMS_PER_LOAD = 12;
 			updateLoadMoreCount();
 		});
 	});
+		// Blokada prawoklika na zdjęciach — utrudnienie, nie realna ochrona
+	document.querySelectorAll("[data-gallery-item]").forEach((item) => {
+		item.addEventListener("contextmenu", (e) => e.preventDefault());
+	});
+	lightboxImg.addEventListener("contextmenu", (e) => e.preventDefault());
 </script>

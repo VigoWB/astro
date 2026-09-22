@@ -20,17 +20,21 @@ const opisy: Record<string, { opis: string; kategoria: string[] }> = {
 	"DSC_4975-Edytuj.jpg": { opis: "Stranger things", kategoria: ["Pracownia"] },
 };
 
-// Wciąga wszystkie zdjęcia "po" (bez przedrostka przed_) z folderu images/
-const poModules = import.meta.glob<{ default: ImageMetadata }>(
-	"../../images/DSC_*.jpg",
-	{ eager: true }
-);
+// Dodaj CSS z user-select: none i listener contextmenu
+const galleryStyles = `
+  .gallery-container {
+    user-select: none;
+  }
+  .gallery-item {
+    cursor: pointer;
+  }
+  .lightbox-overlay {
+    user-select: none;
+  }
+`;
 
-// Wciąga wszystkie zdjęcia "przed"
-const przedModules = import.meta.glob<{ default: ImageMetadata }>(
-	"../../images/przed_DSC_*.jpg",
-	{ eager: true }
-);
+// Dodaj CSS do głównego pliku (lub do komponentu Galeria)
+// W Galeria.astro dodaj style CSS
 
 const zdjecia = Object.entries(poModules).map(([sciezka, modul]) => {
 	const nazwaPliku = sciezka.split("/").pop()!;
@@ -49,3 +53,18 @@ const zdjecia = Object.entries(poModules).map(([sciezka, modul]) => {
 	<h1 class="text-3xl text-ink font-bold text-indigo-800/60 py-8">Galeria</h1>
 	<Galeria zdjecia={zdjecia} kategorie={kategorie} />
 </Layout>
+
+// Dodaj listener contextmenu na lightbox i gallery items
+const lightboxOverlay = document.querySelector('.lightbox-overlay');
+if (lightboxOverlay) {
+  lightboxOverlay.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+  });
+}
+
+// Dodaj listener na gallery items
+document.querySelectorAll('[data-gallery-item]').forEach(item => {
+  item.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+  });
+});

@@ -29,6 +29,8 @@ pnpm-debug.log*
 # Build/test artifacts
 lighthouse-report.json
 playwright-report/
+.lighthouseci/
+test.db
 
 # PWA generated files
 images/

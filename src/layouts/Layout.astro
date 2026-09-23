@@ -28,12 +28,6 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 		<meta name="apple-mobile-web-app-title" content="Wiktor Foto" />
 		<meta name="generator" content={Astro.generator} />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
-			rel="stylesheet"
-		/>
 		<!-- Preload OG image for better LCP/SEO -->
 		<link rel="preload" as="image" href="/og-default.jpg" fetchpriority="high" />
 		{cfBeaconToken && (

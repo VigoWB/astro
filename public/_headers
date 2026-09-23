@@ -1,10 +1,18 @@
-/* Cloudflare Page Headers - auto-generated for security and caching */
+# Nagłówki HTTP dla Cloudflare Pages.
+# WAŻNE: jedynym poprawnym znacznikiem komentarza w tym pliku jest "#".
+# Styl /* ... */ nie jest tu obsługiwany — Cloudflare odczytywało takie
+# linijki jako (bezsensowne) wzorce ścieżek, przez co nagłówki niżej
+# nie trafiały do żadnej prawdziwej strony.
 
-/* Cache control for static assets */
-Cache-Control: public, max-age=31536000, immutable
+# Nagłówki bezpieczeństwa — dotyczą całej witryny
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=()
 
-/* Security headers */
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: geolocation=(), camera=(), microphone=()
+# Rok cache w przeglądarce, ale tylko dla plików z hashem w nazwie —
+# Astro tak buduje pliki w _astro/ (zmiana treści = nowa nazwa pliku),
+# więc te konkretne pliki można bezpiecznie cache'ować "na zawsze".
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

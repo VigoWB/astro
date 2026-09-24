@@ -3,18 +3,28 @@ import Karta from "./ui/Karta.astro";
 
 interface Props {
 	zdjecia: Array<{
-		po: any;
-		przed: any;
+		po: { src: string; width: number; height: number };
+		przed?: { src: string };
 		opis: string;
 		kategoria: string[];
+		exif?: {
+			iso?: number | null;
+			przyslona?: number | null;
+			ogniskowa?: number | null;
+			czasNaswietlania?: number | null;
+		};
 	}>;
-	kategorie: string[];
+	kategorie: readonly string[];
 }
 
 const { zdjecia, kategorie } = Astro.props;
 
-// Load More configuration
-const ITEMS_PER_LOAD = 12;
+// Ile zdjęć widać na start i ile dochodzi po każdym kliknięciu "Załaduj więcej".
+// Ta sama liczba trafia do skryptu niżej przez atrybut data-na-strone,
+// więc jest tylko jedno miejsce do zmiany.
+const NA_STRONE = 8;
+
+const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 ---
 
 <div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
@@ -30,15 +40,29 @@ const ITEMS_PER_LOAD = 12;
 		</button>
 	))}
 </div>
-<div class="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-3" id="galeria-grid" data-zdjecia={JSON.stringify(zdjecia.map(z => ({ po: z.po, exif: z.po?.exif })))}>
 
-	{zdjecia.slice(0, ITEMS_PER_LOAD).map((z: any, index: number) => (
-		<Karta po={z.po} przed={z.przed} opis={z.opis} kategoria={z.kategoria} priority={index === 0} />
+<!-- Wszystkie zdjęcia są w HTML od razu; te poza pierwszą porcją mają klasę "hidden"
+     (miniatury i tak ładują się dopiero po pokazaniu — loading="lazy"). -->
+<div class="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-3" id="galeria-grid" data-na-strone={NA_STRONE}>
+	{zdjecia.map((z, index) => (
+		<Karta
+			po={z.po}
+			przed={z.przed}
+			opis={z.opis}
+			kategoria={z.kategoria}
+			exif={z.exif}
+			priority={index === 0}
+			ukryta={index >= NA_STRONE}
+		/>
 	))}
 </div>
 
 <!-- Load More Button -->
-<div id="load-more-container" class="text-center mt-8" data-testid="load-more-container">
+<div
+	id="load-more-container"
+	class:list={["text-center mt-8", { hidden: poczatkowoPozostalo === 0 }]}
+	data-testid="load-more-container"
+>
 	<button
 		id="load-more-btn"
 		type="button"
@@ -46,7 +70,7 @@ const ITEMS_PER_LOAD = 12;
 		aria-label="Załaduj więcej zdjęć"
 		data-testid="load-more-btn"
 	>
-		Załaduj więcej (<span id="load-more-count" data-testid="load-more-count">0</span>)
+		Załaduj więcej (<span id="load-more-count" data-testid="load-more-count">{poczatkowoPozostalo}</span>)
 	</button>
 </div>
 
@@ -70,146 +94,137 @@ const ITEMS_PER_LOAD = 12;
 				Najedź / przytrzymaj, aby zobaczyć: przed
 			</span>
 		</div>
-		<!-- EXIF Data Display -->
+		<!-- Dane z aparatu (ISO, przysłona, ogniskowa, czas) -->
 		<div id="lightbox-exif" class="text-sm text-white/70 font-mono hidden"></div>
 	</div>
 </div>
 
 <script>
-	// --- Fade-in zdjęć przy wjeździe w viewport ---
-	const elementyDoUjawnienia = Array.from(
-		document.querySelectorAll<HTMLElement>("[data-reveal]")
-	);
+	const grid = document.getElementById("galeria-grid")!;
+	const NA_STRONE = Number(grid.dataset.naStrone) || 8;
 
-	const preferujeMniejRuchu = window.matchMedia(
-		"(prefers-reduced-motion: reduce)"
-	).matches;
-
-	if (preferujeMniejRuchu) {
-		// Bez animacji — po prostu pokaż wszystko od razu.
-		elementyDoUjawnienia.forEach((el) => {
-			el.classList.remove("opacity-0", "translate-y-6");
-		});
-	} else {
-		// Opóźnienie liczymy z realnej pozycji Y karty, żeby "fala" szła
-		// rzędami (wizualnie), a nie kolumnami układu masonry.
-		function ustawKolejnoscWierszami() {
-			const posortowane = elementyDoUjawnienia
-				.map((el) => ({
-					el,
-					top: el.getBoundingClientRect().top + window.scrollY,
-				}))
-				.sort((a, b) => a.top - b.top);
-
-			let rzad = 0;
-			let ostatniTop: number | null = null;
-			const tolerancja = 24; // px — w tym zakresie liczy się jako ten sam "rząd"
-
-			posortowane.forEach(({ el, top }) => {
-				if (ostatniTop === null || Math.abs(top - ostatniTop) > tolerancja) {
-					rzad++;
-					ostatniTop = top;
-				}
-				el.style.transitionDelay = `${Math.min(rzad * 60, 360)}ms`;
-			});
-		}
-
-		ustawKolejnoscWierszami();
-		// Zdjęcia mogą jeszcze przesunąć układ po doładowaniu — przeliczamy raz jeszcze.
-		window.addEventListener("load", ustawKolejnoscWierszami, { once: true });
-
-		const obserwator = new IntersectionObserver(
-			(wpisy) => {
-				wpisy.forEach((wpis) => {
-					if (wpis.isIntersecting) {
-						wpis.target.classList.remove("opacity-0", "translate-y-6");
-						obserwator.unobserve(wpis.target);
-					}
-				});
-			},
-			{ threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
-		);
-
-		elementyDoUjawnienia.forEach((el) => obserwator.observe(el));
-	}
-
-	// --- Load More Functionality ---
-	const ITEMS_PER_LOAD = 8;
-	const galeriaGrid = document.getElementById("galeria-grid")!;
+	const wszystkieKarty = Array.from(document.querySelectorAll<HTMLElement>("[data-gallery-item]"));
+	const przyciskiFiltrow = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-filter]"));
 	const loadMoreBtn = document.getElementById("load-more-btn")!;
 	const loadMoreCount = document.getElementById("load-more-count")!;
 	const loadMoreContainer = document.getElementById("load-more-container")!;
 
-	// Get zdjecia data from data attribute
-	const zdjeciaData = JSON.parse(galeriaGrid.dataset.zdjecia || "[]");
+	let aktywnyFiltr = "Wszystkie";
+	let limit = NA_STRONE; // ile zdjęć (spełniających filtr) ma być teraz widocznych
 
-	// Store all gallery items data from the DOM
-	const allGalleryItems = Array.from(document.querySelectorAll<HTMLElement>("[data-gallery-item]"));
-	let visibleCount = ITEMS_PER_LOAD;
+	// --- Fade-in zdjęć przy wjeździe w viewport ---
+	const preferujeMniejRuchu = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-	// Initialize load more count
-	function updateLoadMoreCount() {
-		const remaining = allGalleryItems.length - visibleCount;
-		loadMoreCount.textContent = remaining > 0 ? remaining.toString() : "0";
-		
-		if (remaining <= 0) {
-			loadMoreContainer.style.display = "none";
-		} else {
-			loadMoreContainer.style.display = "block";
-		}
-	}
-
-	// Initialize IntersectionObserver for new items
-	function observeNewItems(items: HTMLElement[]) {
-		if (preferujeMniejRuchu) {
-			items.forEach((el) => {
-				el.classList.remove("opacity-0", "translate-y-6");
-			});
-		} else {
-			const obserwator = new IntersectionObserver(
-				(wpisy) => {
+	const obserwator = preferujeMniejRuchu
+		? null
+		: new IntersectionObserver(
+				(wpisy, obs) => {
 					wpisy.forEach((wpis) => {
 						if (wpis.isIntersecting) {
 							wpis.target.classList.remove("opacity-0", "translate-y-6");
-							obserwator.unobserve(wpis.target);
+							obs.unobserve(wpis.target);
 						}
 					});
 				},
 				{ threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
 			);
 
-			items.forEach((el) => obserwator.observe(el));
-			// Recalculate row order for new items
-			ustawKolejnoscWierszami();
-		}
+	function nieodkryteWidoczne(): HTMLElement[] {
+		return wszystkieKarty.filter(
+			(el) => !el.classList.contains("hidden") && el.classList.contains("opacity-0")
+		);
 	}
 
-	// Load more function
-	function loadMoreItems() {
-		const nextItems = allGalleryItems.slice(visibleCount, visibleCount + ITEMS_PER_LOAD);
-		
-		nextItems.forEach((item) => {
-			// Remove hidden class if it was filtered
-			if (item.classList.contains("hidden")) {
-				const activeFilter = document.querySelector<HTMLButtonElement>('[data-filter][aria-pressed="true"]')?.dataset.filter || "Wszystkie";
-				const itemCategories = item.dataset.kategoria?.split(" ") || [];
-				const matches = activeFilter === "Wszystkie" || itemCategories.includes(activeFilter);
-				if (matches) {
-					item.classList.remove("hidden");
-				}
+	// Opóźnienie liczymy z realnej pozycji Y karty, żeby "fala" szła
+	// rzędami (wizualnie), a nie kolumnami układu masonry.
+	function ustawKolejnoscWierszami(elementy: HTMLElement[]) {
+		const posortowane = elementy
+			.map((el) => ({
+				el,
+				top: el.getBoundingClientRect().top + window.scrollY,
+			}))
+			.sort((a, b) => a.top - b.top);
+
+		let rzad = 0;
+		let ostatniTop: number | null = null;
+		const tolerancja = 24; // px — w tym zakresie liczy się jako ten sam "rząd"
+
+		posortowane.forEach(({ el, top }) => {
+			if (ostatniTop === null || Math.abs(top - ostatniTop) > tolerancja) {
+				rzad++;
+				ostatniTop = top;
 			}
-			galeriaGrid.appendChild(item);
+			el.style.transitionDelay = `${Math.min(rzad * 60, 360)}ms`;
+		});
+	}
+
+	// Wywoływane po każdej zmianie widocznych zdjęć (start, filtr, "Załaduj więcej").
+	function przygotujAnimacje() {
+		const doOdkrycia = nieodkryteWidoczne();
+
+		if (!obserwator) {
+			// Bez animacji — po prostu pokaż od razu.
+			doOdkrycia.forEach((el) => el.classList.remove("opacity-0", "translate-y-6"));
+			return;
+		}
+
+		ustawKolejnoscWierszami(doOdkrycia);
+		doOdkrycia.forEach((el) => obserwator.observe(el));
+	}
+
+	// --- Filtr + "Załaduj więcej": jedna funkcja decyduje, co jest widoczne ---
+	function pasujeDoFiltra(el: HTMLElement): boolean {
+		if (aktywnyFiltr === "Wszystkie") return true;
+		return (el.dataset.kategoria ?? "").split(" ").includes(aktywnyFiltr);
+	}
+
+	function odswiez() {
+		let pasujace = 0;
+
+		wszystkieKarty.forEach((el) => {
+			if (pasujeDoFiltra(el)) {
+				pasujace++;
+				el.classList.toggle("hidden", pasujace > limit);
+			} else {
+				el.classList.add("hidden");
+			}
 		});
 
-		visibleCount += nextItems.length;
-		observeNewItems(nextItems);
-		updateLoadMoreCount();
+		const pozostalo = Math.max(pasujace - limit, 0);
+		loadMoreCount.textContent = String(pozostalo);
+		loadMoreContainer.classList.toggle("hidden", pozostalo === 0);
+
+		przygotujAnimacje();
 	}
 
-	// Initialize
-	updateLoadMoreCount();
+	loadMoreBtn.addEventListener("click", () => {
+		limit += NA_STRONE;
+		odswiez();
+	});
 
-	loadMoreBtn.addEventListener("click", loadMoreItems);
+	const KLASY_AKTYWNY = ["bg-accent", "text-paper", "border-accent"];
+	const KLASY_NIEAKTYWNY = ["bg-paper", "text-ink", "border-ink/30", "hover:bg-card", "hover:border-accent"];
+
+	przyciskiFiltrow.forEach((btn) => {
+		btn.addEventListener("click", () => {
+			aktywnyFiltr = btn.dataset.filter || "Wszystkie";
+			limit = NA_STRONE; // po zmianie filtra zaczynamy od pierwszej porcji
+
+			przyciskiFiltrow.forEach((b) => {
+				const aktywny = b.dataset.filter === aktywnyFiltr;
+				b.setAttribute("aria-pressed", String(aktywny));
+				// Zmieniamy też wygląd przycisku, żeby było widać, który filtr jest włączony.
+				b.classList.remove(...(aktywny ? KLASY_NIEAKTYWNY : KLASY_AKTYWNY));
+				b.classList.add(...(aktywny ? KLASY_AKTYWNY : KLASY_NIEAKTYWNY));
+			});
+
+			odswiez();
+		});
+	});
+
+	odswiez();
+	// Zdjęcia mogą jeszcze przesunąć układ po doładowaniu — przeliczamy raz jeszcze.
+	window.addEventListener("load", () => ustawKolejnoscWierszami(nieodkryteWidoczne()), { once: true });
 
 	// --- Lightbox z focus trap ---
 	const lightbox = document.getElementById("lightbox")!;
@@ -219,35 +234,14 @@ const ITEMS_PER_LOAD = 12;
 	const lightboxExif = document.getElementById("lightbox-exif")!;
 	const closeBtn = document.getElementById("lightbox-close")!;
 
-	let current = { po: "", przed: "", exif: null as any };
+	const current = { po: "", przed: "" };
 	let lastFocusedElement: HTMLElement | null = null;
 
-	// Elementy fokusowalne w lightboxie (kolejność Tab)
-	const focusableSelectors = [
-		"#lightbox-close",
-		"#lightbox-img",
-		"#lightbox-opis",
-		"#lightbox-hint",
-		"#lightbox-exif"
-	].join(", ");
-
-	// Parse EXIF data from ImageMetadata
-	function parseExif(imageMeta: any): string | null {
-		if (!imageMeta || !imageMeta.exif) return null;
-		
-		const exif = imageMeta.exif;
-		const parts: string[] = [];
-		
-		if (exif.ISO) parts.push(`ISO ${exif.ISO}`);
-		if (exif.FNumber) parts.push(`f/${exif.FNumber}`);
-		if (exif.FocalLength) parts.push(`${exif.FocalLength}mm`);
-		if (exif.ExposureTime) {
-			const exp = exif.ExposureTime;
-			if (exp < 1) parts.push(`1/${Math.round(1/exp)}s`);
-			else parts.push(`${exp}s`);
-		}
-		
-		return parts.length > 0 ? parts.join(" • ") : null;
+	// Elementy, po których krąży Tab wewnątrz lightboxa (tylko te, które są teraz widoczne).
+	function elementyFokusowalne(): HTMLElement[] {
+		return Array.from(
+			lightbox.querySelectorAll<HTMLElement>("#lightbox-close, #lightbox-img, #lightbox-opis, #lightbox-hint")
+		).filter((el) => el.getClientRects().length > 0);
 	}
 
 	function otworz(item: HTMLElement) {
@@ -260,20 +254,16 @@ const ITEMS_PER_LOAD = 12;
 
 		hint.classList.toggle("hidden", !current.przed);
 
-		// Parse and display EXIF data
-		const itemIndex = allGalleryItems.findIndex(el => el === item);
-		const originalImageData = zdjeciaData[itemIndex];
-		if (originalImageData?.po) {
-			const exifString = parseExif(originalImageData.po);
-			if (exifString) {
-				lightboxExif.textContent = exifString;
-				lightboxExif.classList.remove("hidden");
-			} else {
-				lightboxExif.classList.add("hidden");
-			}
-		} else {
-			lightboxExif.classList.add("hidden");
+		// Wersję "przed" pobieramy już teraz, żeby przy najechaniu nie było czekania.
+		if (current.przed) {
+			const wczesniej = new Image();
+			wczesniej.src = current.przed;
 		}
+
+		// Dane z aparatu — gotowy tekst z atrybutu karty (może być pusty).
+		const exif = item.dataset.exif || "";
+		lightboxExif.textContent = exif;
+		lightboxExif.classList.toggle("hidden", !exif);
 
 		// Zapisz element, który miał focus przed otwarciem
 		lastFocusedElement = document.activeElement as HTMLElement;
@@ -313,7 +303,7 @@ const ITEMS_PER_LOAD = 12;
 		lightboxImg.src = current.po;
 	}
 
-	document.querySelectorAll<HTMLElement>("[data-gallery-item]").forEach((item) => {
+	wszystkieKarty.forEach((item) => {
 		item.addEventListener("click", () => otworz(item));
 		// Obsługa klawiatury: Enter/Space otwiera lightbox
 		item.addEventListener("keydown", (e) => {
@@ -343,14 +333,15 @@ const ITEMS_PER_LOAD = 12;
 	});
 
 	document.addEventListener("keydown", (e) => {
-		if (e.key === "Escape") zamknij();
+		// Escape działa tylko przy otwartym lightboxie — inaczej zabierałby focus stronie.
+		if (e.key === "Escape" && !lightbox.classList.contains("hidden")) zamknij();
 	});
 
 	// Focus trap handler dla Tab / Shift+Tab
 	function handleFocusTrap(e: KeyboardEvent) {
 		if (e.key !== "Tab") return;
 
-		const focusableElements = lightbox.querySelectorAll<HTMLElement>(focusableSelectors);
+		const focusableElements = elementyFokusowalne();
 		if (focusableElements.length === 0) return;
 
 		const firstElement = focusableElements[0];
@@ -371,35 +362,8 @@ const ITEMS_PER_LOAD = 12;
 		}
 	}
 
-	// --- Filtr kategorii ---
-	const filterButtons = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
-	const galleryItems = document.querySelectorAll<HTMLElement>("[data-gallery-item]");
-
-	let activeFilter = "Wszystkie";
-
-	filterButtons.forEach((btn) => {
-		btn.addEventListener("click", () => {
-			activeFilter = btn.dataset.filter || "Wszystkie";
-
-			// Update aria-pressed
-			filterButtons.forEach((b) => {
-				b.setAttribute("aria-pressed", b.dataset.filter === activeFilter ? "true" : "false");
-			});
-
-			// Filter items
-			galleryItems.forEach((item) => {
-				const itemCategories = item.dataset.kategoria?.split(" ") || [];
-				const matches = activeFilter === "Wszystkie" || itemCategories.includes(activeFilter);
-				item.classList.toggle("hidden", !matches);
-			});
-
-			// Reset visible count when filter changes
-			visibleCount = ITEMS_PER_LOAD;
-			updateLoadMoreCount();
-		});
-	});
-		// Blokada prawoklika na zdjęciach — utrudnienie, nie realna ochrona
-	document.querySelectorAll("[data-gallery-item]").forEach((item) => {
+	// Blokada prawoklika na zdjęciach — utrudnienie, nie realna ochrona
+	wszystkieKarty.forEach((item) => {
 		item.addEventListener("contextmenu", (e) => e.preventDefault());
 	});
 	lightboxImg.addEventListener("contextmenu", (e) => e.preventDefault());

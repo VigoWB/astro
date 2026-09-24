@@ -1,22 +1,64 @@
 ---
 import { Image } from 'astro:assets';
-const { po, przed, opis, kategoria = [], priority = false } = Astro.props;
+
+interface Props {
+	po: { src: string; width: number; height: number };
+	przed?: { src: string };
+	opis?: string;
+	kategoria?: string[];
+	exif?: {
+		iso?: number | null;
+		przyslona?: number | null;
+		ogniskowa?: number | null;
+		czasNaswietlania?: number | null;
+	};
+	priority?: boolean;
+	/** Karta poza pierwszą porcją zdjęć — startuje ukryta, pokaże ją przycisk "Załaduj więcej". */
+	ukryta?: boolean;
+}
+
+const { po, przed, opis = "", kategoria = [], exif, priority = false, ukryta = false } = Astro.props;
+
+// Miniatura w kaflu galerii ma 600 px szerokości. Wysokość liczymy z prawdziwych
+// proporcji zdjęcia — dzięki temu miniatura nie jest przycinana.
+const SZEROKOSC_MINIATURY = 600;
+const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.width);
+
+// Krótki podpis z danych aparatu, np. "ISO 100 • f/2.8 • 50mm • 1/200s".
+// Składamy go już podczas budowania strony — lightbox dostaje gotowy tekst.
+function formatujExif(dane: Props["exif"]): string {
+	if (!dane) return "";
+	const czesci: string[] = [];
+	if (dane.iso) czesci.push(`ISO ${dane.iso}`);
+	if (dane.przyslona) czesci.push(`f/${Number(dane.przyslona.toFixed(1))}`);
+	if (dane.ogniskowa) czesci.push(`${Math.round(dane.ogniskowa)}mm`);
+	if (dane.czasNaswietlania) {
+		const t = dane.czasNaswietlania;
+		czesci.push(t < 1 ? `1/${Math.round(1 / t)}s` : `${t}s`);
+	}
+	return czesci.join(" • ");
+}
 ---
 <button
 	type="button"
-	class="group mb-6 block w-full break-inside-avoid text-left rounded-sm cursor-zoom-in opacity-0 translate-y-6 transition-all duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper border border-ink/10"
+	class:list={[
+		"group mb-6 block w-full break-inside-avoid text-left rounded-sm cursor-zoom-in opacity-0 translate-y-6 transition-all duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper border border-ink/10",
+		{ hidden: ukryta },
+	]}
 	data-gallery-item
 	data-reveal
 	data-po={po.src}
 	data-przed={przed?.src ?? ""}
 	data-opis={opis}
 	data-kategoria={kategoria.join(" ")}
+	data-exif={formatujExif(exif)}
 	data-testid="gallery-item"
 >
 	<div class="relative overflow-hidden bg-black/5 group-hover:bg-black/20 transition-colors duration-300">
 		<Image
-			src={po}
-			width={600}
+			src={po.src}
+			width={SZEROKOSC_MINIATURY}
+			height={wysokoscMiniatury}
 			alt={opis || "Zdjęcie z portfolio fotograficznego Wiktora"}
 			loading={priority ? "eager" : "lazy"}
 			fetchpriority={priority ? "high" : undefined}

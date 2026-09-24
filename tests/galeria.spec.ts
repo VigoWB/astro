@@ -59,34 +59,30 @@ test.describe('Galeria', () => {
 		expect(allCount).toBeGreaterThan(portretyCount);
 	});
 
-	test('kliknięcie "załaduj więcej": zwiększa liczbę widocznych kart w gridzie', async ({ page }) => {
-		// Sprawdź stan początkowy - licznik pokazuje ile zdjęć zostało do doładowania
-		const initialLabel = await page.locator('[data-testid="load-more-count"]').textContent();
-		const initialRemaining = parseInt(initialLabel || '0', 10);
+	test('"załaduj więcej": pokazuje kolejną porcję zdjęć, a licznik zgadza się z rzeczywistością', async ({ page }) => {
+		const naStrone = Number(await page.locator('#galeria-grid').getAttribute('data-na-strone'));
+		const wszystkie = await page.locator('[data-testid="gallery-item"]').count();
 
-		// Pobierz początkową liczbę widocznych kart
-		const initialCount = await page.locator('[data-testid="gallery-item"]:not(.hidden)').count();
+		// Przycisk pojawia się tylko wtedy, gdy zdjęć jest więcej niż jedna porcja.
+		test.skip(wszystkie <= naStrone, 'Za mało zdjęć, żeby przycisk "załaduj więcej" się pojawił');
 
-		// Jeśli licznik to 0, przycisk powinien być ukryty - to poprawne zachowanie
-		if (initialRemaining === 0) {
-			await expect(page.locator('[data-testid="load-more-container"]')).toBeHidden();
-			return; // Test passed - no more items to load
-		}
+		const widoczne = page.locator('[data-testid="gallery-item"]:not(.hidden)');
+		const licznik = page.locator('[data-testid="load-more-count"]');
 
-		// Kliknij "załaduj więcej"
+		// Na start widać dokładnie jedną porcję, a licznik pokazuje, ile zostało.
+		await expect(widoczne).toHaveCount(naStrone);
+		await expect(licznik).toHaveText(String(wszystkie - naStrone));
+
 		await page.click('[data-testid="load-more-btn"]');
 
-		// Poczekaj na doładowanie
-		await page.waitForTimeout(500);
+		// Po kliknięciu dochodzi kolejna porcja (albo wszystkie pozostałe).
+		await expect(widoczne).toHaveCount(Math.min(wszystkie, naStrone * 2));
+		await expect(licznik).toHaveText(String(Math.max(wszystkie - naStrone * 2, 0)));
 
-		// Sprawdź licznik - powinien zmaleć LUB zostać taki sam (jeśli wszystkie już załadowane)
-		const newLabel = await page.locator('[data-testid="load-more-count"]').textContent();
-		const newRemaining = parseInt(newLabel || '0', 10);
-		expect(newRemaining).toBeLessThanOrEqual(initialRemaining);
-
-		// Liczba widocznych kart nie powinna maleć
-		const newCount = await page.locator('[data-testid="gallery-item"]:not(.hidden)').count();
-		expect(newCount).toBeGreaterThanOrEqual(initialCount);
+		// Gdy nie ma już czego doładowywać, przycisk znika.
+		if (wszystkie <= naStrone * 2) {
+			await expect(page.locator('[data-testid="load-more-container"]')).toBeHidden();
+		}
 	});
 
 	test('load more po filtrowaniu: ładuje tylko zdjęcia z aktywnej kategorii', async ({ page }) => {

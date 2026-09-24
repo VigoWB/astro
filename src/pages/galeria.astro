@@ -2,47 +2,62 @@
 import Layout from "../layouts/Layout.astro";
 import Galeria from "../components/Galeria.astro";
 import { kategorie } from "../data/kategorie.ts";
+import galeriaDane from "../data/galeria.json";
 
-// Podpisy zdjęć — klucz to nazwa pliku "po". Zdjęcie bez wpisu tutaj
-// po prostu nie będzie miało widocznego podpisu (build się nie wywali).
-// Atrybut alt ma jednak osobny, opisowy fallback w Karta.astro i w skrypcie
-// lightboxa w Galeria.astro, więc żadne zdjęcie nie zostaje bez tekstu
-// alternatywnego dla czytników ekranu.
-const opisy: Record<string, { opis: string; kategoria: string[] }> = {
-	"DSC_1111.jpg": { opis: "Zielony", kategoria: ["Portrety"] },
-	"DSC_1112.jpg": { opis: "Zielony2?", kategoria: ["Portrety", "Pracownia"] },
-	"DSC_1113.jpg": { opis: "Fiolet", kategoria: ["Portrety"] },
-	"DSC_1114.jpg": { opis: "Zielony kfadrat", kategoria: ["Pracownia"] },
-	"DSC_1115.jpg": { opis: "Zielony? kfadrat", kategoria: ["Pracownia"] },
-	"DSC_1116.jpg": { opis: "Fioletowy kfadrat", kategoria: ["Pracownia"] },
-	"DSC_4968-Edytuj.jpg": { opis: "Ja i koticzek", kategoria: ["Portrety", "Przyroda"] },
-	"DSC_4971-Edytuj.jpg": { opis: "Milli bobby brałn", kategoria: ["Portrety"] },
-	"DSC_4975-Edytuj.jpg": { opis: "Stranger things", kategoria: ["Pracownia"] },
-};
+// Lista zdjęć (nazwa, opis, kategorie, wymiary, dane z aparatu) pochodzi z pliku
+// src/data/galeria.json. Ten plik generuje skrypt `npm run sync-images` —
+// nie edytuj go ręcznie. Same zdjęcia leżą w Cloudflare R2.
+//
+// Adres bucketa R2 bierzemy ze zmiennej PUBLIC_R2_URL (plik .env lokalnie,
+// ustawienia zmiennych w Cloudflare Pages na produkcji).
+const adresZdjec = (import.meta.env.PUBLIC_R2_URL ?? "").replace(/\/+$/, "");
 
-// Wciąga wszystkie zdjęcia "po" (bez przedrostka przed_) z folderu images/
-const poModules = import.meta.glob<{ default: ImageMetadata }>(
-	"../../images/DSC_*.jpg",
-	{ eager: true }
-);
+if (!adresZdjec) {
+	// Lepiej przerwać budowanie z jasnym komunikatem niż wypuścić pustą galerię.
+	throw new Error(
+		"Brak zmiennej PUBLIC_R2_URL — ustaw adres bucketa R2 w pliku .env (lokalnie) oraz w ustawieniach Cloudflare Pages (produkcja). Zob. .env.example."
+	);
+}
 
-// Wciąga wszystkie zdjęcia "przed"
-const przedModules = import.meta.glob<{ default: ImageMetadata }>(
-	"../../images/przed_DSC_*.jpg",
-	{ eager: true }
-);
-
-const zdjecia = Object.entries(poModules).map(([sciezka, modul]) => {
-	const nazwaPliku = sciezka.split("/").pop()!;
-	const sciezkaPrzed = sciezka.replace(nazwaPliku, `przed_${nazwaPliku}`);
-
-	return {
-		po: modul.default,
-		przed: przedModules[sciezkaPrzed]?.default,
-		opis: opisy[nazwaPliku]?.opis ?? "",
-		kategoria: opisy[nazwaPliku]?.kategoria ?? [],
+interface ZdjecieZPliku {
+	nazwaPliku: string;
+	opis: string;
+	kategorie: string[];
+	szerokosc: number | null;
+	wysokosc: number | null;
+	klucz: string | null;
+	kluczPrzed: string | null;
+	exif: {
+		iso: number | null;
+		przyslona: number | null;
+		ogniskowa: number | null;
+		czasNaswietlania: number | null;
+		dataWykonania: string | null;
 	};
-});
+}
+
+// Klucz w R2 (np. "zdjecia/DSC_1111.jpg") zamieniamy na pełny adres zdjęcia.
+function adresZKlucza(klucz: string): string {
+	return `${adresZdjec}/${klucz.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+const zdjecia = (galeriaDane as ZdjecieZPliku[])
+	.filter((z) => {
+		const kompletne = Boolean(z.klucz && z.szerokosc && z.wysokosc);
+		if (!kompletne) {
+			console.warn(`galeria: pomijam ${z.nazwaPliku} — brakuje adresu w R2 albo wymiarów (uruchom npm run sync-images).`);
+		}
+		return kompletne;
+	})
+	.map((z) => ({
+		// Kształt { src, width, height } jest taki sam jak wcześniej — dzięki temu
+		// Schema.astro (dane strukturalne dla Google) działa bez zmian.
+		po: { src: adresZKlucza(z.klucz!), width: z.szerokosc!, height: z.wysokosc! },
+		przed: z.kluczPrzed ? { src: adresZKlucza(z.kluczPrzed) } : undefined,
+		opis: z.opis,
+		kategoria: z.kategorie,
+		exif: z.exif,
+	}));
 ---
 
 <Layout title="Galeria — Wiktor" zdjecia={zdjecia} breadcrumbs={[{ name: "Home", url: "https://foto.vigolab.ovh/" }, { name: "Galeria", url: "https://foto.vigolab.ovh/galeria" }]}>

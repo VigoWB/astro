@@ -142,5 +142,23 @@
       "czasNaswietlania": null,
       "dataWykonania": null
     }
+  },
+  {
+    "nazwaPliku": "DSC_6910.jpg",
+    "opis": "Złoty zegarek.",
+    "kategorie": [
+      "Pracownia"
+    ],
+    "szerokosc": 3553,
+    "wysokosc": 3553,
+    "klucz": "zdjecia/DSC_6910.jpg",
+    "kluczPrzed": "zdjecia/przed_DSC_6910.jpg",
+    "exif": {
+      "iso": null,
+      "przyslona": null,
+      "ogniskowa": null,
+      "czasNaswietlania": null,
+      "dataWykonania": null
+    }
   }
 ]

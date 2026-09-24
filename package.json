@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "sync-images": "node scripts/sync-images.mjs",
+    "sync-images": "node --env-file=.env scripts/sync-images.mjs",
     "pretest": "npm run build",
     "test": "playwright test",
     "preview": "astro preview --port 4322",

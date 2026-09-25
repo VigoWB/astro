@@ -1,8 +1,10 @@
 [
   {
     "nazwaPliku": "DSC_1111.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Portret w zielonej tonacji",
+    "kategorie": [
+      "Portrety"
+    ],
     "szerokosc": 2560,
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1111.jpg",
@@ -17,8 +19,11 @@
   },
   {
     "nazwaPliku": "DSC_1112.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Portret w zielonym świetle, ujęcie z pracowni",
+    "kategorie": [
+      "Portrety",
+      "Pracownia"
+    ],
     "szerokosc": 2560,
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1112.jpg",
@@ -33,8 +38,10 @@
   },
   {
     "nazwaPliku": "DSC_1113.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Portret w fioletowej tonacji",
+    "kategorie": [
+      "Portrety"
+    ],
     "szerokosc": 2560,
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1113.jpg",
@@ -49,8 +56,10 @@
   },
   {
     "nazwaPliku": "DSC_1114.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Kwadratowy kadr z pracowni w zieleni",
+    "kategorie": [
+      "Pracownia"
+    ],
     "szerokosc": 1440,
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1114.jpg",
@@ -65,8 +74,10 @@
   },
   {
     "nazwaPliku": "DSC_1115.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Kwadratowy kadr z pracowni, druga wersja w zieleni",
+    "kategorie": [
+      "Pracownia"
+    ],
     "szerokosc": 1440,
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1115.jpg",
@@ -81,8 +92,10 @@
   },
   {
     "nazwaPliku": "DSC_1116.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Kwadratowy kadr z pracowni w fiolecie",
+    "kategorie": [
+      "Pracownia"
+    ],
     "szerokosc": 1440,
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1116.jpg",
@@ -97,8 +110,11 @@
   },
   {
     "nazwaPliku": "DSC_4968-Edytuj.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Autoportret z kotem",
+    "kategorie": [
+      "Portrety",
+      "Przyroda"
+    ],
     "szerokosc": 4980,
     "wysokosc": 3412,
     "klucz": "zdjecia/DSC_4968-Edytuj.jpg",
@@ -113,8 +129,10 @@
   },
   {
     "nazwaPliku": "DSC_4971-Edytuj.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Portret w stylizacji filmowej",
+    "kategorie": [
+      "Portrety"
+    ],
     "szerokosc": 4553,
     "wysokosc": 3193,
     "klucz": "zdjecia/DSC_4971-Edytuj.jpg",
@@ -129,8 +147,10 @@
   },
   {
     "nazwaPliku": "DSC_4975-Edytuj.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Kadr z pracowni w stylizacji filmowej",
+    "kategorie": [
+      "Pracownia"
+    ],
     "szerokosc": 4394,
     "wysokosc": 2928,
     "klucz": "zdjecia/DSC_4975-Edytuj.jpg",

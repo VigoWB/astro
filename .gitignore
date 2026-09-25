@@ -34,3 +34,5 @@ test.db
 
 # PWA generated files
 images/
+
+data/*.db

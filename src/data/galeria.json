@@ -174,11 +174,11 @@
     "klucz": "zdjecia/DSC_6910.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_6910.jpg",
     "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null
+      "iso": 100,
+      "przyslona": 16,
+      "ogniskowa": 50,
+      "czasNaswietlania": 0.06666666666666667,
+      "dataWykonania": "2026-07-01T10:18:03.000Z"
     }
   }
 ]

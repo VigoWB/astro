@@ -319,7 +319,8 @@ async function dodajNoweZdjecia(db) {
 
     try {
       const wymiary = await pobierzWymiary(sciezkaPo);
-      const exif = await pobierzExif(sciezkaPo);
+      const sciezkaExif = maWersjePrzed ? sciezkaPrzed : sciezkaPo;
+      const exif = await pobierzExif(sciezkaExif);
       const { opis, kategorie } = await zapytajOpisIKategorie();
 
       const kluczR2Po = `zdjecia/${nazwaPliku}`;

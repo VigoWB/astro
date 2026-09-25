@@ -17,7 +17,7 @@ async function pobierzExif(sciezka) {
   const exifr = (await import('exifr')).default;
   let exif = {};
   try {
-    exif = (await exifr.parse(sciezka, { pick: ['ISO', 'FNumber', 'FocalLength', 'ExposureTime', 'CreateDate'] })) ?? {};
+    exif = (await exifr.parse(sciezka, { pick: ['ISO', 'FNumber', 'FocalLength', 'ExposureTime', 'CreateDate', 'Make', 'Model', 'LensModel'] })) ?? {};
   } catch {
     console.warn('⚠️  Nie udało się odczytać EXIF dla:', sciezka);
   }
@@ -34,6 +34,9 @@ async function pobierzExif(sciezka) {
     ogniskowa: exif.FocalLength ? Number(exif.FocalLength) : null,
     czas_naswietlania: exif.ExposureTime ?? null,
     data_wykonania: dataWykonania,
+    make: exif.Make ?? null,
+    model: exif.Model ?? null,
+    lens_model: exif.LensModel ?? null,
   };
 }
 
@@ -52,16 +55,21 @@ async function main() {
   const db = new DatabaseSync(DB_PATH);
 
   try {
+    // Dodaj kolumny jeśli nie istnieją (dla istniejących baz)
+    try { db.exec(`ALTER TABLE zdjecia ADD COLUMN make TEXT;`); } catch {}
+    try { db.exec(`ALTER TABLE zdjecia ADD COLUMN model TEXT;`); } catch {}
+    try { db.exec(`ALTER TABLE zdjecia ADD COLUMN lens_model TEXT;`); } catch {}
+
     // Pobierz wszystkie zdjęcia, które mają wersję "przed"
     const wiersze = db.prepare(`
-      SELECT id, nazwa_pliku, nazwa_pliku_przed, iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania
+      SELECT id, nazwa_pliku, nazwa_pliku_przed, iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model
       FROM zdjecia
       WHERE nazwa_pliku_przed IS NOT NULL
     `).all();
 
     const aktualizuj = db.prepare(`
       UPDATE zdjecia
-      SET iso = ?, przyslona = ?, ogniskowa = ?, czas_naswietlania = ?, data_wykonania = ?
+      SET iso = ?, przyslona = ?, ogniskowa = ?, czas_naswietlania = ?, data_wykonania = ?, make = ?, model = ?, lens_model = ?
       WHERE id = ?
     `);
 
@@ -83,13 +91,19 @@ async function main() {
       const staraOgniskowa = w.ogniskowa;
       const staryCzas = w.czas_naswietlania;
       const staraData = w.data_wykonania;
+      const staryMake = w.make;
+      const staryModel = w.model;
+      const staryLensModel = w.lens_model;
 
       if (
         exif.iso !== staryIso ||
         exif.przyslona !== staraPrzyslona ||
         exif.ogniskowa !== staraOgniskowa ||
         exif.czas_naswietlania !== staryCzas ||
-        exif.data_wykonania !== staraData
+        exif.data_wykonania !== staraData ||
+        exif.make !== staryMake ||
+        exif.model !== staryModel ||
+        exif.lens_model !== staryLensModel
       ) {
         aktualizuj.run(
           exif.iso,
@@ -97,9 +111,12 @@ async function main() {
           exif.ogniskowa,
           exif.czas_naswietlania,
           exif.data_wykonania,
+          exif.make,
+          exif.model,
+          exif.lens_model,
           w.id
         );
-        console.log(`✅ ${w.nazwa_pliku}: ISO ${exif.iso} • f/${exif.przyslona} • ${exif.ogniskowa}mm • ${exif.czas_naswietlania}s`);
+        console.log(`✅ ${w.nazwa_pliku}: ISO ${exif.iso} • f/${exif.przyslona} • ${exif.ogniskowa}mm • ${exif.czas_naswietlania}s • ${exif.make} ${exif.model} • ${exif.lens_model}`);
         zaktualizowano++;
       } else {
         console.log(`⏭️  ${w.nazwa_pliku}: bez zmian`);
@@ -126,6 +143,9 @@ async function main() {
           ogniskowa: w.ogniskowa ?? null,
           czasNaswietlania: w.czas_naswietlania ?? null,
           dataWykonania: w.data_wykonania ?? null,
+          make: w.make ?? null,
+          model: w.model ?? null,
+          lensModel: w.lens_model ?? null,
         },
       };
     });

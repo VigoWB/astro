@@ -14,7 +14,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -33,7 +36,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -51,7 +57,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -69,7 +78,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -87,7 +99,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -105,7 +120,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -124,7 +142,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -142,7 +163,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -160,7 +184,10 @@
       "przyslona": null,
       "ogniskowa": null,
       "czasNaswietlania": null,
-      "dataWykonania": null
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {
@@ -178,7 +205,10 @@
       "przyslona": 16,
       "ogniskowa": 50,
       "czasNaswietlania": 0.06666666666666667,
-      "dataWykonania": "2026-07-01T10:18:03.000Z"
+      "dataWykonania": "2026-07-01T10:18:03.000Z",
+      "make": "NIKON CORPORATION",
+      "model": "NIKON D7500",
+      "lensModel": "50.0 mm f/1.4"
     }
   }
 ]

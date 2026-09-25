@@ -73,6 +73,9 @@ function initDb() {
       ogniskowa REAL,
       czas_naswietlania REAL,
       data_wykonania TEXT,
+      make TEXT,
+      model TEXT,
+      lens_model TEXT,
       r2_klucz TEXT,
       r2_klucz_przed TEXT,
       wgrano_o TEXT DEFAULT CURRENT_TIMESTAMP
@@ -114,8 +117,8 @@ async function odtworzZJsonJesliPusta(db) {
   const wstaw = db.prepare(`
     INSERT INTO zdjecia
       (nazwa_pliku, nazwa_pliku_przed, opis, kategorie, szerokosc, wysokosc,
-       iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, r2_klucz, r2_klucz_przed)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model, r2_klucz, r2_klucz_przed)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   for (const z of lista) {
@@ -131,6 +134,9 @@ async function odtworzZJsonJesliPusta(db) {
       z.exif?.ogniskowa ?? null,
       z.exif?.czasNaswietlania ?? null,
       z.exif?.dataWykonania ?? null,
+      z.exif?.make ?? null,
+      z.exif?.model ?? null,
+      z.exif?.lensModel ?? null,
       z.klucz ?? null,
       z.kluczPrzed ?? null
     );
@@ -162,7 +168,7 @@ async function pobierzExif(sciezka) {
   const exifr = (await import('exifr')).default;
   let exif = {};
   try {
-    exif = (await exifr.parse(sciezka, { pick: ['ISO', 'FNumber', 'FocalLength', 'ExposureTime', 'CreateDate'] })) ?? {};
+    exif = (await exifr.parse(sciezka, { pick: ['ISO', 'FNumber', 'FocalLength', 'ExposureTime', 'CreateDate', 'Make', 'Model', 'LensModel'] })) ?? {};
   } catch {
     console.warn('⚠️  Nie udało się odczytać EXIF dla:', sciezka);
   }
@@ -179,6 +185,9 @@ async function pobierzExif(sciezka) {
     ogniskowa: exif.FocalLength ? Number(exif.FocalLength) : null,
     czas_naswietlania: exif.ExposureTime ?? null,
     data_wykonania: dataWykonania,
+    make: exif.Make ?? null,
+    model: exif.Model ?? null,
+    lens_model: exif.LensModel ?? null,
   };
 }
 
@@ -298,8 +307,8 @@ async function dodajNoweZdjecia(db) {
   const insertStmt = db.prepare(`
     INSERT INTO zdjecia
       (nazwa_pliku, nazwa_pliku_przed, opis, kategorie, szerokosc, wysokosc,
-       iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, r2_klucz, r2_klucz_przed)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model, r2_klucz, r2_klucz_przed)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   let dodanoLiczba = 0;
@@ -344,6 +353,9 @@ async function dodajNoweZdjecia(db) {
         exif.ogniskowa,
         exif.czas_naswietlania,
         exif.data_wykonania,
+        exif.make,
+        exif.model,
+        exif.lens_model,
         kluczR2Po,
         kluczR2Przed
       );
@@ -409,6 +421,9 @@ async function eksportujJson(db) {
       ogniskowa: w.ogniskowa ?? null,
       czasNaswietlania: w.czas_naswietlania ?? null,
       dataWykonania: w.data_wykonania ?? null,
+      make: w.make ?? null,
+      model: w.model ?? null,
+      lensModel: w.lens_model ?? null,
     },
   }));
 

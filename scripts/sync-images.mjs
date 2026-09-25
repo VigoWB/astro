@@ -280,9 +280,10 @@ async function zapytajOpisIKategorie(dostepneKategorie, obecne = { opis: '', kat
     .filter(Boolean)
     .map((k) => dostepneKategorie.find((kat) => kat.toLowerCase() === k.toLowerCase()) || k);
 
+  return { opis, kategorie: [...new Set(wpisane)] };
+}
 
 // --- Wgrywanie do R2 ---
-}
 async function wgrajDoR2(sciezkaLokalna, kluczR2) {
   const dane = await readFile(sciezkaLokalna);
   const contentType = kluczR2.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';

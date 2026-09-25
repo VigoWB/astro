@@ -27,7 +27,7 @@ const { po, przed, opis = "", kategoria = [], exif, priority = false, ukryta = f
 const SZEROKOSC_MINIATURY = 600;
 const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.width);
 
-// Krótki podpis z danych aparatu, np. "ISO 100 • f/2.8 • 50mm • 1/200s • NIKON D7500 • 50mm f/1.4".
+// Krótki podpis z danych aparatu, np. "ISO 100 • f/2.8 • 50mm • 1/200s".
 	// Składamy go już podczas budowania strony — lightbox dostaje gotowy tekst.
 	function formatujExif(dane: Props["exif"]): string {
 		if (!dane) return "";
@@ -39,9 +39,6 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 			const t = dane.czasNaswietlania;
 			czesci.push(t < 1 ? `1/${Math.round(1 / t)}s` : `${t}s`);
 		}
-		if (dane.make && dane.model) czesci.push(`${dane.make} ${dane.model}`);
-		else if (dane.model) czesci.push(dane.model);
-		if (dane.lensModel) czesci.push(dane.lensModel);
 		return czesci.join(" • ");
 	}
 ---

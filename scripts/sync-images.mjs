@@ -26,7 +26,6 @@ import readline from 'node:readline';
 const IMAGES_DIR = 'images';
 const DB_PATH = 'data/galeria.db';
 const JSON_PATH = 'src/data/galeria.json';
-const KATEGORIE = ['Portrety', 'Pracownia', 'Przyroda'];
 
 // --- Klient S3 (Cloudflare R2 jest S3-kompatybilne) ---
 // Tworzony dopiero przy pierwszym wgrywaniu — dzięki temu samo odświeżenie
@@ -99,6 +98,21 @@ function parsujKategorie(tekst) {
 }
 
 // --- Odtworzenie bazy z pliku JSON ---
+
+// Zwraca listę wszystkich kategorii, jakie kiedykolwiek wpisano przy jakimkolwiek
+// zdjęciu w bazie — bez duplikatów, posortowaną alfabetycznie. Lista rośnie sama,
+// w miarę wpisywania nowych nazw — nic nie trzeba poprawiać w kodzie.
+function pobierzUzywaneKategorie(db) {
+  const wiersze = db.prepare('SELECT kategorie FROM zdjecia').all();
+  const zbior = new Set();
+  for (const w of wiersze) {
+    for (const kategoria of parsujKategorie(w.kategorie)) {
+      zbior.add(kategoria);
+    }
+  }
+  return Array.from(zbior).sort((a, b) => a.localeCompare(b, 'pl'));
+}
+
 // Gdyby baza na tym komputerze była pusta (np. nowy komputer, skasowany plik),
 // a plik src/data/galeria.json istnieje w repozytorium — odtwarzamy z niego bazę,
 // żeby skrypt nie uznał wszystkich zdjęć za "nowe" i nie wgrywał ich drugi raz.
@@ -236,34 +250,39 @@ function zapytaj(pytanie) {
   });
 }
 
-async function zapytajOpisIKategorie(obecne = { opis: '', kategorie: [] }) {
+async function zapytajOpisIKategorie(dostepneKategorie, obecne = { opis: '', kategorie: [] }) {
   const pytanieOpis = obecne.opis
     ? `   Opis zdjęcia (Enter = zostaw „${obecne.opis}”): `
     : '   Opis zdjęcia (Enter = puste): ';
   const opis = (await zapytaj(pytanieOpis)) || obecne.opis;
 
-  console.log(`   Dostępne kategorie: ${KATEGORIE.join(', ')}`);
-  const pytanieKat = obecne.kategorie.length > 0
-    ? `   Kategorie (oddziel przecinkiem, Enter = zostaw: ${obecne.kategorie.join(', ')}): `
-    : '   Kategorie (oddziel przecinkiem, Enter = puste do uzupełnienia później): ';
-  const kategorieRaw = await zapytaj(pytanieKat);
-
-  // Rozpoznajemy kategorie bez względu na wielkość liter ("portrety" = "Portrety").
-  const wpisane = kategorieRaw
-    .split(',')
-    .map((k) => k.trim().toLowerCase())
-    .filter(Boolean)
-    .map((k) => KATEGORIE.find((kat) => kat.toLowerCase() === k))
-    .filter(Boolean);
-
-  if (kategorieRaw && wpisane.length === 0) {
-    console.warn('   ⚠️  Nie rozpoznano żadnej kategorii — zostają dotychczasowe.');
+  if (dostepneKategorie.length > 0) {
+    console.log(`   Kategorie używane do tej pory: ${dostepneKategorie.join(', ')}`);
+  } else {
+    console.log('   Nie ma jeszcze żadnych zapisanych kategorii — możesz wpisać dowolną nową.');
   }
 
-  return { opis, kategorie: wpisane.length > 0 ? wpisane : obecne.kategorie };
-}
+  const pytanieKat = obecne.kategorie.length > 0
+    ? `   Kategorie (oddziel przecinkiem; nowa nazwa = od razu ją dodaje; Enter = zostaw: ${obecne.kategorie.join(', ')}): `
+    : '   Kategorie (oddziel przecinkiem; nowa nazwa = od razu ją dodaje; Enter = puste do uzupełnienia później): ';
+  const kategorieRaw = await zapytaj(pytanieKat);
+
+  if (!kategorieRaw) {
+    return { opis, kategorie: obecne.kategorie };
+  }
+
+  // Dopasowujemy bez względu na wielkość liter do tego, co już istnieje (żeby "portrety"
+  // i "Portrety" nie stały się dwiema różnymi kategoriami) — czego nie znajdziemy,
+  // traktujemy jako nową kategorię, zachowując pisownię, jaką wpisano.
+  const wpisane = kategorieRaw
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean)
+    .map((k) => dostepneKategorie.find((kat) => kat.toLowerCase() === k.toLowerCase()) || k);
+
 
 // --- Wgrywanie do R2 ---
+}
 async function wgrajDoR2(sciezkaLokalna, kluczR2) {
   const dane = await readFile(sciezkaLokalna);
   const contentType = kluczR2.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
@@ -330,8 +349,8 @@ async function dodajNoweZdjecia(db) {
       const wymiary = await pobierzWymiary(sciezkaPo);
       const sciezkaExif = maWersjePrzed ? sciezkaPrzed : sciezkaPo;
       const exif = await pobierzExif(sciezkaExif);
-      const { opis, kategorie } = await zapytajOpisIKategorie();
-
+      const dostepneKategorie = pobierzUzywaneKategorie(db); // odświeżone, żeby widzieć też kategorię dodaną chwilę wcześniej w tym samym uruchomieniu
+      const { opis, kategorie } = await zapytajOpisIKategorie(dostepneKategorie);
       const kluczR2Po = `zdjecia/${nazwaPliku}`;
       const kluczR2Przed = maWersjePrzed ? `zdjecia/${nazwaPrzed}` : null;
 
@@ -393,7 +412,8 @@ async function uzupelnijOpisy(db) {
 
   for (const w of doUzupelnienia) {
     console.log(`\n🖼️  ${w.nazwa_pliku}`);
-    const { opis, kategorie } = await zapytajOpisIKategorie({
+    const dostepneKategorie = pobierzUzywaneKategorie(db);
+    const { opis, kategorie } = await zapytajOpisIKategorie(dostepneKategorie, {
       opis: w.opis ?? '',
       kategorie: parsujKategorie(w.kategorie),
     });

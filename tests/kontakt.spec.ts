@@ -1,6 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const FORMSPREE_URL = 'https://formspree.io/f/';
+
+// Token Turnstile trafia asynchronicznie do ukrytego pola po rozwiązaniu wyzwania
+// (w CI używamy klucza testowego "zawsze przechodzi" — patrz .github/workflows/ci.yml).
+async function poczekajNaTurnstile(page: Page) {
+	await page.waitForFunction(() => {
+		const pole = document.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]');
+		return Boolean(pole?.value);
+	}, undefined, { timeout: 15000 });
+}
 
 test.describe('Formularz kontaktowy', () => {
 	test('happy-path: wypełnienie poprawnych danych i wysłanie formularza', async ({ page }) => {
@@ -21,6 +30,7 @@ test.describe('Formularz kontaktowy', () => {
 		await page.fill('[data-testid="contact-message"]', 'To jest testowa wiadomość o wystarczającej długości.');
 
 		// Kliknij przycisk wysyłania
+		await poczekajNaTurnstile(page);
 		await page.click('[data-testid="contact-submit"]');
 
 		// Poczekaj na sukces (status "wysyłanie" może być zbyt krótki by go złapać)
@@ -102,6 +112,7 @@ test.describe('Formularz kontaktowy', () => {
 		await page.fill('[data-testid="contact-email"]', 'wiktor@example.com');
 		await page.fill('[data-testid="contact-message"]', 'To jest testowa wiadomość o wystarczającej długości.');
 
+		await poczekajNaTurnstile(page);
 		await page.click('[data-testid="contact-submit"]');
 
 		// Sprawdź komunikat błędu sieci
@@ -124,6 +135,7 @@ test.describe('Formularz kontaktowy', () => {
 		await page.fill('[data-testid="contact-email"]', 'wiktor@example.com');
 		await page.fill('[data-testid="contact-message"]', 'To jest testowa wiadomość o wystarczającej długości.');
 
+		await poczekajNaTurnstile(page);
 		await page.click('[data-testid="contact-submit"]');
 
 		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-red-700/, { timeout: 10000 });

@@ -7,9 +7,17 @@
 // na wypadek wyłączonego JS-a (wtedy formularz i tak leci normalnym POST-em do Formspree).
 // Gdy JS jest dostępny, przejmuje walidację i pokazuje własne, polskie komunikaty błędów
 // zamiast natywnych dymków przeglądarki (które bywają po angielsku).
+//
+// Cloudflare Turnstile (ochrona przed botami) włącza się automatycznie, gdy w .env jest
+// ustawione PUBLIC_TURNSTILE_SITE_KEY — bez tej zmiennej widget po prostu się nie pokazuje,
+// a formularz działa tak jak wcześniej. Skrypt Turnstile ładuje się w <head> przez prop
+// `turnstile` przekazany do <Layout> na stronie /kontakt. Weryfikacja tokenu po stronie
+// serwera dzieje się w Formspree (Secret Key ustawiony w ich dashboardzie, nie w tym repo).
 
 const formspreeId = import.meta.env.PUBLIC_FORMSPREE_ID ?? "";
 const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : undefined;
+
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 ---
 
 <form
@@ -18,6 +26,7 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 	action={akcjaFormularza}
 	method="POST"
 	data-formspree-id={formspreeId}
+	data-turnstile-enabled={turnstileSiteKey ? "true" : "false"}
 	data-testid="contact-form"
 >
 	<div class="flex flex-col gap-1.5">
@@ -77,6 +86,14 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 		aria-hidden="true"
 	/>
 
+	<!-- Cloudflare Turnstile — nieinwazyjne sprawdzenie "czy to człowiek". Renderuje się tylko,
+	     gdy PUBLIC_TURNSTILE_SITE_KEY jest ustawione (zob. .env.example). Widget sam wstrzykuje
+	     ukryte pole <input name="cf-turnstile-response">, które trafia do FormData razem
+	     z resztą formularza, bo siedzi w środku <form>. -->
+	{turnstileSiteKey && (
+		<div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-testid="contact-turnstile"></div>
+	)}
+
 	<div class="flex flex-col items-start gap-3">
 		<button
 			type="submit"
@@ -96,9 +113,11 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 	const tekstPrzycisku = przycisk.textContent ?? "Wyślij wiadomość";
 	const statusFormularza = document.getElementById("status-formularza")!;
 
-	// ID Formspree wraca do nas z serwera (Astro frontmatter) przez atrybut data-*,
-	// bo zwykła stała z frontmatteru nie jest widoczna w tym skrypcie (inne środowisko wykonania).
+	// ID Formspree i flaga Turnstile wracają do nas z serwera (Astro frontmatter) przez
+	// atrybuty data-*, bo zwykła stała z frontmatteru nie jest widoczna w tym skrypcie
+	// (inne środowisko wykonania).
 	const formspreeId = formularz.dataset.formspreeId ?? "";
+	const turnstileWlaczony = formularz.dataset.turnstileEnabled === "true";
 
 	// JS przejmuje walidację od przeglądarki — patrz komentarz w markupie wyżej.
 	formularz.noValidate = true;
@@ -197,6 +216,15 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 		if (rodzaj === "blad") statusFormularza.classList.add("text-red-700");
 	}
 
+	// Token Turnstile trafia asynchronicznie do ukrytego pola <input name="cf-turnstile-response">
+	// wewnątrz .cf-turnstile, gdy odwiedzający "przejdzie" weryfikację (zwykle ułamek sekundy,
+	// bez żadnej interakcji przy trybie Managed).
+	function tokenTurnstileGotowy(): boolean {
+		if (!turnstileWlaczony) return true;
+		const pole = formularz.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]');
+		return Boolean(pole?.value);
+	}
+
 	formularz.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
@@ -208,6 +236,12 @@ const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : 
 		if (!formspreeId) {
 			ustawStatus("Formularz nie jest jeszcze skonfigurowany — brak PUBLIC_FORMSPREE_ID w .env.", "blad");
 			console.warn("ContactForm: uzupełnij PUBLIC_FORMSPREE_ID w pliku .env (zob. .env.example).");
+			return;
+		}
+
+		if (!tokenTurnstileGotowy()) {
+			ustawStatus("Poczekaj chwilę — trwa weryfikacja, że nie jesteś robotem, i spróbuj wysłać ponownie.", "blad");
+			console.warn("ContactForm: token Turnstile jeszcze niegotowy (albo widget się nie załadował).");
 			return;
 		}
 

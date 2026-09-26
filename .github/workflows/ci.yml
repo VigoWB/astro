@@ -30,7 +30,20 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+      
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_FORMSPREE_ID: ${{ secrets.PUBLIC_FORMSPREE_ID }}
+          PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
+          PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA'
 
+      - name: Run tests
+        run: npm run test
+        env:
+          PUBLIC_FORMSPREE_ID: ${{ secrets.PUBLIC_FORMSPREE_ID }}
+          PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
+          PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA'  
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

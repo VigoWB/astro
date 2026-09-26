@@ -6,7 +6,7 @@ import Container from "../components/ui/Container.astro";
 import SEO from "../components/SEO.astro";
 import Schema from "../components/Schema.astro";
 
-const { title, frontmatter, description, image, canonicalURL, zdjecia, breadcrumbs } = Astro.props;
+const { title, frontmatter, description, image, canonicalURL, zdjecia, breadcrumbs, turnstile } = Astro.props;
 const pageTitle = title ?? frontmatter?.title ?? "Wiktor — Fotografia";
 const pageDescription = description ?? frontmatter?.description ?? "Portfolio fotograficzne Wiktora.";
 
@@ -30,6 +30,13 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		<meta name="generator" content={Astro.generator} />
 		<!-- Preload OG image for better LCP/SEO -->
 		<link rel="preload" as="image" href="/og-default.jpg" fetchpriority="high" />
+		{turnstile && (
+			<>
+				{/* Cloudflare Turnstile — ochrona formularza kontaktowego przed botami, patrz ContactForm.astro */}
+				<link rel="preconnect" href="https://challenges.cloudflare.com" />
+				<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+			</>
+		)}
 		{cfBeaconToken && (
 			<script
 				defer

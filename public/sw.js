@@ -1,10 +1,14 @@
 // Minimalny service worker dla offline mode - bez sztywnych ścieżek do plików
-// Pliki statyczne są pobierane dynamicznie z public/ podczas buildu
+// Pliki statyczne są pobierane dynamicznie z public/ podczas buildu.
+//
+// Zdjęcia galerii leżą na R2 (inna domena niż strona) — cache'ujemy je
+// osobno, w trybie "no-cors" (R2 nie ma włączonego CORS, więc normalny
+// fetch() zostałby zablokowany; "opaque" odpowiedź da się jednak zapisać
+// w cache i pokazać jako obrazek, mimo że nie znamy jej statusu/kodu HTTP).
 
-const CACHE_NAME = 'foto-v1';
+const CACHE_NAME = 'foto-v2';
 
 self.addEventListener('install', (event) => {
-  // Rejestrujemy service worker
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll([
       '/',
@@ -39,23 +43,16 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      )
-    ).then(() => self.clients.claim())
-  );
-});
-
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  if (url.origin !== location.origin) {
+  const wlasnaDomena = url.origin === location.origin;
+  // Jedyny typ cross-origin requestu, który chcemy cache'ować: obrazek
+  // (czyli zdjęcie z R2). Fonty/analityka z innych domen zostają nietknięte.
+  const obcyObrazek = !wlasnaDomena && request.destination === 'image';
+
+  if (!wlasnaDomena && !obcyObrazek) {
     return;
   }
 
@@ -65,14 +62,20 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      return fetch(request)
+      const zadanieSieciowe = obcyObrazek
+        ? new Request(request, { mode: 'no-cors' })
+        : request;
+
+      return fetch(zadanieSieciowe)
         .then((networkResponse) => {
-          if (
-            networkResponse.ok &&
-            (request.destination === 'image' ||
-              request.destination === 'style' ||
-              request.destination === 'script')
-          ) {
+          const wartoZapisac = obcyObrazek
+            ? networkResponse.type === 'opaque'
+            : networkResponse.ok &&
+              (request.destination === 'image' ||
+                request.destination === 'style' ||
+                request.destination === 'script');
+
+          if (wartoZapisac) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, responseClone);

@@ -5,6 +5,8 @@ interface ImportMetaEnv {
 	readonly PUBLIC_FORMSPREE_ID: string;
 	/** Publiczny adres bucketa R2 ze zdjęciami, bez ukośnika na końcu (np. https://pub-xxxx.r2.dev). Po założeniu własnej subdomeny wystarczy podmienić tę zmienną. */
 	readonly PUBLIC_R2_URL: string;
+	/** Site key (publiczny) z Cloudflare Turnstile — zabezpiecza formularz kontaktowy. */
+	readonly PUBLIC_TURNSTILE_SITE_KEY: string;
 }
 
 interface ImportMeta {

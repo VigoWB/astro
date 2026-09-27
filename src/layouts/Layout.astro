@@ -28,8 +28,6 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 		<meta name="apple-mobile-web-app-title" content="Wiktor Foto" />
 		<meta name="generator" content={Astro.generator} />
-		<!-- Preload OG image for better LCP/SEO -->
-		<link rel="preload" as="image" href="/og-default.jpg" fetchpriority="high" />
 		{turnstile && (
 			<>
 				{/* Cloudflare Turnstile — ochrona formularza kontaktowego przed botami, patrz ContactForm.astro */}

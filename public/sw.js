@@ -6,7 +6,7 @@
 // fetch() zostałby zablokowany; "opaque" odpowiedź da się jednak zapisać
 // w cache i pokazać jako obrazek, mimo że nie znamy jej statusu/kodu HTTP).
 
-const CACHE_NAME = 'foto-v2';
+const CACHE_NAME = 'foto-v3';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -56,6 +56,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Nawigacja (strony HTML) — network-first: po każdym deployu ma być
+  // widoczna świeża treść, cache to tylko zapasowa opcja przy braku sieci.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return networkResponse;
+        })
+        .catch(() =>
+          caches.match(request).then(
+            (cachedResponse) => cachedResponse || caches.match('/offline.html')
+          )
+        )
+    );
+    return;
+  }
+
+  // Pozostałe zasoby (pliki z hashem w /_astro/, zdjęcia) — cache-first,
+  // bo pod tym samym URL-em zawsze mają tę samą treść.
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -83,12 +106,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => {
-          if (request.mode === 'navigate') {
-            return caches.match('/offline.html');
-          }
-          return new Response('Offline', { status: 503 });
-        });
+        .catch(() => new Response('Offline', { status: 503 }));
     })
   );
 });

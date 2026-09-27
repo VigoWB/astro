@@ -1,465 +1,263 @@
-# ⚠️ ZASADA #1 — JĘZYK: TYLKO POLSKI
+# AGENTS.md — portfolio fotograficzne Wiktora (foto.vigolab.ovh)
 
-**Ta zasada jest nadrzędna wobec wszystkiego innego w tym pliku.**
+## ⚠️ ZASADA #1 — PISZESZ TYLKO PO POLSKU
 
-Cała treść Twojej odpowiedzi — wyjaśnienia, plan, pytania, komentarze do zmian, podsumowania — ma być w 100% po polsku. Bez wyjątków i bez mieszania języków w jednej odpowiedzi.
+Każde zdanie skierowane do mnie (plan, pytanie, wyjaśnienie, podsumowanie, komentarz w kodzie) jest po polsku. Bez mieszania języków.
 
-Jedyne dopuszczalne fragmenty po angielsku:
-- nazwy zmiennych, funkcji, plików, klas CSS (konwencja programistyczna projektu)
-- sam kod źródłowy
-- nazwy technologii/bibliotek (Astro, Tailwind, itd.)
-- komendy terminala (`npm run build` itd.)
+Po angielsku zostaje tylko: kod, nazwy technologii i bibliotek (Astro, Tailwind), komendy terminala, nazwy z zewnętrznych API (`addEventListener`, `srcset`).
 
-Wszystko poza tym musi być po polsku — łącznie z komentarzami w kodzie, jeśli piszesz komentarz wyjaśniający coś człowiekowi.
+**Nazwy w kodzie, które tworzysz sam** (zmienne, funkcje, pliki komponentów, klucze w JSON), też piszesz **po polsku**: tak jest napisany cały projekt (`zdjecia`, `adresZdjec`, `formatujExif`, `Karta.astro`, `NA_STRONE`). Trzymaj się tej konwencji.
 
-**Zanim wyślesz odpowiedź, sprawdź ją.** Jeśli zacząłeś pisać po angielsku — nie tłumacz połowy zdań, napisz odpowiedź od nowa po polsku. Częściowo przetłumaczona odpowiedź się nie liczy.
+Jeśli zacząłeś odpowiadać po angielsku, napisz odpowiedź od nowa po polsku zamiast tłumaczyć ją w połowie.
 
 ---
 
-# AGENTS.md — Astro Photography Portfolio
+## 1. Jak pracujemy
 
+- **Ja (Wiktor)** nie znam się na kodzie. Zlecam pracę i akceptuję zmiany.
+- **Ty (OpenCode)** jesteś wykonawcą. Piszesz kod w moim edytorze i robisz commity.
+- **Claude (w claude.ai)** jest architektem. Planuje większe zmiany, robi code review i sprawdza build po moim pushu.
 
-> **INSTRUKCJA DLA AGENTA**: Wyjaśniaj mi dokładnie na czym polegają zmiany zanim je będę akceptował — nie znam się na pisaniu kodu.
-
----
-
-## 1. PROJECT_META
-
-- **Stack**: Astro 7.x + Tailwind CSS v4 (Vite plugin) + TypeScript (strict)
-- **Purpose**: Static photography portfolio (Home, Galeria, O mnie, Kontakt)
-- **Output**: `dist/` (static) — `astro build` → deploy anywhere
-- **Entry**: `src/pages/index.astro` (root), file-based routing
-- **Config**: `astro.config.mjs` (site URL, sitemap, Tailwind)
-- **Env**: `.env` → `PUBLIC_FORMSPREE_ID` (Formspree endpoint)
+Zasady:
+- Rób **tylko to, o co poproszono**. Żadnych poprawek „przy okazji” w innych plikach. Jeśli coś zauważysz, napisz o tym na końcu odpowiedzi.
+- **Zatrzymaj się i zapytaj**, zanim: dodasz nowy pakiet npm, zmienisz przepływ zdjęć, dodasz zewnętrzną usługę, usuniesz plik albo zmienisz coś w `.github/`, `astro.config.mjs` lub `public/_headers`. Opisz propozycję, ale jej nie wdrażaj.
+- **Przed zmianą** pokaż krótki plan: 2–4 punkty, co i gdzie zmienisz, zwykłym językiem.
 
 ---
 
-## 2. ARCHITECTURE
+## 2. Czego NIGDY nie robić
 
-### File Tree (src/)
+1. **Nie wykonuj `git push`.** Nigdy. Wypycham zmiany sam.
+2. **Nie importuj niczego z folderu `images/`** w `src/`. Tego folderu nie ma w gicie ani na Cloudflare Pages, więc build na produkcji się wysypie.
+3. **Nie edytuj ręcznie `src/data/galeria.json`.** Plik generuje `npm run sync-images`.
+4. **Nie dodawaj adaptera `@astrojs/cloudflare`, SSR ani `output: "server"`.** Strona jest w pełni statyczna.
+5. **Nie pisz składni Tailwind v3.** Nie ma `tailwind.config.js` ani `@tailwind base`. Kolory są w `@theme` w `global.css`. Zamienniki:
+   - `bg-opacity-50` → `bg-black/50`
+   - `flex-shrink-0` / `flex-grow` → `shrink-0` / `grow`
+   - `shadow-sm` → `shadow-xs`, `shadow` → `shadow-sm` (tak samo `rounded` i `blur`)
+   - `bg-gradient-to-r` → `bg-linear-to-r`
+   - `ring` (3 px) → `ring-3`
+6. **W pliku `.astro` kod JS/TS może być tylko w dwóch miejscach:**
+   - między `---` na górze pliku (wykonuje się przy budowaniu),
+   - w znaczniku `<script>` (wykonuje się w przeglądarce).
+
+   Nigdy luzem w HTML. Zmiennych z `---` nie ma w `<script>`, więc przekazuj je przez atrybuty `data-*`.
+7. **Nie czytaj na głos, nie wypisuj i nie commituj pliku `.env`.** Są w nim klucze.
+8. **Nie usuwaj atrybutów `data-testid`.** Opierają się na nich testy.
+9. **Nie dodawaj logiki układu (flex, grid) do `Container.astro`.** Ma zostać prostym opakowaniem szerokości.
+10. **Nie używaj `git add -A`.** Folder `test-results/` nie jest w `.gitignore` i wpadłby do repo.
+
+---
+
+## 3. Po każdej zmianie: sprawdź, potem commit
+
+1. Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build i odpali testy Playwright).
+2. **Jeśli build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
+3. `git status`, żeby zobaczyć, co się zmieniło.
+4. `git add <konkretne pliki>`.
+5. `git commit -m "fix: krótki opis po polsku"`. Przedrostki: `feat:` (nowa funkcja), `fix:` (poprawka), `chore:` (porządki), `docs:`, `test:`.
+
+Commit robisz automatycznie, bez pytania. O zgodę pytasz tylko przy samej zmianie w kodzie. Jeden commit to jedna zamknięta zmiana.
+
+---
+
+## 4. Jak mi raportować zmianę
+
+Każdą odpowiedź po zmianie w kodzie kończysz tym szablonem (przy drobiazgach wystarczy jedno zdanie na punkt):
 
 ```
+Co się zmieniło: [jak to wygląda/działa w przeglądarce, bez nazw plików i klas]
+Dlaczego tak: [tylko jeśli był realny wybór między podejściami, inaczej pomiń]
+Build/testy: [✅ przeszły / ❌ co nie przeszło]
+Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersję mobilną"]
+```
+
+- Tłumacz efekt, a nie implementację. Szczegóły techniczne podawaj tylko, jeśli o nie zapytam.
+- Jeśli potrzebna jest moja decyzja (układ, kolor, tekst), zadaj pytanie wprost i nie idź dalej bez odpowiedzi.
+
+---
+
+## 5. Projekt w skrócie
+
+- **Stos:** Astro 7, Tailwind CSS v4 (`@tailwindcss/vite`), TypeScript strict, Node 22.5+ (skrypty używają `node:sqlite`)
+- **Hosting:** Cloudflare Pages, automatyczny deploy z brancha `main`, statyczny `dist/`
+- **Usługi:** Cloudflare R2 (zdjęcia), Formspree (formularz), Cloudflare Turnstile (ochrona formularza), Cloudflare Web Analytics
+- **Poza zakresem:** blog i pobieranie zdjęć przez odwiedzających (celowo utrudniamy kopiowanie). Opinie klientów i link do Instagrama są odłożone na później.
+
+### Zmienne środowiskowe (`.env`, wzór w `.env.example`, typy w `env.d.ts`)
+
+| Zmienna | Czy wymagana | Do czego |
+|---|---|---|
+| `PUBLIC_R2_URL` | **tak**, bez niej build się przerywa | adres bucketa R2 ze zdjęciami |
+| `PUBLIC_FORMSPREE_ID` | tak (formularz) | samo ID formularza, nie cały URL |
+| `PUBLIC_TURNSTILE_SITE_KEY` | nie | bez niej widget Turnstile się nie pokazuje |
+| `PUBLIC_CF_BEACON_TOKEN` | nie | analityka Cloudflare |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | tylko dla `sync-images` | **sekrety**, nigdy z przedrostkiem `PUBLIC_` |
+
+### Komendy
+
+- `npm run dev`: serwer deweloperski (localhost:4321)
+- `npm run build`: build do `dist/`
+- `npm run preview`: podgląd buildu (localhost:4322)
+- `npm run test`: build, potem testy Playwright (Chrome desktop i mobile, testy dostępności axe)
+- `npm run sync-images`: dodaje nowe zdjęcia z `images/` (uruchamiam ja, nie Ty)
+- `npm run sync-images -- --uzupelnij`: dopytuje o brakujące opisy i kategorie
+
+---
+
+## 6. Struktura plików
+
+```
+.agents/skills/            instrukcje dla agentów dotyczące Astro (patrz sekcja 11)
+.github/workflows/ci.yml   build + Lighthouse + testy przy każdym pushu i PR
+public/
+  _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
+  sw.js                    service worker (offline), ma ręczną listę stron
+  manifest.webmanifest, offline.html, ikony, og-default.jpg, robots.txt
+scripts/
+  sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
+  update-exif.mjs          jednorazowy: odświeża dane EXIF z plików "przed"
+  ustaw-opisy-testowe.mjs  jednorazowy: opisy 9 zdjęć testowych
+  start-preview-if-needed.sh  uruchamia podgląd dla testów
 src/
-├── layouts/
-│   ├── Layout.astro         # Base HTML, <head>, Header, Footer, <slot>
-│   └── ArticleLayout.astro  # Wraps Layout, adds <article class="prose">
-├── pages/
-│   ├── index.astro          # Home
-│   ├── galeria.astro        # Gallery (loads images via glob, passes to Galeria)
-│   ├── kontakt.astro        # Contact (uses ContactForm)
-│   └── o-mnie.md            # Markdown + frontmatter → ArticleLayout
-├── components/
-│   ├── Header.astro         # Sticky nav, parallax, mobile hamburger, ARIA
-│   ├── Footer.astro         # Copyright + social links
-│   ├── SEO.astro            # Meta, OG, Twitter, canonical
-│   ├── Schema.astro         # JSON-LD (Person, ProfessionalService, ImageGallery)
-│   ├── Galeria.astro        # Masonry grid + IntersectionObserver fade-in + Lightbox
-│   ├── ContactForm.astro    # Formspree AJAX, JS validation, honeypot
-│   └── ui/
-│       ├── Container.astro  # max-w-240 mx-auto px-4
-│       └── Karta.astro      # Gallery card (button + Image + caption)
-├── data/
-│   └── siteConfig.json      # Person, Business, Gallery config for Schema/SEO
-├── styles/
-│   └── global.css           # @import tailwindcss; @theme (CSS vars)
-└── env.d.ts                 # Astro types
-```
-
-### Module Graph (imports)
-
-```
-Layout.astro
-  ├─ Header.astro
-  ├─ Footer.astro
-  ├─ SEO.astro
-  ├─ Schema.astro
-  └─ Container.astro
-
-galeria.astro
-  └─ Galeria.astro
-       └─ Karta.astro
-
-kontakt.astro
-  └─ ContactForm.astro
-
-o-mnie.md → ArticleLayout.astro → Layout.astro
-```
-
-### Data Flow
-
-```
-siteConfig.json → Schema.astro (Person, Business, ImageGallery)
-                → SEO.astro (fallback title/desc)
-
-galeria.astro: import.meta.glob() → zdjecia[] → Galeria.astro → Karta.astro
-ContactForm: PUBLIC_FORMSPREE_ID → Formspree API
+  assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.md i Schema.astro)
+  components/
+    Header.astro           menu, hamburger na mobile, paralaksa
+    Footer.astro
+    SEO.astro              meta, Open Graph, Twitter, canonical
+    Schema.astro           dane strukturalne JSON-LD
+    Galeria.astro          siatka, filtry, "Załaduj więcej", lightbox
+    ContactForm.astro      formularz Formspree + walidacja + Turnstile
+    ui/Container.astro     tylko max-w-240 mx-auto px-4
+    ui/Karta.astro         kafelek zdjęcia w galerii
+  data/
+    galeria.json           GENEROWANY, nie edytuj ręcznie
+    kategorie.ts           przyciski filtrów galerii
+    nav.ts                 linki w menu
+    siteConfig.json        dane osoby i firmy dla Schema/SEO
+  layouts/Layout.astro, ArticleLayout.astro
+  pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
+  styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
+tests/a11y.spec.ts, galeria.spec.ts, kontakt.spec.ts
+env.d.ts                   typy zmiennych środowiskowych
+images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
 ---
 
-## 3. DEPENDENCY_GRAPH
-
-### Import Graph (ASCII)
+## 7. Przepływ zdjęć
 
 ```
-src/layouts/Layout.astro
-├── ../components/Header.astro
-├── ../components/Footer.astro
-├── ../components/SEO.astro
-├── ../components/Schema.astro
-└── ../components/ui/Container.astro
-
-src/components/Header.astro
-└── ../components/ui/Container.astro
-
-src/components/Schema.astro
-└── ../data/siteConfig.json  (import json)
-
-src/pages/index.astro
-└── ../layouts/Layout.astro
-
-src/pages/galeria.astro
-├── ../layouts/Layout.astro
-└── ../components/Galeria.astro
-     └── ./ui/Karta.astro
-          └── astro:assets (Image)
-
-src/pages/kontakt.astro
-├── ../layouts/Layout.astro
-└── ../components/ContactForm.astro
-
-src/pages/o-mnie.md
-└── ../layouts/ArticleLayout.astro
-     └── ./Layout.astro
+images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
+  → npm run sync-images
+      ├─ wysyła pliki do Cloudflare R2
+      ├─ zapisuje dane (opis, kategorie, wymiary, EXIF) do data/galeria.db
+      └─ eksportuje src/data/galeria.json   ← to trafia do gita
+  → src/pages/galeria.astro czyta galeria.json i skleja adresy z PUBLIC_R2_URL
+  → Galeria.astro → Karta.astro (<Image> z astro:assets robi miniatury przy buildzie)
 ```
 
-### Mermaid
-
-```mermaid
-graph TD
-    Layout[Layout.astro] --> Header[Header.astro]
-    Layout --> Footer[Footer.astro]
-    Layout --> SEO[SEO.astro]
-    Layout --> Schema[Schema.astro]
-    Layout --> Container[Container.astro]
-    
-    Header --> Container
-    
-    Schema --> SiteConfig[(siteConfig.json)]
-    
-    Index[index.astro] --> Layout
-    
-    GaleriaPage[galeria.astro] --> Layout
-    GaleriaPage --> Galeria[Galeria.astro]
-    Galeria --> Karta[Karta.astro]
-    Karta --> AstroAssets[astro:assets]
-    
-    Kontakt[kontakt.astro] --> Layout
-    Kontakt --> ContactForm[ContactForm.astro]
-    
-    Omnie[o-mnie.md] --> ArticleLayout[ArticleLayout.astro]
-    ArticleLayout --> Layout
-```
-
-### External Dependencies
-
-| Package | Purpose | Used In |
-|---------|---------|---------|
-| `astro` | Framework core | All `.astro` files |
-| `@astrojs/sitemap` | `sitemap-index.xml` generation | `astro.config.mjs` |
-| `@tailwindcss/vite` | Tailwind v4 Vite plugin | `astro.config.mjs` |
-| `tailwindcss` | CSS framework | `global.css` |
-| `@tailwindcss/typography` | `prose` class | `global.css`, `ArticleLayout.astro` |
-
-### Data Dependencies
-
-```
-siteConfig.json
-  ├─ person → Schema (Person), SEO (fallback)
-  ├─ business → Schema (ProfessionalService)
-  └─ gallery → Schema (ImageGallery)
-
-PUBLIC_FORMSPREE_ID (.env)
-  └─ ContactForm → Formspree API endpoint
-
-src/data/galeria.json + PUBLIC_R2_URL (.env)
-  └─ Galeria (po/przed) — same pliki zdjęć leżą w Cloudflare R2
-
-images/ — TYLKO lokalnie (w .gitignore), źródło dla `npm run sync-images`.
-  Nic w src/ nie może importować plików z images/ — na Cloudflare Pages tego folderu nie ma.
-
-src/assets/moje-zdjecie.jpg → Schema (Person.image), o-mnie.md
-```
-
-### Critical Path (build-time)
-
-```
-astro build
-  ├─ import.meta.glob(images/) → Galeria data
-  ├─ Schema.astro imports siteConfig.json
-  ├─ SEO.astro uses Astro.site + Astro.url
-  └─ Tailwind scans all .astro for classes → CSS
-```
+- Komponenty zawsze opierają się na `galeria.json`, nigdy na bazie SQLite.
+- `astro.config.mjs` buduje `image.remotePatterns` z `PUBLIC_R2_URL`. Przy zmianie domeny zdjęć zmienia się tylko zmienną.
+- EXIF czytany jest z pliku „przed” (oryginał z aparatu), jeśli taki istnieje.
 
 ---
 
-## 4. CONVENTIONS (hard rules)
+## 8. Konwencje kodu
 
-### TypeScript
-- `extends: "astro/tsconfigs/strict"` — no `any`, explicit return types on exported functions
-- Props interfaces in same file (see `SEO.astro:5-12`, `Schema.astro:12-20`)
-- `Astro.props` destructuring with defaults
+**TypeScript**
+- Każdy komponent ma `interface Props` w tym samym pliku, a `Astro.props` jest destrukturyzowane z domyślnymi wartościami.
+- Żadnego `any`. W skryptach przeglądarki stosuj rzutowania typu `as HTMLImageElement`.
 
-### Imports
-- Relative paths (`../components/...`) — no `@/` alias configured
-- `astro:assets` for images (`import { Image } from 'astro:assets'`)
-- JSON via `import siteConfig from "../data/siteConfig.json"` (type-safe via `env.d.ts`)
+**Komponenty i importy**
+- Wszystko w `.astro`, bez React/Vue.
+- Ścieżki względne (`../components/...`), bez aliasu `@/`.
+- `ui/` to proste komponenty wizualne, `components/` to komponenty z logiką.
+- `<script>` zostaje w tym samym pliku `.astro`.
 
-### Components
-- `.astro` for everything (UI + logic + style + script)
-- Frontmatter (`---`) for server logic, `<script>` for client logic
-- `<style>` scoped by default (no CSS modules needed)
-- Single default export (the component itself)
+**Style**
+- Tylko klasy Tailwind v4 i tokeny z `@theme`: `paper`, `ink`, `muted`, `card`, `accent`, `line`.
+- Bez stylów inline, z wyjątkiem `transform` ustawianego ze skryptu.
+- Podejście mobile-first: bazowe klasy są dla telefonu, a `md:`, `lg:` dla większych ekranów.
 
-### Styling
-- Tailwind v4 via `@import "tailwindcss"; @plugin "@tailwindcss/typography";`
-- Design tokens in `@theme` block (`global.css:4-11`) — CSS variables only
-- No inline styles except `style="transform: ..."` in client scripts
-- `prose` class from `@tailwindcss/typography` for markdown content
+**Dostępność (obowiązkowo, testy to sprawdzają)**
+- Każdy interaktywny element ma etykietę (`aria-label` albo widoczny tekst).
+- Widoczny fokus przez `focus-visible:ring-2 focus-visible:ring-accent`.
+- Szanuj `prefers-reduced-motion`: animacje przez `motion-safe:` albo sprawdzenie w skrypcie.
+- Semantyczny HTML: `<nav>`, `<main>`, `<article>`, `<footer>`, `<button type="button">`.
+- Kontrast tekstu do tła co najmniej 4.5:1.
 
-### Accessibility (non-negotiable)
-- ARIA labels on all interactive elements (Header, Lightbox, Form)
-- `prefers-reduced-motion` respected (Header parallax, Galeria fade-in)
-- `focus-visible` via Tailwind (`focus:border-accent focus:ring-2 focus:ring-accent`)
-- Alt text fallback: `alt={opis || "Zdjęcie z portfolio fotograficznego Wiktora"}` (Karta.astro:18)
-- Semantic HTML: `<nav>`, `<main>`, `<article>`, `<footer>`, `<button type="button">`
-
-### Images
-- `import.meta.glob(..., { eager: true })` for build-time asset loading
-- `astro:assets` `<Image>` with `width`, `height`, `loading="lazy"`, `decoding="async"`
-- Before/after pairing by filename convention: `DSC_*.jpg` + `przed_DSC_*.jpg`
-
-### Scripts
-- Inline `<script>` in same `.astro` file (no separate `.ts` files)
-- Type assertions: `as HTMLImageElement`, `as HTMLFormElement`
-- Event listeners with `{ passive: true }` where applicable
-- Cleanup: `IntersectionObserver.unobserve()`, `removeEventListener` not needed (page unload)
+**Obrazy**
+- `<Image>` / `<Picture>` z `astro:assets` z `width`, `height`, `loading="lazy"`, `decoding="async"`.
+- Pierwsze zdjęcie na stronie ładuje się `eager` z `fetchpriority="high"`.
+- Zdjęcia galerii mają `draggable="false"`, a prawy klik jest zablokowany (ochrona przed kopiowaniem, nie usuwaj).
 
 ---
 
-## 5. MECHANISMS (reference)
+## 9. Jak działają kluczowe elementy
 
-### Header (Header.astro)
-- **Sticky bar**: 60px (`h-15`), `overflow-hidden` on inner div only (allows mobile dropdown)
-- **Parallax**: `scrollY * 0.25` capped at 10px, `requestAnimationFrame` throttled, shadow after 12px scroll
-- **Mobile menu**: Hamburger button toggles `#menu-mobilne` (hidden md:hidden), ARIA expanded/controls
-- **Close triggers**: link click, Escape key, resize > 48rem (md breakpoint)
+**Header.astro:** pasek `h-15`, linki z `nav.ts`, aktywny link dostaje `aria-current="page"`. Paralaksa `scrollY * 0.25` (maks. 10 px) przez `requestAnimationFrame`. Hamburger przełącza klasę `hidden` na menu mobilnym, a klasa `md:hidden` zostaje na stałe. Menu zamyka kliknięcie w link, Escape albo poszerzenie okna. Menu ma focus trap.
 
-### Galeria (Galeria.astro)
-- **Layout**: CSS columns (`columns-2 md:columns-3 gap-6`) — masonry without JS
-- **Fade-in**: `IntersectionObserver` (threshold 0.15, rootMargin -60px)
-  - Row-based stagger: `getBoundingClientRect().top` grouped by 24px tolerance → `transitionDelay` 60ms/row max 360ms
-  - Recalculated on `window.load` (images may shift layout)
-- **Lightbox**: Single shared DOM (`#lightbox`), swaps `src` on click
-  - Desktop: `mouseenter`/`mouseleave` → przed/po
-  - Mobile: `touchstart` (preventDefault) / `touchend` / `touchcancel`
-  - Close: backdrop click, Escape, close button
+**Galeria.astro**
+- Siatka to kolumny CSS (`columns-2` … `2xl:columns-6`), bez JS.
+- Na start widać `NA_STRONE` (8) zdjęć, reszta ma `hidden`. O tym, co jest widoczne, decyduje jedna funkcja (filtr + „Załaduj więcej”).
+- Filtry porównują `data-kategoria` karty z przyciskami z `kategorie.ts`.
+- Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.
+- Efekt „wyostrzenia” miniatury: klasy startowe są w `Karta.astro`, a zdejmuje je skrypt w `Galeria.astro` (nie `onload` w HTML).
+- Lightbox jest jeden, wspólny, i podmienia `src`. Wersja „przed” pojawia się na `mouseenter` / `touchstart`. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
 
-### ContactForm (ContactForm.astro)
-- **Validation**: JS takes over (`form.noValidate = true`)
-  - Per-field: `blur` = show errors, `input` = update existing errors only
-  - Regex email: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-  - Polish messages, `aria-live="polite"` on error spans
-- **Submit**: `fetch` to Formspree (`Accept: application/json`)
-  - Success: reset form, clear errors, green status
-  - Error: parse Formspree `errors[]` or generic message
-- **Honeypot**: `<input name="_gotcha" class="hidden" aria-hidden="true">`
+**ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em.
 
-### Schema (Schema.astro)
-- Always outputs: `Person` + `ProfessionalService`
-- Conditional: `ImageGallery` only if `zdjecia` prop passed (galeria.astro does)
-- URLs absolutized via `new URL(..., Astro.site)`
-- Injected as `<script type="application/ld+json" set:html={JSON.stringify(...)}>`
+**Schema.astro:** zawsze `Person` i `ProfessionalService`. `ImageGallery` pojawia się, gdy strona przekaże `zdjecia`, a `BreadcrumbList`, gdy przekaże `breadcrumbs`. Dane pochodzą z `siteConfig.json`, a adresy są absolutne przez `Astro.site`.
 
-### SEO (SEO.astro)
-- Canonical: `canonicalURL` prop or `new URL(Astro.url.pathname, Astro.site)`
-- OG image: `image` prop or `/og-default.jpg` → absolutized
-- Twitter: `summary_large_image`
-- Locale: `pl_PL`
+**SEO.astro:** canonical z propa albo z `Astro.url.pathname` + `Astro.site`. Obraz OG domyślnie `/og-default.jpg`. Locale `pl_PL`.
 
 ---
 
-## 6. COMMON_TASKS (recipes)
+## 10. Przepisy
 
-### Add a new page
-1. Create `src/pages/nazwa.astro` (or `.md` for content)
-2. Import `Layout` (or `ArticleLayout` for articles)
-3. Pass `title`, `description` to Layout
-4. Add nav link in `src/data/nav.ts` (see Faza 1 plan)
+**Nowe zdjęcie w galerii:** robię to ja. Wrzucam plik do `images/`, uruchamiam `npm run sync-images` i commituję `src/data/galeria.json`. W kodzie nic nie trzeba zmieniać.
 
-### Add gallery image
-1. Add `DSC_XXXX.jpg` + `przed_DSC_XXXX.jpg` to `images/`
-2. Add entry to `opisy` object in `galeria.astro:10-20`
-3. Build — `import.meta.glob` picks up automatically
+**Nowa podstrona:**
+1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
+2. Dodaj link w `src/data/nav.ts`.
+3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v2` → `foto-v3`).
+4. Dopisz adres do `PAGES` w `tests/a11y.spec.ts` i do `url` w `lighthouserc.json`.
 
-### Modify Schema.org data
-1. Edit `src/data/siteConfig.json` (Person, Business, Gallery)
-2. For page-specific: pass `zdjecia` prop to `<Schema />` in Layout
+**Nowa zmienna środowiskowa:**
+1. Dodaj ją do `env.d.ts` (z opisem po polsku) i do `.env.example`.
+2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w obu krokach (`Build` i `Run tests`) w `.github/workflows/ci.yml`.
+3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
 
-### Change colors/design tokens
-1. Edit `@theme` block in `src/styles/global.css:4-11`
-2. Values: `--color-paper`, `--color-ink`, `--color-muted`, `--color-card`, `--color-accent`, `--color-line`
+**Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Sprawdź kontrast.
 
-### Add form field
-1. Add HTML in `ContactForm.astro` (label, input, error span, `aria-describedby`)
-2. Add to `pola` object in script (`ContactForm.astro:103-116`)
-3. Add validation in `walidujPole()` (`ContactForm.astro:121-140`)
-4. Add event listeners in forEach (`ContactForm.astro:174-177`)
+**Nowe pole w formularzu:**
+1. Dodaj HTML: `label`, `input`, `span` na błąd z `aria-live`, `aria-describedby` i `data-testid`.
+2. Dodaj pole do obiektu `pola` w skrypcie.
+3. Dodaj regułę w funkcji `walidujPole()`.
+4. Dodaj test w `tests/kontakt.spec.ts`.
 
-### Update nav links (active state)
-1. Create `src/data/nav.ts` exporting `navLinks: {href, label}[]`
-2. Import in `Header.astro`, compute `isActive = link.href === Astro.url.pathname`
-3. Render `aria-current="page"` + style in `<style>` block
+**Dane dla Google (Schema.org):** `src/data/siteConfig.json`.
 
 ---
 
-## 7. CONFIG_AND_COMMANDS
+## 11. Pułapki
 
-### package.json scripts
-- `npm run dev` — `astro dev` (localhost:4321)
-- `npm run build` — `astro build` → `dist/`
-- `npm run preview` — `astro preview` (test build locally)
-- `npm run astro` — Astro CLI
-
-### Key config files
-- `astro.config.mjs`: `site` (canonical domain), `sitemap()`, Tailwind Vite plugin
-- `tsconfig.json`: extends `astro/tsconfigs/strict`
-- `.env`: `PUBLIC_FORMSPREE_ID` (required for contact form)
-- `.env.example`: template
-
-### Build output
-- Static files in `dist/`
-- Images optimized by Astro Assets → `dist/_astro/`
-- Sitemap at `dist/sitemap-index.xml`
+1. **Astro 7 jest nowy.** Twoja wiedza może dotyczyć starszej wersji. Jeśli nie masz pewności co do API Astro, przeczytaj `.agents/skills/docs-lookup/SKILL.md` i sprawdź w dokumentacji zamiast zgadywać. Przy review kodu korzystaj z `.agents/skills/astro-best-practices/SKILL.md`.
+2. **`Astro.url` a `Astro.site`:** `Astro.url` to adres bieżącej strony, a `Astro.site` to domena z konfiguracji. Absolutne adresy buduj przez `Astro.site`.
+3. **W `public/_headers` komentarz to tylko `#`.** Styl `/* */` Cloudflare czyta jako wzorzec ścieżki i nagłówki przestają działać.
+4. **W `astro.config.mjs` nie ma `import.meta.env`.** Zmienne wczytuje `loadEnv` z Vite.
+5. **Service worker ma ręczną listę stron.** Bez podbicia `CACHE_NAME` przeglądarki dalej trzymają starą wersję.
+6. **Formspree ID** to sam identyfikator (np. `xzznnkyq`), a nie pełny URL.
 
 ---
 
-## 8. EXTENSION_POINTS
+## 12. Tylko jeśli dodajesz do strony funkcję opartą o AI (zasady Fluent 2 RAI)
 
-### Add new schema type
-- Extend `Schema.astro` with new JSON-LD object
-- Pass required data via props from page
-
-### Add new UI component
-- Create in `src/components/ui/` (dumb) or `src/components/` (smart)
-- Follow existing pattern: frontmatter + template + optional `<style>` + optional `<script>`
-
-### Add new page type (e.g., blog)
-- Create layout in `src/layouts/` (e.g., `BlogLayout.astro`)
-- Add collection in `src/content/` (Astro Content Collections)
-- Update `Schema.astro` for `BlogPosting` type
-
-### Modify image processing
-- `galeria.astro` glob patterns (`DSC_*.jpg`, `przed_DSC_*.jpg`)
-- `Karta.astro` Image props (width, quality, formats)
-
----
-
-## 9. GOTCHAS (non-obvious behaviors)
-
-1. **Astro.url vs Astro.site**: `Astro.url` = current page URL (runtime), `Astro.site` = config.site (build-time). Schema/SEO use `Astro.site` for absolutizing.
-
-2. **import.meta.glob eager**: Loads ALL matched images at build. Large galleries → memory. Current: 12 images OK.
-
-3. **Script isolation**: `<script>` in `.astro` runs in browser only. Frontmatter variables NOT available — use `data-*` attributes (ContactForm: `data-formspree-id`).
-
-4. **CSS columns + IntersectionObserver**: Row detection uses `getBoundingClientRect().top` which changes on scroll. Recalculated once on `load` event.
-
-5. **Formspree ID**: Must be set in `.env` as `PUBLIC_FORMSPREE_ID` (only the ID, not full URL). Form falls back to native POST if JS fails.
-
-6. **Tailwind v4**: Uses `@import "tailwindcss"` + `@theme` — no `tailwind.config.js`. Custom colors = CSS variables.
-
-7. **Mobile hamburger**: `md:hidden` stays in class list permanently (CSS handles desktop hide). JS only toggles `hidden` class.
-
-8. **Lightbox single instance**: Reuses DOM, swaps `src`. Not mounted per image — memory efficient.
-
-9. **Polish locale**: Hardcoded in Schema (`pl_PL`), SEO (`pl_PL`), date format in `o-mnie.md` frontmatter (`DD-MM-YYYY`).
-
-10. **No test framework**: Manual verification via `npm run dev` + `npm run preview`.
-
----
-
-## 10. GIT_WORKFLOW (obowiązkowe zasady commitów)
-
-Po każdej zmianie w kodzie, którą zaakceptowałem:
-
-1. Wykonaj `git add <zmienione pliki>` (albo `git add -A`, jeśli zmiana obejmuje wiele plików naraz).
-2. Wykonaj `git commit -m "krótki, rzeczowy opis zmiany"`.
-3. **NIGDY nie wykonuj `git push`.** Wypchnięcie zmian na GitHub robię wyłącznie ja, ręcznie, kiedy sam zdecyduję.
-
-Zasady dodatkowe:
-- Rób `add` + `commit` **automatycznie**, bez pytania mnie o zgodę — o zgodę pytasz tylko przy akceptacji samej zmiany w kodzie, nie przy commicie.
-- Jeden commit = jedna sensowna, zamknięta zmiana (np. "dodanie filtra kategorii do galerii"), a nie jeden wielki commit na koniec sesji.
-- Jeśli zmiana obejmuje kilka plików, które logicznie do siebie pasują (np. komponent + jego test), wrzuć je do jednego commita.
-- Jeśli nie masz pewności, czy `git push` jest bezpieczne — nigdy nie zgaduj. Zawsze zakładaj "nie".
-
----
-
-## Tłumaczenie zmian – użytkownik nie zna się na kodowaniu ani projektowaniu
-
-Po **każdej** zmianie w kodzie (nowa funkcja, poprawka, refaktor, nawet jednolinijkowa) — bez wyjątków — kończysz odpowiedź poniższym szablonem. Nie pomijaj go, nawet gdy zmiana wydaje się banalna (literówka, kolor, tekst) — wtedy po prostu skróć go do 1 zdania, ale nie usuwaj całkowicie.
-
-**Obowiązkowy format:**
-
-```
-Co się zmieniło: [jak to teraz wygląda/działa w przeglądarce — nie nazwy plików/klas, tylko efekt "na oko"]
-Dlaczego tak: [jedno zdanie uzasadnienia — TYLKO jeśli był realny wybór między podejściami, inaczej pomiń tę linię]
-Co sprawdzić: [konkretna czynność, np. "odśwież stronę i zmniejsz okno przeglądarki, żeby zobaczyć wersję mobilną"]
-```
-
-Dodatkowe zasady:
-- Jeśli coś wymaga mojej decyzji (wybór layoutu, kolor, tekst) — zadaj pytanie wprost, w ramach tego samego podsumowania, i nie idź dalej bez odpowiedzi.
-- Unikaj rzucania samym kodem/diffem bez tego kontekstu. Traktuj mnie jak osobę zlecającą pracę wykonawcy, nie jak dewelopera.
-- Tłumacz efekt, nie implementację — chyba że sam dopytam "jak to zrobiłeś technicznie".
-
----
-
-## Język komunikacji
-
-Patrz **ZASADA #1 na samej górze tego pliku** — jest nadrzędna wobec wszystkiego poniżej.
-
-W skrócie: zawsze odpowiadaj po polsku – wyjaśnienia, plany, pytania, komentarze w czacie, podsumowania zmian. Nazwy zmiennych/klas/plików w kodzie zostają po angielsku (konwencja branżowa), ale każde zdanie skierowane do mnie ma być po polsku. Przed wysłaniem odpowiedzi sprawdź ją pod tym kątem.
-
----
-
-## Responsible AI – zasady UI dla funkcji AI (wg Fluent 2 RAI)
-
-Gdy projektujesz/kodujesz UI dla funkcji opartych o AI, agent musi:
-
-1. **Transparentność** – oznacz wizualnie każde miejsce, gdzie działa AI 
-   (badge/ikona/label). AI ma być wizualnie odróżnialne od treści/akcji człowieka.
-   Nigdy nie maskuj że coś jest generowane przez model.
-
-2. **Ton głosu** – zero antropomorfizacji. Bez "czuję", "myślę", "chcę". 
-   Komunikaty opisują działanie faktycznie ("Wygenerowano podsumowanie"), 
-   nie emocjonalnie ("Cieszę się, że mogę pomóc!").
-
-3. **Ustaw oczekiwania** – przy każdym punkcie wejścia do funkcji AI pokaż 
-   krótko: co robi, jakich danych/źródeł używa, jakie ma ograniczenia. 
-   Dla agentów z autonomią: pokaż wyraźnie trigger, uprawnienia dostępu, 
-   zakres akcji zanim je wykona.
-
-4. **Przeciwdziałaj nadmiernemu zaufaniu** – output AI ma disclaimer 
-   ("może zawierać błędy, zweryfikuj"), źródła muszą być widoczne 
-   i możliwe do zweryfikowania. Nie prezentuj wyniku AI jako ostatecznego faktu.
-
-5. **Kontrola użytkownika** – każda akcja agenta wymaga jasnej etykiety 
-   co się stanie ("Usunie plik X" a nie "Wykonaj"). Akcje nieodwracalne 
-   wymagają potwierdzenia przed wykonaniem, nie po.
-
-6. **Feedback** – jeśli UI generuje output AI, dodaj mechanizm zgłoszenia 
-   problemu (błędne/nieprzydatne/stronnicze), nie tylko generyczne 
-   kciuk-góra/dół.
-
-Zero wyjątków dla "to tylko prototyp" – powyższe stosuj od razu w kodzie.
-
+Dziś strona nie ma takich funkcji. Jeśli się pojawią, stosuj od razu, także w prototypie:
+1. **Transparentność:** każde miejsce działania AI ma widoczne oznaczenie (badge, ikona, etykieta).
+2. **Ton:** bez antropomorfizacji. Piszesz „Wygenerowano podsumowanie”, a nie „Cieszę się, że mogę pomóc”.
+3. **Oczekiwania:** przy wejściu do funkcji krótko wyjaśnij, co robi, z jakich danych korzysta i jakie ma ograniczenia.
+4. **Bez nadmiernego zaufania:** dodaj dopisek „może zawierać błędy, zweryfikuj” i pokaż źródła.
+5. **Kontrola:** przyciski mówią konkretnie, co się stanie („Usuń plik X”). Akcje nieodwracalne wymagają potwierdzenia przed wykonaniem.
+6. **Feedback:** daj możliwość zgłoszenia błędnego, nieprzydatnego albo stronniczego wyniku, a nie tylko kciuk w górę/w dół.

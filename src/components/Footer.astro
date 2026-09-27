@@ -29,10 +29,6 @@ const klasyLinku =
           ))}
         </ul>
       </nav>
-
-      <div class="footer-social">
-        <a href="mailto:BrzezinskiWiktor@outlook.com" class={klasyLinku}>Kontakt</a>
-      </div>
     </div>
   </Container>
 </footer>
@@ -44,6 +40,7 @@ const klasyLinku =
     background: var(--color-paper);
   }
 
+  /* Telefon: jedna kolumna, wszystko wyśrodkowane */
   .footer-grid {
     display: grid;
     gap: 1.5rem;
@@ -68,84 +65,16 @@ const klasyLinku =
     margin: 0;
   }
 
-  .footer-social {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: center;
-  }
-
-  .footer-social::before {
-    content: "";
-    width: 100%;
-    border-top: 1px solid var(--color-line);
-    margin-bottom: 0.75rem;
-  }
-
-  /* Tablet: 2 columns - brand left, nav+social right */
+  /* Od tabletu w górę: podpis po lewej, linki po prawej */
   @media (min-width: 640px) {
     .footer-grid {
       grid-template-columns: auto 1fr;
+      align-items: center;
       text-align: left;
     }
 
-    .footer-brand {
-      grid-column: 1;
-      grid-row: 1;
-    }
-
-    .footer-nav {
-      grid-column: 2;
-    }
-
-    .footer-social {
-      grid-column: 2;
-    }
-
-    .footer-nav-list,
-    .footer-social {
-      justify-content: flex-start;
-    }
-
-    .footer-social::before {
-      display: block;
-      width: 100%;
-      margin-top: 1rem;
-    }
-  }
-
-  /* Desktop: 3 columns */
-  @media (min-width: 1024px) {
-    .footer-grid {
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      justify-items: start;
-    }
-
-    .footer-brand {
-      grid-column: 1;
-    }
-
-    .footer-nav {
-      grid-column: 2;
-      justify-self: center;
-    }
-
-    .footer-social {
-      grid-column: 3;
-      justify-self: end;
-    }
-
     .footer-nav-list {
-      justify-content: center;
-    }
-
-    .footer-social {
       justify-content: flex-end;
     }
-
-    .footer-social::before {
-      display: none;
-    }
-  } 
+  }
 </style>

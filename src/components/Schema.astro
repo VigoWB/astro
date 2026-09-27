@@ -6,7 +6,7 @@
 // Person i ProfessionalService lecą zawsze (są potrzebne na każdej stronie).
 // ImageGallery jest opcjonalny — podajesz go tylko na stronie /galeria,
 // przekazując listę zdjęć jako prop.
-// WebSite + SearchAction zawsze (dla wyszukiwarki w Google).
+// WebSite zawsze.
 // BreadcrumbList opcjonalny (dla stron z nawigacją hierarchiczną).
 
 import siteConfig from "../data/siteConfig.json";
@@ -70,20 +70,14 @@ const business = {
 	sameAs: siteConfig.person.sameAs,
 };
 
-// --- WebSite + SearchAction (zawsze) ---
+// --- WebSite (zawsze) ---
+// Bez SearchAction: galeria nie ma wyszukiwarki, a Google i tak wycofał
+// pole wyszukiwania w wynikach (listopad 2024).
 const website = {
 	"@context": "https://schema.org",
 	"@type": "WebSite",
 	name: siteConfig.business.name,
 	url: bazowyUrl.toString(),
-	potentialAction: {
-		"@type": "SearchAction",
-		target: {
-			"@type": "EntryPoint",
-			urlTemplate: `${bazowyUrl.toString()}/galeria?search={search_term_string}`,
-		},
-		"query-input": "required name=search_term_string",
-	},
 };
 
 // --- ImageGallery (tylko jeśli przekazano zdjęcia) ---

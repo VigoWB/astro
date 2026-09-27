@@ -10,6 +10,10 @@
 // BreadcrumbList opcjonalny (dla stron z nawigacją hierarchiczną).
 
 import siteConfig from "../data/siteConfig.json";
+// Zdjęcie profilowe leży w src/assets (trafia do repo, w przeciwieństwie do images/).
+// Astro przy buildzie kopiuje je do dist/_astro/ i podaje tu gotowy adres —
+// dzięki temu link w danych dla Google zawsze prowadzi do istniejącego pliku.
+import zdjecieProfilowe from "../assets/moje-zdjecie.jpg";
 
 interface Zdjecie {
 	po: { src: string; width?: number; height?: number };
@@ -31,6 +35,7 @@ interface Props {
 const { zdjecia, breadcrumbs } = Astro.props;
 
 const bazowyUrl = Astro.site ?? new URL(Astro.url.origin);
+const adresZdjeciaProfilowego = new URL(zdjecieProfilowe.src, bazowyUrl).toString();
 
 // --- Person ---
 const person = {
@@ -40,7 +45,7 @@ const person = {
 	alternateName: siteConfig.person.alternateName,
 	jobTitle: siteConfig.person.jobTitle,
 	email: siteConfig.person.email,
-	image: new URL(siteConfig.person.image, bazowyUrl).toString(),
+	image: adresZdjeciaProfilowego,
 	url: bazowyUrl.toString(),
 	sameAs: siteConfig.person.sameAs,
 };
@@ -54,7 +59,7 @@ const business = {
 	name: siteConfig.business.name,
 	description: siteConfig.business.description,
 	url: bazowyUrl.toString(),
-	image: new URL(siteConfig.person.image, bazowyUrl).toString(),
+	image: adresZdjeciaProfilowego,
 	email: siteConfig.person.email,
 	priceRange: siteConfig.business.priceRange,
 	address: {

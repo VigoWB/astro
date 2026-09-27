@@ -225,6 +225,25 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		});
 	});
 
+	// --- Płynne pojawienie się miniatury po wczytaniu (rozmycie → ostre) ---
+	// Wcześniej robił to atrybut onload="..." w Karta.astro. Przeniesione tutaj, bo:
+	// 1) kod w atrybucie HTML zablokuje przyszła polityka CSP → miniatury zostałyby niewidoczne,
+	// 2) tu obsługujemy też zdjęcia już wczytane (z cache) i te, których nie udało się pobrać.
+	function pokazMiniature(img: HTMLImageElement) {
+		img.classList.remove("opacity-0", "blur-md", "scale-105");
+	}
+
+	document.querySelectorAll<HTMLImageElement>("[data-miniatura].opacity-0").forEach((img) => {
+		if (img.complete) {
+			// Już wczytane (albo błąd pobierania) — pokazujemy od razu.
+			pokazMiniature(img);
+			return;
+		}
+		img.addEventListener("load", () => pokazMiniature(img), { once: true });
+		// Przy błędzie też pokazujemy — wtedy widać chociaż opis (alt), a nie pustą ramkę.
+		img.addEventListener("error", () => pokazMiniature(img), { once: true });
+	});
+
 	odswiez();
 	// Zdjęcia mogą jeszcze przesunąć układ po doładowaniu — przeliczamy raz jeszcze.
 	window.addEventListener("load", () => ustawKolejnoscWierszami(nieodkryteWidoczne()), { once: true });

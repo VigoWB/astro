@@ -182,10 +182,13 @@ siteConfig.json
 PUBLIC_FORMSPREE_ID (.env)
   └─ ContactForm → Formspree API endpoint
 
-images/
-  ├─ DSC_*.jpg → Galeria (po)
-  ├─ przed_DSC_*.jpg → Galeria (przed)
-  └─ moje-zdjecie.jpg → Schema (Person.image), o-mnie.md
+src/data/galeria.json + PUBLIC_R2_URL (.env)
+  └─ Galeria (po/przed) — same pliki zdjęć leżą w Cloudflare R2
+
+images/ — TYLKO lokalnie (w .gitignore), źródło dla `npm run sync-images`.
+  Nic w src/ nie może importować plików z images/ — na Cloudflare Pages tego folderu nie ma.
+
+src/assets/moje-zdjecie.jpg → Schema (Person.image), o-mnie.md
 ```
 
 ### Critical Path (build-time)

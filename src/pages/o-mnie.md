@@ -7,7 +7,7 @@ date: "11-11-2025"
 
 # O mnie
 
-![Wiktor](../../images/moje-zdjecie.jpg)
+![Wiktor](../assets/moje-zdjecie.jpg)
 
 Cześć, mam na imię Wiktor. Fotografuję różne rzeczy — portrety, chwile ze znajomymi, cokolwiek akurat przyciągnie oko. Nie trzymam się jednego gatunku, wolę łapać to, co akurat warte jest zatrzymania.
 

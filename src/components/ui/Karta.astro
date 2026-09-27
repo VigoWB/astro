@@ -67,8 +67,14 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 			fetchpriority={priority ? "high" : undefined}
 			decoding="async"
 			draggable="false"
-			class="w-full h-auto object-cover opacity-0 blur-md scale-105 motion-safe:transition-all motion-safe:duration-300 group-hover:scale-105"
-			onload="this.classList.remove('opacity-0','blur-md','scale-105')"
+			data-miniatura
+			class:list={[
+				"w-full h-auto object-cover motion-safe:transition-all motion-safe:duration-300 group-hover:scale-105",
+				// Efekt "wyostrzenia" przy wczytaniu — tylko dla miniatur ładowanych leniwie.
+				// Pierwsze zdjęcie (priority) jest widoczne od razu, żeby nie opóźniać LCP.
+				// Klasy zdejmuje skrypt w Galeria.astro, gdy obrazek się wczyta.
+				{ "opacity-0 blur-md scale-105": !priority },
+			]}
 		/>
 		<!-- Overlay with description on hover -->
 		<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-end p-3">

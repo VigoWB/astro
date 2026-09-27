@@ -37,6 +37,7 @@ Zasady:
    - `shadow-sm` → `shadow-xs`, `shadow` → `shadow-sm` (tak samo `rounded` i `blur`)
    - `bg-gradient-to-r` → `bg-linear-to-r`
    - `ring` (3 px) → `ring-3`
+   - `outline-none` → `outline-hidden`
 6. **W pliku `.astro` kod JS/TS może być tylko w dwóch miejscach:**
    - między `---` na górze pliku (wykonuje się przy budowaniu),
    - w znaczniku `<script>` (wykonuje się w przeglądarce).

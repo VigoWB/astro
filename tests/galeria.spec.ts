@@ -8,7 +8,10 @@ test.describe('Galeria', () => {
 		await page.waitForSelector('[data-testid="gallery-item"]', { state: 'attached' });
 	});
 
-	test('filtr kategorii: pokazuje tylko zdjęcia z wybranej kategorii', async ({ page }) => {
+	// Pasek filtrów jest ukryty w UI (Roadmapa pkt 5, decyzja 25.09) — logika filtrowania
+	// zostaje w kodzie na później, więc te testy zostają w pliku, ale pomijane (skip).
+	// Usunąć .skip, gdy pasek filtrów wróci.
+	test.skip('filtr kategorii: pokazuje tylko zdjęcia z wybranej kategorii', async ({ page }) => {
 		// Pobierz początkową liczbę widocznych kart (Wszystkie)
 		const allItems = page.locator('[data-testid="gallery-item"]:not(.hidden)');
 		const initialCount = await allItems.count();
@@ -39,7 +42,7 @@ test.describe('Galeria', () => {
 		expect(visibleCount).toBeGreaterThan(0);
 	});
 
-	test('filtr "Wszystkie" pokazuje wszystkie zdjęcia z powrotem', async ({ page }) => {
+		test.skip('filtr "Wszystkie" pokazuje wszystkie zdjęcia z powrotem', async ({ page }) => {
 		// Najpierw przefiltruj do Portrety
 		await page.click('[data-testid="filter-portrety"]');
 		await page.waitForTimeout(300);
@@ -85,7 +88,7 @@ test.describe('Galeria', () => {
 		}
 	});
 
-	test('load more po filtrowaniu: ładuje tylko zdjęcia z aktywnej kategorii', async ({ page }) => {
+	test.skip('load more po filtrowaniu: ładuje tylko zdjęcia z aktywnej kategorii', async ({ page }) => {
 		// Filtruj do Portrety
 		await page.click('[data-testid="filter-portrety"]');
 		await page.waitForTimeout(300);
@@ -116,7 +119,7 @@ test.describe('Galeria', () => {
 		}
 	});
 
-	test('filtry działają klawiaturą (Tab + Enter)', async ({ page }) => {
+	test.skip('filtry działają klawiaturą (Tab + Enter)', async ({ page }) => {
 		// Fokusuj pierwszy filtr
 		await page.locator('[data-testid="filter-wszystkie"]').focus();
 		await expect(page.locator('[data-testid="filter-wszystkie"]')).toBeFocused();

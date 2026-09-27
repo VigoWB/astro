@@ -30,8 +30,11 @@ const NA_STRONE = 8;
 const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 ---
 
-<div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
-	{kategorie.map((kat) => (
+<!-- Ukryte na razie (Roadmapa pkt 5, decyzja 25.09) — kategorie.ts to ręczna lista,
+     więc pasek wraca dopiero jak lista kategorii będzie generowana z galeria.json.
+     Logika filtrowania w skrypcie niżej zostaje nietknięta na tę chwilę. -->
+<div class="hidden mb-6" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
+		{kategorie.map((kat) => (
 		<button
 			type="button"
 			data-filter={kat}

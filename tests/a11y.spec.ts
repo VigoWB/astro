@@ -24,7 +24,9 @@ for (const pagePath of PAGES) {
 	});
 }
 
-test('a11y: Galeria – filtry działają klawiaturą', async ({ page }) => {
+// Pasek filtrów jest ukryty w UI (Roadmapa pkt 5, decyzja 25.09) — usunąć .skip,
+// gdy pasek filtrów wróci.
+test.skip('a11y: Galeria – filtry działają klawiaturą', async ({ page }) => {
 	await page.goto('/galeria');
 
 	// Fokusuj pierwszy filtr bezpośrednio

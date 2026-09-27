@@ -29,6 +29,7 @@ pnpm-debug.log*
 # Build/test artifacts
 lighthouse-report.json
 playwright-report/
+test-results/
 .lighthouseci/
 test.db
 

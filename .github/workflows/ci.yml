@@ -8,9 +8,6 @@ on:
   schedule:
     - cron: '0 3 * * 1'  # Weekly on Monday 3 AM UTC - run Lighthouse CI
 
-env:
-  NODE_VERSION: '24'
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -25,11 +22,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          # Wersja Node z pliku .node-version — ten sam plik czyta Cloudflare Pages.
+          node-version-file: .node-version
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -48,19 +46,17 @@ jobs:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
         continue-on-error: true
 
+      # Strona jest już zbudowana w kroku "Build". `npm run test` zbudowałby ją
+      # drugi raz (skrypt "pretest"), więc uruchamiamy same testy.
       - name: Run tests
-        run: npm run test
-        env:
-          PUBLIC_FORMSPREE_ID: ${{ secrets.PUBLIC_FORMSPREE_ID }}
-          PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
-          PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA'
-          PUBLIC_R2_URL: ${{ secrets.PUBLIC_R2_URL }}
+        run: npx playwright test
 
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-         name: lighthouse-report
-         path: |
-           lighthouse-report.json
-           .lighthouseci/
+          name: lighthouse-report
+          path: |
+            lighthouse-report.json
+            .lighthouseci/
+          retention-days: 7

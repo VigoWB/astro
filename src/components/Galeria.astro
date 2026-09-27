@@ -39,7 +39,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 			type="button"
 			data-filter={kat}
 			data-testid={`filter-${kat.toLowerCase()}`}
-			class={`px-4 py-2 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-accent text-paper border-accent" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
+			class={`px-4 py-2 rounded-full border-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-accent text-paper border-accent" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
 			aria-pressed={kat === "Wszystkie"}
 		>
 			{kat}
@@ -72,7 +72,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	<button
 		id="load-more-btn"
 		type="button"
-		class="px-8 py-3 bg-accent text-paper font-semibold rounded-full hover:bg-accent/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+		class="px-8 py-3 bg-accent text-paper font-semibold rounded-full hover:bg-accent/90 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 		aria-label="Załaduj więcej zdjęć"
 		data-testid="load-more-btn"
 	>
@@ -81,7 +81,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 </div>
 
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 p-4">
-	<button type="button" id="lightbox-close" tabindex="0" class="absolute top-4 right-4 text-white text-3xl leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black" aria-label="Zamknij podgląd">
+	<button type="button" id="lightbox-close" tabindex="0" class="absolute top-4 right-4 text-white text-3xl leading-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black" aria-label="Zamknij podgląd">
 		&times;
 	</button>
 
@@ -92,7 +92,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 			alt=""
 			draggable="false"
 			tabindex="0"
-			class="max-h-[80vh] max-w-full object-contain select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+			class="max-h-[80vh] max-w-full object-contain select-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black"
 		/>
 		<div class="flex items-center gap-4 text-white">
 			<span id="lightbox-opis" class="font-bold" tabindex="0"></span>

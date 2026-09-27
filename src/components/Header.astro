@@ -31,7 +31,7 @@ const currentPath = Astro.url.pathname;
 											href={link.href}
 											class={isActive
 												? "text-accent font-medium pointer-events-none"
-												: "hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
+												: "hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
 											aria-current={isActive ? "page" : undefined}
 										>
 											{link.label}
@@ -45,7 +45,7 @@ const currentPath = Astro.url.pathname;
 					<button
 						type="button"
 						id="przycisk-menu"
-						class="relative h-8 w-8 md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+						class="relative h-8 w-8 md:hidden focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 						aria-expanded="false"
 						aria-controls="menu-mobilne"
 						aria-label="Otwórz menu"
@@ -72,7 +72,7 @@ const currentPath = Astro.url.pathname;
 							<li>
 								<a
 									href={link.href}
-									class={`block py-3 hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent font-medium" : ""}`}
+									class={`block py-3 hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent font-medium" : ""}`}
 									aria-current={isActive ? "page" : undefined}
 								>
 									{link.label}

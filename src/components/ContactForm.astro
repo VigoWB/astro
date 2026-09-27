@@ -39,7 +39,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			minlength="2"
 			autocomplete="name"
 			aria-describedby="kontakt-name-blad"
-			class="w-full border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			class="w-full border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
 			data-testid="contact-name"
 		/>
 		<p id="kontakt-name-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
@@ -54,7 +54,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			required
 			autocomplete="email"
 			aria-describedby="kontakt-email-blad"
-			class="w-full border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			class="w-full border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
 			data-testid="contact-email"
 		/>
 		<p id="kontakt-email-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
@@ -69,7 +69,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			minlength="10"
 			rows="6"
 			aria-describedby="kontakt-message-blad"
-			class="w-full resize-y border border-line bg-paper px-3 py-2.5 text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			class="w-full resize-y border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
 			data-testid="contact-message"
 		></textarea>
 		<p id="kontakt-message-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>

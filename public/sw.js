@@ -64,7 +64,7 @@ self.addEventListener('fetch', (event) => {
         .then((networkResponse) => {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
+            if (networkResponse.ok) cache.put(request, responseClone); // strona błędu (404/500) nie nadpisze dobrej kopii na czas bez sieci
           });
           return networkResponse;
         })

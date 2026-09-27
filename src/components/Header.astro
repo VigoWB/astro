@@ -151,7 +151,7 @@ const currentPath = Astro.url.pathname;
 	if (pasek && tresc && !preferujeMniejRuchu) {
 		let animujeSie = false;
 
-		function aktualizujNaglowek() {
+		const aktualizujNaglowek = () => {
 			const offset = Math.min(window.scrollY * 0.25, 10);
 			tresc.style.transform = `translateY(-${offset}px)`;
 			pasek.classList.toggle("shadow-md", window.scrollY > 12);
@@ -177,7 +177,7 @@ const currentPath = Astro.url.pathname;
 	if (przyciskMenu && menuMobilne) {
 		let lastFocusedElement: HTMLElement | null = null;
 
-		function otworzMenu() {
+		const otworzMenu = () => {
 			przyciskMenu.setAttribute("aria-expanded", "true");
 			przyciskMenu.setAttribute("aria-label", "Zamknij menu");
 			menuMobilne.classList.remove("hidden");
@@ -195,7 +195,7 @@ const currentPath = Astro.url.pathname;
 			});
 		}
 
-		function zamknijMenu() {
+		const zamknijMenu = () => {
 			przyciskMenu.setAttribute("aria-expanded", "false");
 			przyciskMenu.setAttribute("aria-label", "Otwórz menu");
 			menuMobilne.classList.add("hidden");
@@ -231,7 +231,7 @@ const currentPath = Astro.url.pathname;
 		});
 
 		// Focus trap handler dla menu mobilnego
-		function handleMenuFocusTrap(e: KeyboardEvent) {
+		const handleMenuFocusTrap = (e: KeyboardEvent) => {
 			if (e.key !== "Tab") return;
 
 			const links = menuMobilne.querySelectorAll<HTMLElement>("a");

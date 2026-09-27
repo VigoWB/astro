@@ -33,7 +33,7 @@ test-results/
 .lighthouseci/
 test.db
 
-# PWA generated files
+# Oryginały zdjęć — tylko lokalnie, źródło dla sync-images
 images/
 
 data/*.db

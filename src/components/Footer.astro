@@ -3,6 +3,12 @@ import Container from "../components/ui/Container.astro";
 import { navLinks } from "../data/nav.ts";
 
 const rok = new Date().getFullYear();
+
+// Wygląd linków w stopce (kolor, najechanie, obwódka przy Tab) — tylko klasami Tailwinda,
+// tak samo jak w Header.astro. Nie dublujemy tego w <style>: zwykły CSS z <style>
+// wygrywa z klasami Tailwinda i po cichu je wyłącza.
+const klasyLinku =
+  "text-base font-semibold text-ink hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 ---
 
 <footer class="footer" role="contentinfo">
@@ -16,7 +22,7 @@ const rok = new Date().getFullYear();
         <ul class="footer-nav-list">
           {navLinks.map((link) => (
             <li>
-              <a href={link.href} class="hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
+              <a href={link.href} class={klasyLinku}>
                 {link.label}
               </a>
             </li>
@@ -25,8 +31,7 @@ const rok = new Date().getFullYear();
       </nav>
 
       <div class="footer-social">
-        <a href="https://www.instagram.com/" target="_blank" rel="noopener" class="hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper">Instagram</a>
-        <a href="mailto:BrzezinskiWiktor@outlook.com" class="hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper">Kontakt</a>
+        <a href="mailto:BrzezinskiWiktor@outlook.com" class={klasyLinku}>Kontakt</a>
       </div>
     </div>
   </Container>
@@ -75,27 +80,6 @@ const rok = new Date().getFullYear();
     width: 100%;
     border-top: 1px solid var(--color-line);
     margin-bottom: 0.75rem;
-  }
-
-  .footer-nav-list a,
-  .footer-social a {
-    color: var(--color-ink);
-    transition: color 0.2s;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-
-  .footer-nav-list a:hover,
-  .footer-social a:hover {
-    color: var(--color-accent);
-  }
-
-  .footer-nav-list a:focus-visible,
-  .footer-social a:focus-visible {
-    outline: none;
-    ring: 2px solid var(--color-accent);
-    ring-offset: 2px;
-    ring-offset-color: var(--color-paper);
   }
 
   /* Tablet: 2 columns - brand left, nav+social right */
@@ -163,13 +147,5 @@ const rok = new Date().getFullYear();
     .footer-social::before {
       display: none;
     }
-  }
-
-  /* Accessibility focus styles */
-  .footer-nav-list a:focus-visible,
-  .footer-social a:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--color-accent), 0 0 0 4px var(--color-paper);
-    border-radius: 2px;
   }
 </style>

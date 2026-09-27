@@ -231,7 +231,7 @@ const currentPath = Astro.url.pathname;
 		});
 
 		// Focus trap handler dla menu mobilnego
-		const handleMenuFocusTrap = (e: KeyboardEvent) => {
+		const handleMenuFocusTrap = (e: KeyboardEvent) => {	
 			if (e.key !== "Tab") return;
 
 			const links = menuMobilne.querySelectorAll<HTMLElement>("a");

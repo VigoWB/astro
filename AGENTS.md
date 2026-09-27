@@ -29,7 +29,7 @@ Zasady:
 
 1. **Nie wykonuj `git push`.** Nigdy. Wypycham zmiany sam.
 2. **Nie importuj niczego z folderu `images/`** w `src/`. Tego folderu nie ma w gicie ani na Cloudflare Pages, więc build na produkcji się wysypie.
-3. **Nie edytuj ręcznie `src/data/galeria.json`.** Plik generuje `npm run sync-images`.
+3. **Nie edytuj ręcznie `src/data/galeria.json` i nie uruchamiaj `npm run sync-images`** (ani innych skryptów z `scripts/`, które zapisują `galeria.json` lub `data/galeria.db`). Zdjęcia dodaję tylko ja, na domowym komputerze. Na innym komputerze skrypt nadpisałby `galeria.json` starą lokalną bazą i zdjęcia zniknęłyby ze strony. Jeśli zadanie wymaga odświeżenia `galeria.json`, napisz mi, że mam to zrobić sam.
 4. **Nie dodawaj adaptera `@astrojs/cloudflare`, SSR ani `output: "server"`.** Strona jest w pełni statyczna.
 5. **Nie pisz składni Tailwind v3.** Nie ma `tailwind.config.js` ani `@tailwind base`. Kolory są w `@theme` w `global.css`. Zamienniki:
    - `bg-opacity-50` → `bg-black/50`
@@ -45,7 +45,7 @@ Zasady:
 7. **Nie czytaj na głos, nie wypisuj i nie commituj pliku `.env`.** Są w nim klucze.
 8. **Nie usuwaj atrybutów `data-testid`.** Opierają się na nich testy.
 9. **Nie dodawaj logiki układu (flex, grid) do `Container.astro`.** Ma zostać prostym opakowaniem szerokości.
-10. **Nie używaj `git add -A`.** Folder `test-results/` nie jest w `.gitignore` i wpadłby do repo.
+10. **Nie używaj `git add -A`.** Dodawaj tylko pliki zmienione w tym zadaniu. Jeśli `git status` pokazuje zmieniony `src/data/galeria.json`, którego nie ruszałeś, nie commituj go i zapytaj mnie.
 
 ---
 
@@ -79,7 +79,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 
 ## 5. Projekt w skrócie
 
-- **Stos:** Astro 7, Tailwind CSS v4 (`@tailwindcss/vite`), TypeScript strict, Node 22.5+ (skrypty używają `node:sqlite`)
+- **Stos:** Astro 7, Tailwind CSS v4 (`@tailwindcss/vite`), TypeScript strict, Node 24 (dokładna wersja w `.node-version`; minimum 22.13, bo skrypty używają wbudowanego `node:sqlite`)
 - **Hosting:** Cloudflare Pages, automatyczny deploy z brancha `main`, statyczny `dist/`
 - **Usługi:** Cloudflare R2 (zdjęcia), Formspree (formularz), Cloudflare Turnstile (ochrona formularza), Cloudflare Web Analytics
 - **Poza zakresem:** blog i pobieranie zdjęć przez odwiedzających (celowo utrudniamy kopiowanie). Opinie klientów i link do Instagrama są odłożone na później.
@@ -221,12 +221,12 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 **Nowa podstrona:**
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
 2. Dodaj link w `src/data/nav.ts`.
-3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v2` → `foto-v3`).
+3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v3` → `foto-v4`).
 4. Dopisz adres do `PAGES` w `tests/a11y.spec.ts` i do `url` w `lighthouserc.json`.
 
 **Nowa zmienna środowiskowa:**
 1. Dodaj ją do `env.d.ts` (z opisem po polsku) i do `.env.example`.
-2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w obu krokach (`Build` i `Run tests`) w `.github/workflows/ci.yml`.
+2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` (testy korzystają z tego samego buildu) w `.github/workflows/ci.yml`.
 3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
 
 **Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Sprawdź kontrast.
@@ -247,7 +247,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 2. **`Astro.url` a `Astro.site`:** `Astro.url` to adres bieżącej strony, a `Astro.site` to domena z konfiguracji. Absolutne adresy buduj przez `Astro.site`.
 3. **W `public/_headers` komentarz to tylko `#`.** Styl `/* */` Cloudflare czyta jako wzorzec ścieżki i nagłówki przestają działać.
 4. **W `astro.config.mjs` nie ma `import.meta.env`.** Zmienne wczytuje `loadEnv` z Vite.
-5. **Service worker ma ręczną listę stron.** Bez podbicia `CACHE_NAME` przeglądarki dalej trzymają starą wersję.
+5. **Service worker:** strony HTML pobiera najpierw z sieci (network-first), a pliki z `/_astro/` i zdjęcia najpierw z cache. Nie zmieniaj tego bez pytania — przy cache-first dla stron odwiedzający po deployu widzieli starą treść. Lista stron w `sw.js` służy tylko do trybu offline.
 6. **Formspree ID** to sam identyfikator (np. `xzznnkyq`), a nie pełny URL.
 
 ---

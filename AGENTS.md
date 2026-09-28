@@ -52,8 +52,8 @@ Zasady:
 
 ## 3. Po każdej zmianie: sprawdź, potem commit
 
-1. Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build i odpali testy Playwright).
-2. **Jeśli build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
+1. Uruchom `npm run check` (na końcu musi być `0 errors`, to samo sprawdza CI na GitHubie). Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build i odpali testy Playwright).
+2. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
 3. `git status`, żeby zobaczyć, co się zmieniło.
 4. `git add <konkretne pliki>`.
 5. `git commit -m "fix: krótki opis po polsku"`. Przedrostki: `feat:` (nowa funkcja), `fix:` (poprawka), `chore:` (porządki), `docs:`, `test:`.
@@ -98,7 +98,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 ### Komendy
 
 - `npm run dev`: serwer deweloperski (localhost:4321)
-- `npm run build`: build do `dist/`
+- `npm run build`: build do `dist/` (wcześniej warto `npm run check`: sprawdzanie typów TypeScript, także w plikach `.astro`; to samo robi CI)
 - `npm run preview`: podgląd buildu (localhost:4322)
 - `npm run test`: build, potem testy Playwright (Chrome desktop i mobile, testy dostępności axe)
 - `npm run sync-images`: dodaje nowe zdjęcia z `images/` (uruchamiam ja, nie Ty)
@@ -110,7 +110,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 
 ```
 .agents/skills/            instrukcje dla agentów dotyczące Astro (patrz sekcja 11)
-.github/workflows/ci.yml   build + Lighthouse + testy przy każdym pushu i PR
+.github/workflows/ci.yml   typy + build + Lighthouse + testy przy każdym pushu i PR
 public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
   sw.js                    service worker (offline), ma ręczną listę stron

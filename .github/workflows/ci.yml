@@ -29,6 +29,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Sprawdzanie typów TypeScript, także w plikach .astro (astro check).
+      # Błąd typu = czerwone CI. Krok stoi przed pobieraniem przeglądarek,
+      # żeby przy błędzie CI kończyło się szybko. Nie potrzebuje zmiennych środowiskowych.
+      - name: Type check
+        run: npm run check
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

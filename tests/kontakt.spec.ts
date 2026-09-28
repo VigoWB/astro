@@ -1,7 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
 
-const FORMSPREE_URL = 'https://formspree.io/f/';
-
 // Token Turnstile trafia asynchronicznie do ukrytego pola po rozwiązaniu wyzwania
 // (w CI używamy klucza testowego "zawsze przechodzi" — patrz .github/workflows/ci.yml).
 async function poczekajNaTurnstile(page: Page) {

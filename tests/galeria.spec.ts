@@ -177,8 +177,12 @@ test.describe('Galeria', () => {
 		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
 		const adresPo = await zdjecie.evaluate((img: HTMLImageElement) => img.currentSrc);
 
-		// Klawiatura: fokus na przełączniku i aktywacja Enterem (bez myszki, bez dotyku).
-		await przelacznik.focus();
+		// Klawiatura: dojście do przełącznika samym Tabem (jak ktoś bez myszki) i Enter.
+		await expect(page.locator('#lightbox-close')).toBeFocused();
+		for (let i = 0; i < 5 && !(await przelacznik.evaluate((el) => el === document.activeElement)); i++) {
+			await page.keyboard.press('Tab');
+		}
+		await expect(przelacznik).toBeFocused();
 		await page.keyboard.press('Enter');
 
 		await expect(przelacznik).toHaveAttribute('aria-pressed', 'true');

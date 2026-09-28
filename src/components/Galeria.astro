@@ -301,7 +301,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	// Elementy, po których krąży Tab wewnątrz lightboxa (tylko te, które są teraz widoczne).
 	function elementyFokusowalne(): HTMLElement[] {
 		return Array.from(
-			lightbox.querySelectorAll<HTMLElement>("#lightbox-close, #lightbox-img, #lightbox-opis, #lightbox-hint")
+			lightbox.querySelectorAll<HTMLElement>("#lightbox-close, #lightbox-img, #lightbox-opis, #lightbox-przelacznik")
 		).filter((el) => el.getClientRects().length > 0);
 	}
 

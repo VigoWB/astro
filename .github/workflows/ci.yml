@@ -15,12 +15,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0  # needed for git log in sitemap
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           # Wersja Node z pliku .node-version — ten sam plik czyta Cloudflare Pages.
           node-version-file: .node-version
@@ -58,11 +58,10 @@ jobs:
         run: npx playwright test
 
       - name: Upload Lighthouse report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: lighthouse-report
-          path: |
-            lighthouse-report.json
-            .lighthouseci/
+          path: .lighthouseci/
+          include-hidden-files: true
           retention-days: 7

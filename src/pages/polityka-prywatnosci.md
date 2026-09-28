@@ -22,6 +22,15 @@ Gdy wysyłasz wiadomość przez formularz na stronie [/kontakt](/kontakt), bior�
 
 Bez tych dwóch usług formularz kontaktowy by nie zadziałał — to jedyny sposób, żeby napisać do mnie przez tę stronę.
 
+## Podstawa prawna i czas przechowywania
+
+Dane, które podajesz w formularzu (imię, e-mail, treść wiadomości), przetwarzam na podstawie:
+
+- Twojej zgody (art. 6 ust. 1 lit. a RODO) — bo dobrowolnie wysyłasz formularz, oraz
+- mojego prawnie uzasadnionego interesu (art. 6 ust. 1 lit. f RODO), czyli udzielenia Ci odpowiedzi na wiadomość.
+
+Wiadomość trzymam w swojej skrzynce tak długo, jak jest potrzebna do obsłużenia Twojego zapytania — obecnie nie mam ustalonego sztywnego terminu jej automatycznego kasowania. Jeśli chcesz, żebym usunął konkretną wiadomość wcześniej, napisz na adres podany wyżej.
+
 ## Statystyki odwiedzin
 
 Strona korzysta z **Cloudflare Web Analytics** do liczenia odwiedzin — np. ile osób ją odwiedziło, z jakiej strony przyszły, jakiej mniej więcej przeglądarki czy urządzenia używają. Cloudflare deklaruje, że to narzędzie nie korzysta z ciasteczek i nie zbiera danych osobowych odwiedzających — dane są zbiorcze i nie da się nimi śledzić konkretnej osoby.

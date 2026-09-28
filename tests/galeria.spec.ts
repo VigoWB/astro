@@ -160,4 +160,33 @@ test.describe('Galeria', () => {
 			expect(przed).toMatch(/^\/_astro\/.+\.webp$/);
 		}
 	});
+
+	test('lightbox: przełącznik "Pokaż przed" działa klawiaturą i podmienia zdjęcie', async ({ page }) => {
+		const karta = page.locator('[data-testid="gallery-item"]').first();
+		const maWersjePrzed = Boolean(await karta.getAttribute('data-przed'));
+		test.skip(!maWersjePrzed, 'Pierwsze zdjęcie w danych testowych nie ma wersji "przed"');
+
+		await karta.click();
+
+		const zdjecie = page.locator('#lightbox-img');
+		const przelacznik = page.locator('[data-testid="lightbox-przelacznik"]');
+
+		await expect(przelacznik).toBeVisible();
+		await expect(przelacznik).toHaveAttribute('aria-pressed', 'false');
+
+		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+		const adresPo = await zdjecie.evaluate((img: HTMLImageElement) => img.currentSrc);
+
+		// Klawiatura: fokus na przełączniku i aktywacja Enterem (bez myszki, bez dotyku).
+		await przelacznik.focus();
+		await page.keyboard.press('Enter');
+
+		await expect(przelacznik).toHaveAttribute('aria-pressed', 'true');
+		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.currentSrc)).not.toBe(adresPo);
+
+		// Powrót do "po" tym samym przełącznikiem.
+		await przelacznik.click();
+		await expect(przelacznik).toHaveAttribute('aria-pressed', 'false');
+		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.currentSrc)).toBe(adresPo);
+	});
 });

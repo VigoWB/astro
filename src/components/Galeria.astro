@@ -98,9 +98,17 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		/>
 		<div class="flex items-center gap-4 text-white">
 			<span id="lightbox-opis" class="font-bold" tabindex="0"></span>
-			<span id="lightbox-hint" class="hidden text-sm text-white/70 italic select-none" tabindex="0">
-				Najedź / przytrzymaj, aby zobaczyć: przed
-			</span>
+			<!-- Widoczny przełącznik zamiast najechania myszką/przytrzymania palca —
+			     działa z klawiatury i czytnika ekranu (Roadmapa pkt 9). -->
+			<button
+				type="button"
+				id="lightbox-przelacznik"
+				aria-pressed="false"
+				data-testid="lightbox-przelacznik"
+				class="hidden rounded-full border-2 border-white/50 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:border-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-paper"
+			>
+				Pokaż przed
+			</button>
 		</div>
 		<!-- Dane z aparatu (ISO, przysłona, ogniskowa, czas) -->
 		<div id="lightbox-exif" class="text-sm text-white/70 font-mono hidden"></div>
@@ -257,7 +265,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	const lightbox = document.getElementById("lightbox")!;
 	const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
 	const lightboxOpis = document.getElementById("lightbox-opis")!;
-	const hint = document.getElementById("lightbox-hint")!;
+	const przelacznikBtn = document.getElementById("lightbox-przelacznik") as HTMLButtonElement;
 	const lightboxExif = document.getElementById("lightbox-exif")!;
 	const closeBtn = document.getElementById("lightbox-close")!;
 
@@ -305,9 +313,10 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		lightboxImg.alt = item.dataset.opis || "Zdjęcie z portfolio fotograficznego Wiktora";
 		lightboxOpis.textContent = item.dataset.opis || "";
 
-		hint.classList.toggle("hidden", !current.przed);
+		przelacznikBtn.classList.toggle("hidden", !current.przed);
+		przelacznikBtn.setAttribute("aria-pressed", "false");
 
-		// Wersję "przed" pobieramy już teraz, żeby przy najechaniu nie było czekania.
+		// Wersję "przed" pobieramy już teraz, żeby przełącznik pokazał ją bez czekania.
 		// Te same sizes i srcset co w lightboxie = przeglądarka pobierze ten sam plik.
 		if (current.przed) {
 			ustawZdjecie(new Image(), current.przed);
@@ -369,17 +378,19 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 
 	closeBtn.addEventListener("click", zamknij);
 
-	// Desktop – najechanie myszką
-	lightboxImg.addEventListener("mouseenter", pokazPrzed);
-	lightboxImg.addEventListener("mouseleave", pokazPo);
-
-	// Mobile – przytrzymanie palca
-	lightboxImg.addEventListener("touchstart", (e) => {
-		e.preventDefault();
-		pokazPrzed();
-	}, { passive: false });
-	lightboxImg.addEventListener("touchend", pokazPo);
-	lightboxImg.addEventListener("touchcancel", pokazPo);
+	// Przełącznik "Pokaż przed" — ta sama obsługa dla klawiatury, myszki i dotyku
+	// (wcześniej trzeba było najechać myszką albo przytrzymać palec: nie dało się
+	// tego zrobić z klawiatury, a na komputerze powiększenie czasem otwierało się
+	// pod kursorem i "przed" pokazywało się od razu, zanim ktoś zobaczył "po").
+	przelacznikBtn.addEventListener("click", () => {
+		const pokazujePrzed = przelacznikBtn.getAttribute("aria-pressed") === "true";
+		przelacznikBtn.setAttribute("aria-pressed", String(!pokazujePrzed));
+		if (pokazujePrzed) {
+			pokazPo();
+		} else {
+			pokazPrzed();
+		}
+	});
 
 	lightbox.addEventListener("click", (e) => {
 		if (e.target === lightbox) zamknij();

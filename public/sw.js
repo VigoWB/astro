@@ -5,8 +5,8 @@
 // i wersje do lightboxa) Astro robi przy buildzie do /_astro/, więc strona
 // nie pobiera już niczego z R2 — nie potrzebujemy osobnej obsługi innych domen.
 
-// foto-v4: nowa nazwa kasuje stary cache, w którym leżały pełne oryginały z R2.
-const CACHE_NAME = 'foto-v4';
+// foto-v5: dopisana strona polityki prywatności do listy offline.
+const CACHE_NAME = 'foto-v5';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -19,6 +19,8 @@ self.addEventListener('install', (event) => {
       '/kontakt/index.html',
       '/o-mnie/',
       '/o-mnie/index.html',
+      '/polityka-prywatnosci/',
+      '/polityka-prywatnosci/index.html',
       '/offline.html',
       '/manifest.webmanifest',
       '/favicon.svg',

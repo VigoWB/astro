@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const PAGES = ['/', '/galeria', '/o-mnie', '/kontakt'];
+const PAGES = ['/', '/galeria', '/o-mnie', '/kontakt', '/polityka-prywatnosci'];
 
 for (const pagePath of PAGES) {
 	test(`a11y: ${pagePath} – brak naruszeń WCAG AA`, async ({ page }) => {

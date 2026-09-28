@@ -6,7 +6,8 @@
         "http://localhost/index.html",
         "http://localhost/galeria/index.html",
         "http://localhost/o-mnie/index.html",
-        "http://localhost/kontakt/index.html"
+        "http://localhost/kontakt/index.html",
+        "http://localhost/polityka-prywatnosci/index.html"
       ],
       "settings": {
         "chromeFlags": "--no-sandbox --disable-dev-shm-usage"

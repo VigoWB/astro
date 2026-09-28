@@ -24,6 +24,19 @@ for (const pagePath of PAGES) {
 	});
 }
 
+test('a11y: Skip link pozwala pominąć nawigację klawiaturą', async ({ page }) => {
+	await page.goto('/');
+
+	// Pierwszy Tab na stronie ma trafić w link "Przejdź do treści"
+	await page.keyboard.press('Tab');
+	const skipLink = page.getByRole('link', { name: 'Przejdź do treści' });
+	await expect(skipLink).toBeFocused();
+
+	// Aktywacja linku przenosi focus na główną treść
+	await page.keyboard.press('Enter');
+	await expect(page.locator('#glowna-tresc')).toBeFocused();
+});
+
 // Pasek filtrów jest ukryty w UI (Roadmapa pkt 5, decyzja 25.09) — usunąć .skip,
 // gdy pasek filtrów wróci.
 test.skip('a11y: Galeria – filtry działają klawiaturą', async ({ page }) => {

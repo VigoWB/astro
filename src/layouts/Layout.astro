@@ -51,8 +51,14 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		</script>
 	</head>
 	<body class="flex flex-col min-h-dvh">
+		
+			href="#glowna-tresc"
+			class="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-2 focus-visible:left-2 focus-visible:z-50 focus-visible:rounded-md focus-visible:bg-paper focus-visible:px-4 focus-visible:py-2 focus-visible:font-medium focus-visible:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+		>
+			Przejdź do treści
+		</a>
 		<Header/>
-		<main class="wrapper flex-1 w-full">
+		<main id="glowna-tresc" tabindex="-1" class="wrapper flex-1 w-full focus:outline-hidden">
 			<Container>
 				<slot />
 			</Container>

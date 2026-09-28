@@ -1,6 +1,7 @@
 ---
 layout: ../layouts/ArticleLayout.astro
 title: "O mnie — Wiktor"
+breadcrumbLabel: "O mnie"
 author: "Wiktor"
 date: "11-11-2025"
 ---

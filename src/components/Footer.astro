@@ -9,6 +9,12 @@ const rok = new Date().getFullYear();
 // wygrywa z klasami Tailwinda i po cichu je wyłącza.
 const klasyLinku =
   "text-base font-semibold text-ink hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
+
+// Link do polityki prywatności — celowo mniejszy i osobno od głównej
+// nawigacji (navLinks), która jest współdzielona z Header.astro. To link
+// prawny/informacyjny, nie część głównego menu.
+const klasyLinkuPrawnego =
+  "text-sm text-muted hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
 ---
 
 <footer class="footer" role="contentinfo">
@@ -29,6 +35,10 @@ const klasyLinku =
           ))}
         </ul>
       </nav>
+    </div>
+
+    <div class="footer-legal">
+      <a href="/polityka-prywatnosci" class={klasyLinkuPrawnego}>Polityka prywatności</a>
     </div>
   </Container>
 </footer>
@@ -65,6 +75,11 @@ const klasyLinku =
     margin: 0;
   }
 
+  .footer-legal {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
   /* Od tabletu w górę: podpis po lewej, linki po prawej */
   @media (min-width: 640px) {
     .footer-grid {
@@ -75,6 +90,10 @@ const klasyLinku =
 
     .footer-nav-list {
       justify-content: flex-end;
+    }
+
+    .footer-legal {
+      text-align: right;
     }
   }
 </style>

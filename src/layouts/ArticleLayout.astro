@@ -1,8 +1,20 @@
 ---
 import Layout from "./Layout.astro";
 const { frontmatter } = Astro.props;
+
+// Breadcrumb dla podstron na tym layoucie: "Strona główna" + etykieta tej
+// podstrony. breadcrumbLabel we frontmatterze pozwala użyć krótszej nazwy
+// niż pełny <title> (np. "O mnie" zamiast "O mnie — Wiktor"). Adres liczony
+// z bieżącej ścieżki, więc każda podstrona dostaje poprawny link sama.
+const breadcrumbLabel = frontmatter?.breadcrumbLabel ?? frontmatter?.title;
+const breadcrumbs = [
+	{ name: "Strona główna", url: "https://foto.vigolab.ovh/" },
+	...(breadcrumbLabel
+		? [{ name: breadcrumbLabel, url: new URL(Astro.url.pathname, Astro.site).toString() }]
+		: []),
+];
 ---
-<Layout title={frontmatter?.title} breadcrumbs={[{ name: "Strona główna", url: "https://foto.vigolab.ovh/" }, { name: "O mnie", url: "https://foto.vigolab.ovh/o-mnie" }]}>
+<Layout title={frontmatter?.title} description={frontmatter?.description} breadcrumbs={breadcrumbs}>
 	<article class="prose mx-auto py-12">
 		<slot />
 	</article>

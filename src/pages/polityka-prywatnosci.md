@@ -41,7 +41,7 @@ Strona jest hostowana na Cloudflare Pages. Jak każdy serwer w internecie, Cloud
 
 ## Twoje prawa
 
-Zgodnie z RODO masz prawo do: dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych oraz sprzeciwu wobec przetwarzania. W sprawach dotyczących danych, które przetwarzam bezpośrednio (czyli treści wiadomości z formularza), napisz na adres podany wyżej. Masz też prawo złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych (UODO).
+Zgodnie z RODO masz prawo do: dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych oraz sprzeciwu wobec przetwarzania. Zgodę na przetwarzanie danych z formularza możesz w każdej chwili wycofać — wystarczy napisać na adres podany wyżej. Wycofanie zgody nie wpływa na zgodność z prawem przetwarzania, które odbyło się przed jej wycofaniem. W sprawach dotyczących danych, które przetwarzam bezpośrednio (czyli treści wiadomości z formularza), napisz na adres podany wyżej. Masz też prawo złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych (UODO).
 
 W sprawach dotyczących samego przetwarzania danych przez Formspree albo Cloudflare — te firmy są odrębnymi administratorami/podmiotami przetwarzającymi w rozumieniu RODO, więc po szczegóły warto sięgnąć bezpośrednio do ich polityk prywatności, do których linkuję niżej.
 

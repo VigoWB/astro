@@ -16,7 +16,7 @@
  */
 
 import { DatabaseSync } from 'node:sqlite';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
 import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -43,15 +43,22 @@ function pobierzKlienta() {
     process.exit(1);
   }
 
-  s3 = new S3Client({
+  s3 = new AwsClient({
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
+    service: 's3',
     region: 'auto',
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: R2_ACCESS_KEY_ID,
-      secretAccessKey: R2_SECRET_ACCESS_KEY,
-    },
   });
   return s3;
+}
+
+// Adres R2 do wgrania pliku pod danym kluczem (ten sam endpoint S3-kompatybilny).
+// Każdy segment ścieżki kodujemy osobno, żeby ukośnik w kluczu (np. "zdjecia/plik.jpg")
+// został separatorem, a nie zamienił się w %2F.
+function adresR2(kluczR2) {
+  const { R2_ACCOUNT_ID, R2_BUCKET_NAME } = process.env;
+  const kluczZakodowany = kluczR2.split('/').map(encodeURIComponent).join('/');
+  return `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${kluczZakodowany}`;
 }
 
 // --- Baza SQLite (wbudowana w Node 22.5+) ---
@@ -287,14 +294,16 @@ async function zapytajOpisIKategorie(dostepneKategorie, obecne = { opis: '', kat
 async function wgrajDoR2(sciezkaLokalna, kluczR2) {
   const dane = await readFile(sciezkaLokalna);
   const contentType = kluczR2.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-  await pobierzKlienta().send(
-    new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
-      Key: kluczR2,
-      Body: dane,
-      ContentType: contentType,
-    })
-  );
+
+  const odpowiedz = await pobierzKlienta().fetch(adresR2(kluczR2), {
+    method: 'PUT',
+    body: dane,
+    headers: { 'Content-Type': contentType },
+  });
+
+  if (!odpowiedz.ok) {
+    throw new Error(`R2 odrzuciło wgrywanie ${kluczR2}: ${odpowiedz.status} ${odpowiedz.statusText}`);
+  }
 }
 
 // --- Tryb "dodaj nowe zdjęcia" ---

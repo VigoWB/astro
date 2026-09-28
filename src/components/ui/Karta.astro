@@ -1,9 +1,18 @@
 ---
 import { Image } from 'astro:assets';
 
+/** Zmniejszona wersja zdjęcia do lightboxa (przygotowana przy buildzie w galeria.astro). */
+interface WersjaLightboxa {
+	src: string;
+	srcset: string;
+	sizes: string;
+}
+
 interface Props {
+	/** Oryginał z R2 — źródło miniatury. */
 	po: { src: string; width: number; height: number };
-	przed?: { src: string };
+	/** Wersje do lightboxa: "po" zawsze, "przed" tylko gdy istnieje. */
+	lightbox: { po: WersjaLightboxa; przed?: WersjaLightboxa };
 	opis?: string;
 	kategoria?: string[];
 	exif?: {
@@ -20,7 +29,7 @@ interface Props {
 	ukryta?: boolean;
 }
 
-const { po, przed, opis = "", kategoria = [], exif, priority = false, ukryta = false } = Astro.props;
+const { po, lightbox, opis = "", kategoria = [], exif, priority = false, ukryta = false } = Astro.props;
 
 // Miniatura w kaflu galerii ma 600 px szerokości. Wysokość liczymy z prawdziwych
 // proporcji zdjęcia — dzięki temu miniatura nie jest przycinana.
@@ -50,8 +59,12 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 	]}
 	data-gallery-item
 	data-reveal
-	data-po={po.src}
-	data-przed={przed?.src ?? ""}
+	data-po={lightbox.po.src}
+	data-po-srcset={lightbox.po.srcset}
+	data-po-sizes={lightbox.po.sizes}
+	data-przed={lightbox.przed?.src ?? ""}
+	data-przed-srcset={lightbox.przed?.srcset ?? ""}
+	data-przed-sizes={lightbox.przed?.sizes ?? ""}
 	data-opis={opis}
 	data-kategoria={kategoria.join(" ")}
 	data-exif={formatujExif(exif)}

@@ -135,4 +135,29 @@ test.describe('Galeria', () => {
 		await expect(page.locator('[data-testid="filter-portrety"]')).toHaveAttribute('aria-pressed', 'true');
 		await expect(page.locator('[data-testid="filter-wszystkie"]')).toHaveAttribute('aria-pressed', 'false');
 	});
+
+	test('lightbox: pokazuje zmniejszone zdjęcie z naszej domeny, a nie oryginał z R2', async ({ page, baseURL }) => {
+		const karta = page.locator('[data-testid="gallery-item"]').first();
+		await karta.click();
+
+		const zdjecie = page.locator('#lightbox-img');
+		await expect(zdjecie).toBeVisible();
+
+		// Poczekaj, aż przeglądarka wybierze i wczyta plik z srcset.
+		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+		const { adres, szerokosc } = await zdjecie.evaluate((img: HTMLImageElement) => ({
+			adres: img.currentSrc,
+			szerokosc: img.naturalWidth,
+		}));
+
+		expect(adres.startsWith(`${baseURL}/_astro/`)).toBe(true);
+		expect(adres).toMatch(/\.webp$/);
+		expect(szerokosc).toBeLessThanOrEqual(1920);
+
+		// Wersja "przed" (jeśli jest) też pochodzi z /_astro/, a nie z R2.
+		const przed = await karta.getAttribute('data-przed');
+		if (przed) {
+			expect(przed).toMatch(/^\/_astro\/.+\.webp$/);
+		}
+	});
 });

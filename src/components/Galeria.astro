@@ -4,7 +4,10 @@ import Karta from "./ui/Karta.astro";
 interface Props {
 	zdjecia: Array<{
 		po: { src: string; width: number; height: number };
-		przed?: { src: string };
+		lightbox: {
+			po: { src: string; srcset: string; sizes: string };
+			przed?: { src: string; srcset: string; sizes: string };
+		};
 		opis: string;
 		kategoria: string[];
 		exif?: {
@@ -53,7 +56,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	{zdjecia.map((z, index) => (
 		<Karta
 			po={z.po}
-			przed={z.przed}
+			lightbox={z.lightbox}
 			opis={z.opis}
 			kategoria={z.kategoria}
 			exif={z.exif}
@@ -258,8 +261,34 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	const lightboxExif = document.getElementById("lightbox-exif")!;
 	const closeBtn = document.getElementById("lightbox-close")!;
 
-	const current = { po: "", przed: "" };
+	// Zmniejszona wersja zdjęcia (webp z /_astro/) — przygotowana przy buildzie w galeria.astro.
+	interface WersjaZdjecia {
+		src: string;
+		srcset: string;
+		sizes: string;
+	}
+
+	const current: { po: WersjaZdjecia | null; przed: WersjaZdjecia | null } = { po: null, przed: null };
 	let lastFocusedElement: HTMLElement | null = null;
+
+	// Czyta z karty adresy wersji "po" albo "przed" (atrybuty data-po*, data-przed*).
+	function wersjaZKarty(item: HTMLElement, ktora: "po" | "przed"): WersjaZdjecia | null {
+		const src = item.getAttribute(`data-${ktora}`) || "";
+		if (!src) return null;
+		return {
+			src,
+			srcset: item.getAttribute(`data-${ktora}-srcset`) || "",
+			sizes: item.getAttribute(`data-${ktora}-sizes`) || "",
+		};
+	}
+
+	// Podmienia zdjęcie. Najpierw sizes i srcset, potem src — przeglądarka
+	// sama wybierze rozmiar pasujący do ekranu (mniejszy na telefonie).
+	function ustawZdjecie(img: HTMLImageElement, wersja: WersjaZdjecia) {
+		img.sizes = wersja.sizes;
+		img.srcset = wersja.srcset;
+		img.src = wersja.src;
+	}
 
 	// Elementy, po których krąży Tab wewnątrz lightboxa (tylko te, które są teraz widoczne).
 	function elementyFokusowalne(): HTMLElement[] {
@@ -269,19 +298,19 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	}
 
 	function otworz(item: HTMLElement) {
-		current.po = item.dataset.po || "";
-		current.przed = item.dataset.przed || "";
+		current.po = wersjaZKarty(item, "po");
+		current.przed = wersjaZKarty(item, "przed");
 
-		lightboxImg.src = current.po;
+		pokazPo();
 		lightboxImg.alt = item.dataset.opis || "Zdjęcie z portfolio fotograficznego Wiktora";
 		lightboxOpis.textContent = item.dataset.opis || "";
 
 		hint.classList.toggle("hidden", !current.przed);
 
 		// Wersję "przed" pobieramy już teraz, żeby przy najechaniu nie było czekania.
+		// Te same sizes i srcset co w lightboxie = przeglądarka pobierze ten sam plik.
 		if (current.przed) {
-			const wczesniej = new Image();
-			wczesniej.src = current.przed;
+			ustawZdjecie(new Image(), current.przed);
 		}
 
 		// Dane z aparatu — gotowy tekst z atrybutu karty (może być pusty).
@@ -320,11 +349,11 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	}
 
 	function pokazPrzed() {
-		if (current.przed) lightboxImg.src = current.przed;
+		if (current.przed) ustawZdjecie(lightboxImg, current.przed);
 	}
 
 	function pokazPo() {
-		lightboxImg.src = current.po;
+		if (current.po) ustawZdjecie(lightboxImg, current.po);
 	}
 
 	wszystkieKarty.forEach((item) => {

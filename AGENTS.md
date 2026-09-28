@@ -156,7 +156,11 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
       └─ eksportuje src/data/galeria.json   ← to trafia do gita
   → src/pages/galeria.astro czyta galeria.json i skleja adresy z PUBLIC_R2_URL
   → Galeria.astro → Karta.astro (<Image> z astro:assets robi miniatury przy buildzie)
+  → galeria.astro robi też przez getImage() wersje do lightboxa (webp, dłuższy bok 1280 i 1920 px)
 ```
+
+- Na stronie nie ma żadnego adresu z R2: miniatury, lightbox i dane dla Google (Schema.org) wskazują pliki w `/_astro/`. Oryginały z R2 pobiera tylko build.
+- Wymiary pliku „przed” build odczytuje z R2 (`inferRemoteSize`). Brak pliku „przed” w R2 = build przerywa się z komunikatem, którego pliku brakuje.
 
 - Komponenty zawsze opierają się na `galeria.json`, nigdy na bazie SQLite.
 - `astro.config.mjs` buduje `image.remotePatterns` z `PUBLIC_R2_URL`. Przy zmianie domeny zdjęć zmienia się tylko zmienną.
@@ -205,7 +209,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 - Filtry porównują `data-kategoria` karty z przyciskami z `kategorie.ts`.
 - Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.
 - Efekt „wyostrzenia” miniatury: klasy startowe są w `Karta.astro`, a zdejmuje je skrypt w `Galeria.astro` (nie `onload` w HTML).
-- Lightbox jest jeden, wspólny, i podmienia `src`. Wersja „przed” pojawia się na `mouseenter` / `touchstart`. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
+- Lightbox jest jeden, wspólny, i podmienia `sizes`, `srcset` i `src` (funkcja `ustawZdjecie`) — dane bierze z atrybutów karty `data-po*` / `data-przed*`. Wersja „przed” pojawia się na `mouseenter` / `touchstart`. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
 
 **ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em.
 
@@ -222,7 +226,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 **Nowa podstrona:**
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
 2. Dodaj link w `src/data/nav.ts`.
-3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v3` → `foto-v4`).
+3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v4` → `foto-v5`).
 4. Dopisz adres do `PAGES` w `tests/a11y.spec.ts` i do `url` w `lighthouserc.json`.
 
 **Nowa zmienna środowiskowa:**

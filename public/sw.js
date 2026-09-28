@@ -1,12 +1,12 @@
 // Minimalny service worker dla offline mode - bez sztywnych ścieżek do plików
 // Pliki statyczne są pobierane dynamicznie z public/ podczas buildu.
 //
-// Zdjęcia galerii leżą na R2 (inna domena niż strona) — cache'ujemy je
-// osobno, w trybie "no-cors" (R2 nie ma włączonego CORS, więc normalny
-// fetch() zostałby zablokowany; "opaque" odpowiedź da się jednak zapisać
-// w cache i pokazać jako obrazek, mimo że nie znamy jej statusu/kodu HTTP).
+// Obsługujemy tylko zapytania do naszej domeny. Zdjęcia galerii (miniatury
+// i wersje do lightboxa) Astro robi przy buildzie do /_astro/, więc strona
+// nie pobiera już niczego z R2 — nie potrzebujemy osobnej obsługi innych domen.
 
-const CACHE_NAME = 'foto-v3';
+// foto-v4: nowa nazwa kasuje stary cache, w którym leżały pełne oryginały z R2.
+const CACHE_NAME = 'foto-v4';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -47,12 +47,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  const wlasnaDomena = url.origin === location.origin;
-  // Jedyny typ cross-origin requestu, który chcemy cache'ować: obrazek
-  // (czyli zdjęcie z R2). Fonty/analityka z innych domen zostają nietknięte.
-  const obcyObrazek = !wlasnaDomena && request.destination === 'image';
-
-  if (!wlasnaDomena && !obcyObrazek) {
+  // Zapytania do innych domen (analityka, Turnstile, Formspree) zostawiamy
+  // przeglądarce — service worker ich nie dotyka.
+  if (url.origin !== location.origin) {
     return;
   }
 
@@ -77,7 +74,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Pozostałe zasoby (pliki z hashem w /_astro/, zdjęcia) — cache-first,
+  // Pozostałe zasoby (pliki z hashem w /_astro/, w tym zdjęcia galerii) — cache-first,
   // bo pod tym samym URL-em zawsze mają tę samą treść.
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
@@ -85,18 +82,13 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      const zadanieSieciowe = obcyObrazek
-        ? new Request(request, { mode: 'no-cors' })
-        : request;
-
-      return fetch(zadanieSieciowe)
+      return fetch(request)
         .then((networkResponse) => {
-          const wartoZapisac = obcyObrazek
-            ? networkResponse.type === 'opaque'
-            : networkResponse.ok &&
-              (request.destination === 'image' ||
-                request.destination === 'style' ||
-                request.destination === 'script');
+          const wartoZapisac =
+            networkResponse.ok &&
+            (request.destination === 'image' ||
+              request.destination === 'style' ||
+              request.destination === 'script');
 
           if (wartoZapisac) {
             const responseClone = networkResponse.clone();

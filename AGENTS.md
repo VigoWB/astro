@@ -29,7 +29,7 @@ Zasady:
 
 1. **Nie wykonuj `git push`.** Nigdy. Wypycham zmiany sam.
 2. **Nie importuj niczego z folderu `images/`** w `src/`. Tego folderu nie ma w gicie ani na Cloudflare Pages, więc build na produkcji się wysypie.
-3. **Nie edytuj ręcznie `src/data/galeria.json` i nie uruchamiaj `npm run sync-images`** (ani innych skryptów z `scripts/`, które zapisują `galeria.json` lub `data/galeria.db`). Zdjęcia dodaję tylko ja, na domowym komputerze. Na innym komputerze skrypt nadpisałby `galeria.json` starą lokalną bazą i zdjęcia zniknęłyby ze strony. Jeśli zadanie wymaga odświeżenia `galeria.json`, napisz mi, że mam to zrobić sam.
+3. **Nie edytuj ręcznie `src/data/galeria.json` i nie uruchamiaj `npm run sync-images`** (ani innych skryptów z `scripts/`, które zapisują `galeria.json` lub `data/galeria.db`). Zdjęcia dodaję tylko ja: skrypt pyta o opisy, wgrywa pliki do R2 kluczami z `.env` i przepisuje `galeria.json`. (Baza `data/galeria.db` jest odtwarzana z `galeria.json` przy każdym uruchomieniu, więc po `git pull` skrypt jest bezpieczny na każdym moim komputerze. Zakaz dotyczy Ciebie, a nie sprzętu.) Jeśli zadanie wymaga odświeżenia `galeria.json`, napisz mi, że mam to zrobić sam.
 4. **Nie dodawaj adaptera `@astrojs/cloudflare`, SSR ani `output: "server"`.** Strona jest w pełni statyczna.
 5. **Nie pisz składni Tailwind v3.** Nie ma `tailwind.config.js` ani `@tailwind base`. Kolory są w `@theme` w `global.css`. Zamienniki:
    - `bg-opacity-50` → `bg-black/50`
@@ -221,7 +221,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 
 ## 10. Przepisy
 
-**Nowe zdjęcie w galerii:** robię to ja. Wrzucam plik do `images/`, uruchamiam `npm run sync-images` i commituję `src/data/galeria.json`. W kodzie nic nie trzeba zmieniać.
+**Nowe zdjęcie w galerii:** robię to ja. Robię `git pull`, wrzucam plik do `images/`, uruchamiam `npm run sync-images` i commituję `src/data/galeria.json`. W kodzie nic nie trzeba zmieniać.
 
 **Nowa podstrona:**
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.

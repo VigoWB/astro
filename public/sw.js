@@ -5,8 +5,8 @@
 // i wersje do lightboxa) Astro robi przy buildzie do /_astro/, więc strona
 // nie pobiera już niczego z R2 — nie potrzebujemy osobnej obsługi innych domen.
 
-// foto-v5: dopisana strona polityki prywatności do listy offline.
-const CACHE_NAME = 'foto-v5';
+// foto-v6: style strony offline w osobnym pliku /offline.css (wymóg Content-Security-Policy).
+const CACHE_NAME = 'foto-v6';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -22,6 +22,7 @@ self.addEventListener('install', (event) => {
       '/polityka-prywatnosci/',
       '/polityka-prywatnosci/index.html',
       '/offline.html',
+      '/offline.css',
       '/manifest.webmanifest',
       '/favicon.svg',
       '/og-default.jpg',

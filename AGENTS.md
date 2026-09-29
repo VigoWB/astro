@@ -114,7 +114,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
   sw.js                    service worker (offline), ma ręczną listę stron
-  manifest.webmanifest, offline.html, ikony, og-default.jpg, robots.txt
+  manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
   start-preview-if-needed.sh  uruchamia podgląd dla testów
@@ -137,7 +137,7 @@ src/
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/a11y.spec.ts, galeria.spec.ts, kontakt.spec.ts
+tests/a11y.spec.ts, galeria.spec.ts, kontakt.spec.ts, csp.spec.ts
 env.d.ts                   typy zmiennych środowiskowych
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
@@ -180,7 +180,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 
 **Style**
 - Tylko klasy Tailwind v4 i tokeny z `@theme`: `paper`, `ink`, `muted`, `card`, `accent`, `line`.
-- Bez stylów inline, z wyjątkiem `transform` ustawianego ze skryptu.
+- Bez stylów wklejonych w HTML — żadnego `style="..."` w HTML, `<style>` wklejanego w stronę ani `setAttribute('style', …)` — blokuje je Content-Security-Policy (pułapka 7). Ze skryptu wolno tylko przez `element.style.nazwa = …` (tak działa `transform` w nagłówku i opóźnienie animacji w galerii).
 - Podejście mobile-first: bazowe klasy są dla telefonu, a `md:`, `lg:` dla większych ekranów.
 
 **Dostępność (obowiązkowo, testy to sprawdzają)**
@@ -225,7 +225,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
 2. Dodaj link w `src/data/nav.ts`.
 3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v4` → `foto-v5`).
-4. Dopisz adres do `PAGES` w `tests/a11y.spec.ts` i do `url` w `lighthouserc.json`.
+4. Dopisz adres do `PAGES` w `tests/a11y.spec.ts`, do `STRONY` w `tests/csp.spec.ts` i do `url` w `lighthouserc.json`.
 
 **Nowa zmienna środowiskowa:**
 1. Dodaj ją do `env.d.ts` (z opisem po polsku) i do `.env.example`.
@@ -252,6 +252,11 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 4. **W `astro.config.mjs` nie ma `import.meta.env`.** Zmienne wczytuje `loadEnv` z Vite.
 5. **Service worker:** strony HTML pobiera najpierw z sieci (network-first), a pliki z `/_astro/` i zdjęcia najpierw z cache. Nie zmieniaj tego bez pytania — przy cache-first dla stron odwiedzający po deployu widzieli starą treść. Lista stron w `sw.js` służy tylko do trybu offline.
 6. **Formspree ID** to sam identyfikator (np. `xzznnkyq`), a nie pełny URL.
+7. **Content-Security-Policy (CSP) w `public/_headers`.** Przeglądarka ładuje skrypty, style, ramki i połączenia tylko z miejsc z tej listy. Dlatego:
+   - żadnych `onclick=` / `onload=`, `style="..."`, `<script>` z atrybutem `is:inline` ani `set:html` z kodem JS — wszystko, co wklejone w HTML, zostanie zablokowane (`set:html` z danymi JSON-LD jest w porządku),
+   - w `astro.config.mjs` zostają `build.inlineStylesheets: 'never'` i `vite.build.assetsInlineLimit: 0` — bez nich Astro wkleja małe skrypty i style prosto do HTML,
+   - nowa zewnętrzna usługa (skrypt, ramka, `fetch` do innej domeny) = najpierw zapytaj, potem dopisz jej domenę do właściwej dyrektywy CSP w `_headers`,
+   - `tests/csp.spec.ts` czyta politykę z `_headers` i wykrywa naruszenia na wszystkich stronach — nowa podstrona trafia też do `STRONY` w tym pliku.
 
 ---
 

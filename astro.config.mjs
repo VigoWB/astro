@@ -148,6 +148,13 @@ export default defineConfig({
     }),
   ],
   output: 'static',
+  // Content-Security-Policy (public/_headers) wpuszcza tylko skrypty i style
+  // z plików, a nie wklejone prosto w HTML. Astro domyślnie wkleja małe
+  // arkusze stylów do <style> w HTML — tu każemy mu zawsze robić z nich
+  // osobne pliki w /_astro/.
+  build: {
+    inlineStylesheets: 'never',
+  },
   image: {
     remotePatterns: adresZdjec
       ? [
@@ -162,6 +169,14 @@ export default defineConfig({
   vite: {
     plugins: [
       tailwindcss(),
-    ]
+    ],
+    build: {
+      // To samo dla skryptów: Astro wkleja do HTML każdy <script> mniejszy
+      // niż ten limit (domyślnie 4 KB), a CSP by go zablokowała. 0 = nigdy
+      // nie wklejaj — każdy skrypt, czcionka i obrazek trafia do osobnego
+      // pliku w /_astro/ (żadnych adresów data:). Nie zmieniaj bez
+      // poprawienia Content-Security-Policy w public/_headers.
+      assetsInlineLimit: 0,
+    },
   }
 });

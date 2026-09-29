@@ -8,7 +8,12 @@
  * i zapisuje metadane w lokalnej bazie SQLite (data/galeria.db).
  *
  * Na końcu ZAWSZE generuje plik src/data/galeria.json — to właśnie z niego
- * korzysta strona podczas budowania (baza SQLite zostaje tylko na Twoim komputerze).
+ * korzysta strona podczas budowania.
+ *
+ * Źródłem prawdy jest galeria.json (leży w gicie). Baza SQLite to tylko robocza
+ * kopia: przy KAŻDYM uruchomieniu jest budowana od nowa z galeria.json, więc stara
+ * baza z innego komputera nie może nadpisać nowszych zdjęć ani opisów.
+ * Przed uruchomieniem zawsze zrób git pull.
  *
  * Uruchomienie:
  *   npm run sync-images                  — dodaje nowe zdjęcia
@@ -62,10 +67,9 @@ function adresR2(kluczR2) {
 }
 
 // --- Baza SQLite (wbudowana w Node 22.5+) ---
-function initDb() {
-  mkdirSync(dirname(DB_PATH), { recursive: true });
-  const db = new DatabaseSync(DB_PATH);
-  db.exec(`
+// Tabela jako stała, bo tworzymy ją w dwóch miejscach: przy otwarciu bazy
+// i przy odtwarzaniu bazy z galeria.json.
+const TABELA_ZDJEC = `
     CREATE TABLE IF NOT EXISTS zdjecia (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nazwa_pliku TEXT UNIQUE NOT NULL,
@@ -86,7 +90,12 @@ function initDb() {
       r2_klucz_przed TEXT,
       wgrano_o TEXT DEFAULT CURRENT_TIMESTAMP
     );
-  `);
+`;
+
+function initDb() {
+  mkdirSync(dirname(DB_PATH), { recursive: true });
+  const db = new DatabaseSync(DB_PATH);
+  db.exec(TABELA_ZDJEC);
   return db;
 }
 
@@ -120,49 +129,72 @@ function pobierzUzywaneKategorie(db) {
   return Array.from(zbior).sort((a, b) => a.localeCompare(b, 'pl'));
 }
 
-// Gdyby baza na tym komputerze była pusta (np. nowy komputer, skasowany plik),
-// a plik src/data/galeria.json istnieje w repozytorium — odtwarzamy z niego bazę,
-// żeby skrypt nie uznał wszystkich zdjęć za "nowe" i nie wgrywał ich drugi raz.
-async function odtworzZJsonJesliPusta(db) {
-  const ile = db.prepare('SELECT COUNT(*) AS n FROM zdjecia').get().n;
-  if (ile > 0 || !existsSync(JSON_PATH)) return;
+// Źródłem prawdy jest src/data/galeria.json — leży w gicie, więc po git pull jest taki
+// sam na każdym komputerze. Baza SQLite to tylko robocza kopia, dlatego przy KAŻDYM
+// uruchomieniu budujemy ją od nowa z pliku JSON. Stara baza z innego komputera nie może
+// wtedy nadpisać nowszych zdjęć ani opisów, a zdjęcia usunięte z JSON-a nie wracają.
+// Obieg JSON → baza → JSON daje identyczny plik, więc nic nie ginie.
+async function odtworzZJson(db) {
+  if (!existsSync(JSON_PATH)) return; // pierwsze uruchomienie — nie ma jeszcze z czego odtwarzać
 
   let lista;
   try {
     lista = JSON.parse(await readFile(JSON_PATH, 'utf8'));
-  } catch {
-    return;
-  }
-  if (!Array.isArray(lista) || lista.length === 0) return;
-
-  const wstaw = db.prepare(`
-    INSERT INTO zdjecia
-      (nazwa_pliku, nazwa_pliku_przed, opis, kategorie, szerokosc, wysokosc,
-       iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model, r2_klucz, r2_klucz_przed)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  for (const z of lista) {
-    wstaw.run(
-      z.nazwaPliku,
-      z.kluczPrzed ? `przed_${z.nazwaPliku}` : null,
-      z.opis ?? '',
-      JSON.stringify(z.kategorie ?? []),
-      z.szerokosc ?? null,
-      z.wysokosc ?? null,
-      z.exif?.iso ?? null,
-      z.exif?.przyslona ?? null,
-      z.exif?.ogniskowa ?? null,
-      z.exif?.czasNaswietlania ?? null,
-      z.exif?.dataWykonania ?? null,
-      z.exif?.make ?? null,
-      z.exif?.model ?? null,
-      z.exif?.lensModel ?? null,
-      z.klucz ?? null,
-      z.kluczPrzed ?? null
+  } catch (err) {
+    // Uszkodzony plik (np. nierozwiązany konflikt gita) — przerywamy, żeby go nie nadpisać.
+    throw new Error(
+      `Plik ${JSON_PATH} nie jest poprawnym JSON-em (${err.message}). ` +
+      'Możliwy nierozwiązany konflikt gita. Nic nie zmieniono — napraw plik albo przywróć jego poprzednią wersję z gita.'
     );
   }
-  console.log(`♻️  Baza była pusta — odtworzono ją z ${JSON_PATH} (${lista.length} zdjęć).\n`);
+  if (!Array.isArray(lista) || lista.some((z) => !z || typeof z.nazwaPliku !== 'string' || !z.nazwaPliku)) {
+    throw new Error(`Plik ${JSON_PATH} ma nieoczekiwany format (oczekiwana lista zdjęć z polem nazwaPliku). Nic nie zmieniono.`);
+  }
+
+  const ileBylo = db.prepare('SELECT COUNT(*) AS n FROM zdjecia').get().n;
+
+  // Tabelę tworzymy od zera, więc stara baza z innego komputera (np. bez nowszych kolumn)
+  // też zadziała. Wszystko w jednej transakcji: błąd w połowie nie zostawi połowy bazy.
+  db.exec('BEGIN');
+  try {
+    db.exec('DROP TABLE IF EXISTS zdjecia');
+    db.exec(TABELA_ZDJEC);
+
+    const wstaw = db.prepare(`
+      INSERT INTO zdjecia
+        (nazwa_pliku, nazwa_pliku_przed, opis, kategorie, szerokosc, wysokosc,
+         iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model, r2_klucz, r2_klucz_przed)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const z of lista) {
+      wstaw.run(
+        z.nazwaPliku,
+        z.kluczPrzed ? `przed_${z.nazwaPliku}` : null,
+        z.opis ?? '',
+        JSON.stringify(z.kategorie ?? []),
+        z.szerokosc ?? null,
+        z.wysokosc ?? null,
+        z.exif?.iso ?? null,
+        z.exif?.przyslona ?? null,
+        z.exif?.ogniskowa ?? null,
+        z.exif?.czasNaswietlania ?? null,
+        z.exif?.dataWykonania ?? null,
+        z.exif?.make ?? null,
+        z.exif?.model ?? null,
+        z.exif?.lensModel ?? null,
+        z.klucz ?? null,
+        z.kluczPrzed ?? null
+      );
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw new Error(`Nie udało się odtworzyć bazy z ${JSON_PATH}: ${err.message}`);
+  }
+
+  console.log(`♻️  Baza odtworzona z ${JSON_PATH}: ${lista.length} zdjęć (w starej bazie było ${ileBylo}).`);
+  console.log('   Jeśli pracujesz na innym komputerze niż zwykle, upewnij się, że zrobiłeś git pull.\n');
 }
 
 // --- Wymiary zdjęcia: czytane z samego pliku (sharp), a nie z EXIF ---
@@ -389,6 +421,10 @@ async function dodajNoweZdjecia(db) {
         kluczR2Przed
       );
 
+      // JSON od razu nadąża za bazą — bo przy następnym uruchomieniu baza jest budowana z JSON-a,
+      // więc przerwane uruchomienie (Ctrl+C, błąd) nie może zgubić zdjęcia już wgranego do R2.
+      await eksportujJson(db, { cicho: true });
+
       console.log(`   ✅ Wgrano i zapisano w bazie.`);
       dodanoLiczba++;
     } catch (err) {
@@ -428,13 +464,14 @@ async function uzupelnijOpisy(db) {
       kategorie: parsujKategorie(w.kategorie),
     });
     aktualizuj.run(opis, JSON.stringify(kategorie), w.id);
+    await eksportujJson(db, { cicho: true }); // jak wyżej: JSON zawsze nadąża za bazą
     console.log('   ✅ Zapisano.');
   }
   console.log('');
 }
 
 // --- Plik src/data/galeria.json — to z niego korzysta strona ---
-async function eksportujJson(db) {
+async function eksportujJson(db, { cicho = false } = {}) {
   const wiersze = db.prepare('SELECT * FROM zdjecia ORDER BY nazwa_pliku').all();
 
   const lista = wiersze.map((w) => ({
@@ -459,7 +496,9 @@ async function eksportujJson(db) {
 
   await mkdir(dirname(JSON_PATH), { recursive: true });
   await writeFile(JSON_PATH, JSON.stringify(lista, null, 2) + '\n', 'utf8');
-  console.log(`📄 Zapisano ${JSON_PATH} (${lista.length} zdjęć). Pamiętaj o commicie tego pliku.`);
+  if (!cicho) {
+    console.log(`📄 Zapisano ${JSON_PATH} (${lista.length} zdjęć). Pamiętaj o commicie tego pliku.`);
+  }
 }
 
 // --- Główna logika ---
@@ -470,7 +509,7 @@ async function main() {
   const db = initDb();
 
   try {
-    await odtworzZJsonJesliPusta(db);
+    await odtworzZJson(db);
     await odswiezWymiary(db);
 
     if (trybUzupelnij) {

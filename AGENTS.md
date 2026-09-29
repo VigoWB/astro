@@ -117,8 +117,6 @@ public/
   manifest.webmanifest, offline.html, ikony, og-default.jpg, robots.txt
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
-  update-exif.mjs          jednorazowy: odświeża dane EXIF z plików "przed"
-  ustaw-opisy-testowe.mjs  jednorazowy: opisy 9 zdjęć testowych
   start-preview-if-needed.sh  uruchamia podgląd dla testów
 src/
   assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.md i Schema.astro)

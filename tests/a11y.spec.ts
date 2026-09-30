@@ -37,9 +37,7 @@ test('a11y: Skip link pozwala pominąć nawigację klawiaturą', async ({ page }
 	await expect(page.locator('#glowna-tresc')).toBeFocused();
 });
 
-// Pasek filtrów jest ukryty w UI (Roadmapa pkt 5, decyzja 25.09) — usunąć .skip,
-// gdy pasek filtrów wróci.
-test.skip('a11y: Galeria – filtry działają klawiaturą', async ({ page }) => {
+test('a11y: Galeria – filtry działają klawiaturą', async ({ page }) => {
 	await page.goto('/galeria');
 
 	// Fokusuj pierwszy filtr bezpośrednio

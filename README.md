@@ -15,3 +15,21 @@ Zasady pracy nad projektem, stos technologiczny i konwencje kodu opisuje [`AGENT
 | `npm run preview` | podgląd builda (`localhost:4322`) |
 | `npm run test` | build + testy Playwright |
 | `npm run sync-images` | dodanie nowych zdjęć z `images/` do R2 i `galeria.json` |
+
+## Testy lokalnie
+
+Przed pierwszym uruchomieniem testów (i po każdej aktualizacji Playwrighta w `package.json`) zainstaluj przeglądarkę:
+
+```
+npx playwright install chromium
+```
+
+Bez tego wszystkie testy padają od razu z komunikatem `Executable doesn't exist … Please run: npx playwright install`.
+
+Bez klucza testowego Turnstile 6 testów formularza kontaktowego pada (czekają na widżet Turnstile). W PowerShellu:
+
+```
+$env:PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"; npm test
+```
+
+Klucz obowiązuje tylko w tym oknie terminala i nie trafia do repo. Testy filtrów kategorii są pominięte celowo (pasek filtrów jest ukryty).

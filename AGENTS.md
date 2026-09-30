@@ -117,7 +117,6 @@ public/
   manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
-  start-preview-if-needed.sh  uruchamia podgląd dla testów
 src/
   assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.md i Schema.astro)
   components/

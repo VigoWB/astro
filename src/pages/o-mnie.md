@@ -1,6 +1,7 @@
 ---
 layout: ../layouts/ArticleLayout.astro
 title: "O mnie — Wiktor"
+description: "Wiktor Brzeziński — fotografia i retusz zdjęć produktowych w Poznaniu. Poznaj moje podejście do pracy nad zdjęciem."
 breadcrumbLabel: "O mnie"
 author: "Wiktor"
 date: "11-11-2025"

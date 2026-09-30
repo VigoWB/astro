@@ -2,19 +2,19 @@
 	"person": {
 		"name": "Wiktor Brzeziński",
 		"alternateName": "Wiktor",
-		"jobTitle": "Fotograf",
-		"email": "BrzezinskiWiktor@outlook.com",
+		"jobTitle": "Fotograf i retuszer produktowy",
+		"email": "BrzezinskiWiktor@proton.com",
 		"sameAs": []
 	},
 	"business": {
 		"name": "Wiktor Brzeziński — Fotografia",
-		"description": "Portfolio fotograficzne — portrety, sesje okolicznościowe, kadry z życia codziennego.",
+		"description": "Fotografia i retusz zdjęć produktowych — czyszczenie kadru, równe białe tło do sklepu internetowego, wierne kolory i usuwanie odblasków.",
 		"addressLocality": "Poznań",
 		"addressCountry": "PL",
 		"priceRange": "$$"
 	},
 	"gallery": {
 		"name": "Galeria — Wiktor",
-		"description": "Zbiór zdjęć z podglądem przed/po retuszu."
+		"description": "Zdjęcia produktowe z podglądem przed i po retuszu."
 	}
 }

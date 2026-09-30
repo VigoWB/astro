@@ -1,46 +1,17 @@
-# Astro Starter Kit: Basics
+# Portfolio fotograficzne — foto.vigolab.ovh
 
-```sh
-npm create astro@latest -- --template basics
-```
+Prywatna strona portfolio fotograficznego Wiktora: Astro 7 (w pełni statyczny), Tailwind CSS v4, hosting na Cloudflare Pages. Zdjęcia trzymane w Cloudflare R2, formularz kontaktowy przez Formspree z ochroną Cloudflare Turnstile.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Zasady pracy nad projektem, stos technologiczny i konwencje kodu opisuje [`AGENTS.md`](./AGENTS.md).
 
-## 🚀 Project Structure
+## Komendy
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+| Komenda | Działanie |
+|---|---|
+| `npm install` | instalacja zależności |
+| `npm run dev` | serwer deweloperski (`localhost:4321`) |
+| `npm run check` | sprawdzanie typów TypeScript |
+| `npm run build` | build produkcyjny do `dist/` |
+| `npm run preview` | podgląd builda (`localhost:4322`) |
+| `npm run test` | build + testy Playwright |
+| `npm run sync-images` | dodanie nowych zdjęć z `images/` do R2 i `galeria.json` |

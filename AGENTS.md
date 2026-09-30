@@ -85,7 +85,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 - **Usługi:** Cloudflare R2 (zdjęcia), Formspree (formularz), Cloudflare Turnstile (ochrona formularza), Cloudflare Web Analytics
 - **Poza zakresem:** blog i pobieranie zdjęć przez odwiedzających (celowo utrudniamy kopiowanie). Opinie klientów i link do Instagrama są odłożone na później.
 
-### Zmienne środowiskowe (`.env`, wzór w `.env.example`, typy w `env.d.ts`)
+### Zmienne środowiskowe (`.env`, wzór w `.env.example`, typy w `src/env.d.ts`)
 
 | Zmienna | Czy wymagana | Do czego |
 |---|---|---|
@@ -134,6 +134,7 @@ src/
     kategorie.ts           przyciski filtrów galerii
     nav.ts                 linki w menu
     siteConfig.json        dane osoby i firmy dla Schema/SEO
+  env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
@@ -227,7 +228,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 4. Dopisz adres do `PAGES` w `tests/a11y.spec.ts`, do `STRONY` w `tests/csp.spec.ts` i do `url` w `lighthouserc.json`.
 
 **Nowa zmienna środowiskowa:**
-1. Dodaj ją do `env.d.ts` (z opisem po polsku) i do `.env.example`.
+1. Dodaj ją do `src/env.d.ts` (z opisem po polsku) i do `.env.example`.
 2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` (testy korzystają z tego samego buildu) w `.github/workflows/ci.yml`.
 3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
 

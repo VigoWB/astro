@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0  # needed for git log in sitemap
 
       - name: Setup Node.js
         uses: actions/setup-node@v5

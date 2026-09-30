@@ -35,7 +35,9 @@ async function czyGotowy() {
 async function main() {
 	if (!(await czyGotowy())) {
 		console.log(`Uruchamiam serwer podglądu na ${URL}...`);
-		spawn("npm", ["run", "preview"], {
+		// Polecenie jako jeden napis (a nie "npm" + lista argumentów): Node 24 przy
+		// `shell: true` z osobną listą argumentów wypisuje ostrzeżenie DEP0190.
+		spawn("npm run preview", {
 			stdio: "inherit",
 			shell: true,
 		});

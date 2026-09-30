@@ -1,5 +1,84 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import Galeria from "../components/Galeria.astro";
+import PorownanieSuwak from "../components/PorownanieSuwak.astro";
+import { kategorie } from "../data/kategorie.ts";
+import { wczytajZdjecia, type Zdjecie } from "../lib/galeria.ts";
+
+// Strona główna — wizytówka retuszu produktowego (Roadmapa pkt 4):
+// (1) suwak przed/po z jedną mocną parą, (2) co poprawiam przy retuszu,
+// (3) kilka wybranych par (kliknięcie otwiera lightbox jak w galerii),
+// (4) zaproszenie do kontaktu.
+const zdjecia = await wczytajZdjecia();
+
+// --- (1) Para do suwaka ---
+// Suwak wymaga identycznego kadru "przed" i "po" (patrz Roadmapa pkt 4 — sposób
+// przygotowania pary w Lightroomie). Dopóki Wiktor takiej pary nie oznaczy
+// (npm run sync-images -- --wyroznij), strona i tak działa: pokazuje zastępcze
+// zdjęcie ze zwykłym przełącznikiem "Pokaż przed", zamiast przerywać build.
+const TOLERANCJA_PROPORCJI = 0.02;
+
+function proporcjeZgodne(zdjecie: Zdjecie): boolean {
+	if (!zdjecie.lightbox.przed) return false;
+	const proporcjaPo = zdjecie.po.width / zdjecie.po.height;
+	const proporcjaPrzed = zdjecie.lightbox.przed.szerokosc / zdjecie.lightbox.przed.wysokosc;
+	return Math.abs(proporcjaPo - proporcjaPrzed) / proporcjaPo <= TOLERANCJA_PROPORCJI;
+}
+
+function wybierzBohatera(lista: Zdjecie[]): { zdjecie: Zdjecie; trybSuwaka: boolean } | null {
+	if (lista.length === 0) return null;
+
+	const oznaczone = lista.filter((z) => z.paraSuwaka);
+	if (oznaczone.length > 1) {
+		console.warn(
+			`index: ${oznaczone.length} zdjęć oznaczonych jako "paraSuwaka" w galeria.json — użyto pierwszego (npm run sync-images -- --wyroznij, żeby zostawić tylko jedno).`
+		);
+	}
+
+	const kandydat = oznaczone[0];
+	if (!kandydat) {
+		const zastepcze = lista.find((z) => z.wyroznione) ?? lista[0];
+		console.warn(
+			'index: brak zdjęcia oznaczonego jako "paraSuwaka" w galeria.json — na pierwszym ekranie pokazano zastępcze zdjęcie z przełącznikiem "Pokaż przed" zamiast suwaka (npm run sync-images -- --wyroznij, żeby je ustawić).'
+		);
+		return { zdjecie: zastepcze, trybSuwaka: false };
+	}
+
+	if (!proporcjeZgodne(kandydat)) {
+		console.warn(
+			`index: zdjęcie oznaczone jako "paraSuwaka" (${kandydat.opis || kandydat.po.src}) ma inne proporcje "przed" i "po" — pokazano przełącznik zamiast suwaka. Przygotuj parę w identycznym kadrze (patrz Roadmapa pkt 4).`
+		);
+		return { zdjecie: kandydat, trybSuwaka: false };
+	}
+
+	return { zdjecie: kandydat, trybSuwaka: true };
+}
+
+const bohater = wybierzBohatera(zdjecia);
+
+// --- (3) Wybrane prace niżej na stronie ---
+const LIMIT_WYROZNIONYCH = 6;
+
+function wybierzWyroznione(lista: Zdjecie[], pominiete?: Zdjecie): Zdjecie[] {
+	let wynik = lista.filter((z) => z.wyroznione && z !== pominiete);
+	if (wynik.length === 0) {
+		console.warn(
+			'index: żadne zdjęcie nie ma ustawionego "wyroznione" w galeria.json — tymczasowo pokazano pierwsze zdjęcia z galerii (npm run sync-images -- --wyroznij, żeby wybrać właściwe).'
+		);
+		wynik = lista.filter((z) => z !== pominiete);
+	}
+	return wynik.slice(0, LIMIT_WYROZNIONYCH);
+}
+
+const wybranePrace = wybierzWyroznione(zdjecia, bohater?.zdjecie);
+
+// Treść tymczasowa (placeholder) — do potwierdzenia przez Wiktora, patrz Roadmapa pkt 4.
+const PUNKTY_RETUSZU = [
+	"Usuwam kurz i rysy",
+	"Równe, czyste białe tło pod sklep internetowy",
+	"Wierne kolory produktu",
+	"Usuwam odblaski na szkle i metalu",
+];
 ---
 
 <Layout
@@ -7,11 +86,74 @@ import Layout from "../layouts/Layout.astro";
 	description="Fotografia i retusz produktowy w Poznaniu: czyste ujęcia, równe białe tło i wierne kolory do sklepu internetowego. Zobacz przykłady przed i po retuszu."
 	breadcrumbs={[{ name: "Strona główna", url: "https://foto.vigolab.ovh/" }]}
 >
-	<div class="py-12">
-		<h1 class="text-3xl font-bold text-ink">Cześć, jestem Wiktor</h1>
-		<p class="mt-4 text-muted max-w-prose">
-			Fotografuję różne rzeczy i lubię pokazywać, jak zdjęcie zmienia się od surowego ujęcia do gotowej wersji.
-			Zerknij na <a href="/galeria/" class="underline text-ink hover:text-accent transition-colors">galerię</a>, żeby zobaczyć kilka przykładów — albo dowiedz się <a href="/o-mnie/" class="underline text-ink hover:text-accent transition-colors">więcej o mnie</a>.
-		</p>
+	<div class="space-y-16 py-12">
+		<!-- (1) Pierwszy ekran -->
+		<section class="space-y-6">
+			<h1 class="max-w-prose text-3xl font-bold text-ink">Fotografia i retusz produktowy · Poznań</h1>
+
+			{bohater ? (
+				<>
+					<PorownanieSuwak
+						po={bohater.zdjecie.lightbox.po}
+						przed={bohater.zdjecie.lightbox.przed}
+						opis={bohater.zdjecie.opis}
+						szerokoscOryginalu={bohater.zdjecie.po.width}
+						wysokoscOryginalu={bohater.zdjecie.po.height}
+						trybSuwaka={bohater.trybSuwaka}
+					/>
+					<div class="flex flex-wrap gap-4">
+						<a
+							href="/galeria/"
+							class="rounded-full bg-accent px-6 py-3 font-semibold text-paper transition-colors hover:bg-accent/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+						>
+							Zobacz galerię
+						</a>
+						<a
+							href="/kontakt/"
+							class="rounded-full border-2 border-ink/30 px-6 py-3 font-semibold text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+						>
+							Napisz do mnie
+						</a>
+					</div>
+				</>
+			) : (
+				<p class="max-w-prose text-muted">Galeria jest jeszcze pusta — pierwsze zdjęcia pojawią się tu wkrótce.</p>
+			)}
+		</section>
+
+		<!-- (2) Co poprawiam przy retuszu -->
+		<section aria-labelledby="retusz-naglowek" class="space-y-4">
+			<h2 id="retusz-naglowek" class="text-2xl font-bold text-ink">Co poprawiam przy retuszu</h2>
+			<ul class="grid gap-3 sm:grid-cols-2">
+				{PUNKTY_RETUSZU.map((punkt) => (
+					<li class="flex items-start gap-2 text-muted">
+						<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+						{punkt}
+					</li>
+				))}
+			</ul>
+		</section>
+
+		<!-- (3) Wybrane prace -->
+		{wybranePrace.length > 0 && (
+			<section aria-labelledby="wybrane-naglowek" class="space-y-4">
+				<h2 id="wybrane-naglowek" class="text-2xl font-bold text-ink">Wybrane prace</h2>
+				<Galeria zdjecia={wybranePrace} kategorie={kategorie} pokazFiltry={false} pokazZaladujWiecej={false} />
+			</section>
+		)}
+
+		<!-- (4) Zaproszenie do kontaktu -->
+		<section class="space-y-4 rounded-sm border border-ink/10 bg-card/10 p-8 text-center">
+			<h2 class="text-2xl font-bold text-ink">Masz zdjęcia do obrobienia?</h2>
+			<p class="mx-auto max-w-prose text-muted">
+				Napisz, jakie zdjęcia potrzebujesz obrobić — odpiszę z wyceną i terminem.
+			</p>
+			<a
+				href="/kontakt/"
+				class="inline-block rounded-full bg-accent px-6 py-3 font-semibold text-paper transition-colors hover:bg-accent/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+			>
+				Napisz do mnie
+			</a>
+		</section>
 	</div>
 </Layout>

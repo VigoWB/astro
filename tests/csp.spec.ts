@@ -90,6 +90,27 @@ for (const sciezka of STRONY) {
 	});
 }
 
+test('CSP: strona główna – suwak/przełącznik przed-po i lightbox wybranych prac – brak naruszeń', async ({ page }) => {
+	await page.goto('/', { waitUntil: 'load' });
+
+	// Pozycję suwaka i podmianę zdjęcia w przełączniku ustawia skrypt przez
+	// element.style.* (AGENTS.md pułapka 7) — to jest tu właśnie sprawdzane.
+	const suwak = page.locator('[data-porownanie-suwak]');
+	if (await suwak.count() > 0) {
+		await suwak.fill('80');
+	} else {
+		await page.locator('[data-porownanie-przelacznik]').click();
+	}
+
+	const karta = page.locator('[data-testid="gallery-item"]').first();
+	if (await karta.count() > 0) {
+		await karta.click();
+		await expect(page.locator('#lightbox-img')).toBeVisible();
+	}
+
+	expect(await naruszenia(page), 'Naruszenia CSP na stronie głównej — patrz public/_headers').toEqual([]);
+});
+
 test('CSP: galeria z otwartym lightboxem i przełącznikiem "Pokaż przed" – brak naruszeń', async ({ page }) => {
 	await page.goto('/galeria', { waitUntil: 'load' });
 

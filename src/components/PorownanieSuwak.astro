@@ -1,0 +1,137 @@
+---
+import type { WersjaLightboxa } from "../lib/galeria.ts";
+
+/**
+ * Duże porównanie "przed/po" na pierwszym ekranie strony głównej (Roadmapa pkt 4).
+ *
+ * Dwa tryby, decyduje o tym build w index.astro (patrz wybierzBohatera):
+ * - trybSuwaka=true: interaktywny suwak (<input type="range">) — tylko gdy "przed"
+ *   i "po" mają identyczny kadr (build to sprawdza, patrz Roadmapa "Zabezpieczenie").
+ * - trybSuwaka=false: zwykły przełącznik "Pokaż przed", jak w lightboksie galerii —
+ *   używany, gdy kadry się różnią albo gdy nie ma jeszcze zdjęcia oznaczonego
+ *   jako "paraSuwaka" (npm run sync-images -- --wyroznij).
+ *
+ * Obie wersje ("po" i "przed") to gotowe webp z /_astro/ (te same dane co lightbox
+ * w galerii) — bez dodatkowego przetwarzania zdjęcia tutaj.
+ *
+ * Proporcje pudełka pilnują atrybuty width/height na <img> "po" (przeglądarka sama
+ * rezerwuje miejsce, bez przesunięcia layoutu) — "przed" wypełnia to samo pudełko
+ * przez object-cover, więc nie musi mieć identycznych pikseli, żeby wizualnie pasować.
+ */
+interface Props {
+	po: WersjaLightboxa;
+	przed?: WersjaLightboxa;
+	opis: string;
+	szerokoscOryginalu: number;
+	wysokoscOryginalu: number;
+	trybSuwaka: boolean;
+}
+
+const { po, przed, opis, szerokoscOryginalu, wysokoscOryginalu, trybSuwaka } = Astro.props;
+const pokazSuwak = trybSuwaka && Boolean(przed);
+const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
+---
+
+<div class="relative overflow-hidden rounded-sm bg-black/5" data-porownanie>
+	<!-- "po" zawsze widoczne w tle — LCP, dlatego eager + fetchpriority high. -->
+	<img
+		src={po.src}
+		srcset={po.srcset}
+		sizes={po.sizes}
+		width={szerokoscOryginalu}
+		height={wysokoscOryginalu}
+		alt={opis || "Zdjęcie po retuszu"}
+		loading="eager"
+		fetchpriority="high"
+		decoding="async"
+		draggable="false"
+		class="block h-auto w-full select-none"
+		data-porownanie-po
+	/>
+
+	{przed && (
+		<img
+			src={przed.src}
+			srcset={przed.srcset}
+			sizes={przed.sizes}
+			width={szerokoscOryginalu}
+			height={wysokoscOryginalu}
+			alt=""
+			aria-hidden="true"
+			draggable="false"
+			loading="eager"
+			class:list={[
+				"absolute inset-0 h-full w-full select-none object-cover",
+				{ hidden: !pokazSuwak, "motion-safe:transition-[clip-path] motion-safe:duration-150": pokazSuwak },
+			]}
+			data-porownanie-przed
+		/>
+	)}
+
+	{pokazSuwak && (
+		<>
+			<div
+				class="pointer-events-none absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-paper shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
+				data-porownanie-linia
+				aria-hidden="true"
+			></div>
+			<div class="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-black/40 px-4 py-3 backdrop-blur-sm">
+				<span class="text-xs font-semibold text-white/90" aria-hidden="true">Przed</span>
+				<input
+					type="range"
+					min="0"
+					max="100"
+					value="50"
+					step="1"
+					class="h-2 w-full cursor-ew-resize appearance-none rounded-full bg-white/30 accent-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+					aria-label={`Porównaj zdjęcie przed i po retuszu${opis ? `: ${opis}` : ""}`}
+					data-porownanie-suwak
+				/>
+				<span class="text-xs font-semibold text-white/90" aria-hidden="true">Po</span>
+			</div>
+		</>
+	)}
+
+	{pokazPrzelacznik && (
+		<button
+			type="button"
+			aria-pressed="false"
+			data-porownanie-przelacznik
+			class="absolute bottom-3 right-3 rounded-full border-2 border-white/50 bg-black/30 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-paper"
+		>
+			Pokaż przed
+		</button>
+	)}
+</div>
+
+<script>
+	// Wszystkie porównania na stronie (dziś jest jedno, na pierwszym ekranie).
+	document.querySelectorAll<HTMLElement>("[data-porownanie]").forEach((kontener) => {
+		const obrazPrzed = kontener.querySelector<HTMLImageElement>("[data-porownanie-przed]");
+		const suwak = kontener.querySelector<HTMLInputElement>("[data-porownanie-suwak]");
+		const przelacznik = kontener.querySelector<HTMLButtonElement>("[data-porownanie-przelacznik]");
+		const linia = kontener.querySelector<HTMLElement>("[data-porownanie-linia]");
+
+		if (suwak && obrazPrzed) {
+			// "przed" jest cały czas w DOM, a suwak odsłania go od lewej przez clip-path —
+			// dzięki temu obraz "po" w tle (LCP) nigdy nie znika i nie przeskakuje.
+			const ustawPozycje = (procent: number) => {
+				obrazPrzed.style.clipPath = `inset(0 ${100 - procent}% 0 0)`;
+				if (linia) linia.style.left = `${procent}%`;
+			};
+			ustawPozycje(Number(suwak.value));
+			suwak.addEventListener("input", () => ustawPozycje(Number(suwak.value)));
+		}
+
+		if (przelacznik && obrazPrzed) {
+			przelacznik.addEventListener("click", () => {
+				const pokazujePrzed = przelacznik.getAttribute("aria-pressed") === "true";
+				przelacznik.setAttribute("aria-pressed", String(!pokazujePrzed));
+				obrazPrzed.classList.toggle("hidden", pokazujePrzed);
+			});
+		}
+
+		// Blokada prawoklika — ta sama utrudniająca ochrona co w galerii (nie usuwać).
+		kontener.addEventListener("contextmenu", (e) => e.preventDefault());
+	});
+</script>

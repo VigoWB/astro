@@ -18,6 +18,8 @@
  * Uruchomienie:
  *   npm run sync-images                  — dodaje nowe zdjęcia
  *   npm run sync-images -- --uzupelnij   — pyta o opis/kategorie tam, gdzie są puste
+ *   npm run sync-images -- --wyroznij    — wybór zdjęć na stronę główną (Roadmapa pkt 4):
+ *                                           pokazywane w sekcji "wybrane" i para do suwaka przed/po
  */
 
 import { DatabaseSync } from 'node:sqlite';
@@ -88,6 +90,8 @@ const TABELA_ZDJEC = `
       lens_model TEXT,
       r2_klucz TEXT,
       r2_klucz_przed TEXT,
+      wyroznione INTEGER DEFAULT 0,
+      para_suwaka INTEGER DEFAULT 0,
       wgrano_o TEXT DEFAULT CURRENT_TIMESTAMP
     );
 `;
@@ -163,8 +167,9 @@ async function odtworzZJson(db) {
     const wstaw = db.prepare(`
       INSERT INTO zdjecia
         (nazwa_pliku, nazwa_pliku_przed, opis, kategorie, szerokosc, wysokosc,
-         iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model, r2_klucz, r2_klucz_przed)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model, r2_klucz, r2_klucz_przed,
+         wyroznione, para_suwaka)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const z of lista) {
@@ -184,7 +189,9 @@ async function odtworzZJson(db) {
         z.exif?.model ?? null,
         z.exif?.lensModel ?? null,
         z.klucz ?? null,
-        z.kluczPrzed ?? null
+        z.kluczPrzed ?? null,
+        z.wyroznione ? 1 : 0,
+        z.paraSuwaka ? 1 : 0
       );
     }
     db.exec('COMMIT');
@@ -470,6 +477,91 @@ async function uzupelnijOpisy(db) {
   console.log('');
 }
 
+// Zamienia np. "1, 3 5" na [1, 3, 5] — pomija nieprawidłowe/poza zakresem numery (z ostrzeżeniem).
+function rozbijNaNumery(tekst, maks) {
+  const numery = tekst
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(Number);
+
+  const poprawne = numery.filter((n) => Number.isInteger(n) && n >= 1 && n <= maks);
+  const bledne = numery.filter((n) => !Number.isInteger(n) || n < 1 || n > maks);
+  if (bledne.length > 0) {
+    console.warn(`   ⚠️  Pominięto nieprawidłowe numery: ${bledne.join(', ')} (zakres 1–${maks}).`);
+  }
+  return [...new Set(poprawne)];
+}
+
+// --- Tryb "wyróżnij": wybór zdjęć na stronę główną (Roadmapa pkt 4) ---
+// Dwie niezależne rzeczy: (1) które zdjęcia pokazują się w sekcji "Wybrane prace"
+// (pole "wyroznione", dowolna liczba), (2) która JEDNA para trafia do suwaka
+// przed/po na pierwszym ekranie (pole "para_suwaka"). Build sam sprawdzi, czy para
+// do suwaka ma identyczne proporcje "przed" i "po" — jeśli nie, pokaże zamiast
+// niego przełącznik "Pokaż przed" (bez przerywania builda).
+async function zarzadzajWyroznieniami(db) {
+  const wszystkie = db
+    .prepare('SELECT id, nazwa_pliku, nazwa_pliku_przed, opis, wyroznione, para_suwaka FROM zdjecia ORDER BY nazwa_pliku')
+    .all();
+
+  if (wszystkie.length === 0) {
+    console.log('✅ Baza jest pusta — najpierw dodaj zdjęcia (npm run sync-images).\n');
+    return;
+  }
+
+  console.log('🌟 Wybór zdjęć na stronę główną\n');
+  wszystkie.forEach((w, i) => {
+    const znaczniki = [w.wyroznione ? 'wyróżnione' : null, w.para_suwaka ? 'suwak' : null].filter(Boolean);
+    const opis = w.opis ? ` — ${w.opis}` : '';
+    const status = znaczniki.length > 0 ? `  [${znaczniki.join(', ')}]` : '';
+    console.log(`   ${String(i + 1).padStart(2)}. ${w.nazwa_pliku}${opis}${status}`);
+  });
+
+  console.log('\n   Sekcja "Wybrane prace" na stronie głównej pokazuje zdjęcia oznaczone jako wyróżnione (3–6 par).');
+  const wejscieWyroznione = await zapytaj(
+    '   Numery zdjęć do wyróżnienia (oddziel przecinkiem lub spacją; Enter = bez zmian, "brak" = wyczyść wszystkie): '
+  );
+
+  if (wejscieWyroznione) {
+    const noweId =
+      wejscieWyroznione.trim().toLowerCase() === 'brak'
+        ? new Set()
+        : new Set(rozbijNaNumery(wejscieWyroznione, wszystkie.length).map((n) => wszystkie[n - 1].id));
+
+    const ustawWyroznione = db.prepare('UPDATE zdjecia SET wyroznione = ? WHERE id = ?');
+    for (const w of wszystkie) {
+      ustawWyroznione.run(noweId.has(w.id) ? 1 : 0, w.id);
+    }
+    console.log(`   ✅ Wyróżnionych zdjęć: ${noweId.size}.`);
+  }
+
+  console.log('\n   Suwak przed/po na pierwszym ekranie pokazuje jedną parę — potrzebuje "przed"');
+  console.log('   w IDENTYCZNYM kadrze co "po" (patrz Roadmapa pkt 4, sposób przygotowania pary).');
+  const wejscieSuwak = await zapytaj('   Numer zdjęcia do suwaka (jedna liczba; Enter = bez zmian, 0 = wyłącz): ');
+
+  if (wejscieSuwak) {
+    if (wejscieSuwak.trim() === '0') {
+      db.prepare('UPDATE zdjecia SET para_suwaka = 0').run();
+      console.log('   ✅ Suwak wyłączony — strona główna pokaże zastępcze zdjęcie z przełącznikiem "Pokaż przed".');
+    } else {
+      const [numer] = rozbijNaNumery(wejscieSuwak, wszystkie.length);
+      if (numer === undefined) {
+        console.warn('   ⚠️  Nieprawidłowy numer — nie zmieniono suwaka.');
+      } else {
+        const wybrane = wszystkie[numer - 1];
+        if (!wybrane.nazwa_pliku_przed) {
+          console.warn(`   ⚠️  ${wybrane.nazwa_pliku} nie ma wersji "przed" — suwak i tak nie zadziała (build pokaże tryb zastępczy).`);
+        }
+        db.prepare('UPDATE zdjecia SET para_suwaka = 0').run();
+        db.prepare('UPDATE zdjecia SET para_suwaka = 1 WHERE id = ?').run(wybrane.id);
+        console.log(`   ✅ Para do suwaka: ${wybrane.nazwa_pliku}.`);
+      }
+    }
+  }
+
+  console.log('');
+}
+
 // --- Plik src/data/galeria.json — to z niego korzysta strona ---
 async function eksportujJson(db, { cicho = false } = {}) {
   const wiersze = db.prepare('SELECT * FROM zdjecia ORDER BY nazwa_pliku').all();
@@ -482,6 +574,8 @@ async function eksportujJson(db, { cicho = false } = {}) {
     wysokosc: w.wysokosc ?? null,
     klucz: w.r2_klucz,
     kluczPrzed: w.r2_klucz_przed ?? null,
+    wyroznione: Boolean(w.wyroznione),
+    paraSuwaka: Boolean(w.para_suwaka),
     exif: {
       iso: w.iso ?? null,
       przyslona: w.przyslona ?? null,
@@ -506,6 +600,7 @@ async function main() {
   console.log('🚀 sync-images — synchronizacja zdjęć z Cloudflare R2 + SQLite\n');
 
   const trybUzupelnij = process.argv.includes('--uzupelnij');
+  const trybWyroznij = process.argv.includes('--wyroznij');
   const db = initDb();
 
   try {
@@ -514,6 +609,8 @@ async function main() {
 
     if (trybUzupelnij) {
       await uzupelnijOpisy(db);
+    } else if (trybWyroznij) {
+      await zarzadzajWyroznieniami(db);
     } else {
       await dodajNoweZdjecia(db);
     }

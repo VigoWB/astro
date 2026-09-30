@@ -103,6 +103,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 - `npm run test`: build, potem testy Playwright (Chrome desktop i mobile, testy dostępności axe)
 - `npm run sync-images`: dodaje nowe zdjęcia z `images/` (uruchamiam ja, nie Ty)
 - `npm run sync-images -- --uzupelnij`: dopytuje o brakujące opisy i kategorie
+- `npm run sync-images -- --wyroznij`: wybór zdjęć na stronę główną — które pokazują się w sekcji "Wybrane prace" i która jedna para trafia do suwaka przed/po (Roadmapa pkt 4)
 
 ---
 
@@ -125,15 +126,17 @@ src/
     Footer.astro
     SEO.astro              meta, Open Graph, Twitter, canonical
     Schema.astro           dane strukturalne JSON-LD
-    Galeria.astro          siatka, filtry, "Załaduj więcej", lightbox
+    Galeria.astro          siatka, filtry, "Załaduj więcej", lightbox (używana też na / bez filtrów/"Załaduj więcej")
+    PorownanieSuwak.astro  suwak przed/po (albo zastępczy przełącznik) na pierwszym ekranie /
     ContactForm.astro      formularz Formspree + walidacja + Turnstile
     ui/Container.astro     tylko max-w-240 mx-auto px-4
     ui/Karta.astro         kafelek zdjęcia w galerii
   data/
     galeria.json           GENEROWANY, nie edytuj ręcznie
-    kategorie.ts           przyciski filtrów galerii
+    kategorie.ts           lista kategorii LICZONA przy buildzie z galeria.json
     nav.ts                 linki w menu
     siteConfig.json        dane osoby i firmy dla Schema/SEO
+  lib/galeria.ts           wczytywanie zdjęć (adresy R2, wersje do lightboxa) — wspólne dla / i /galeria
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
@@ -152,9 +155,9 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
       ├─ wysyła pliki do Cloudflare R2
       ├─ zapisuje dane (opis, kategorie, wymiary, EXIF) do data/galeria.db
       └─ eksportuje src/data/galeria.json   ← to trafia do gita
-  → src/pages/galeria.astro czyta galeria.json i skleja adresy z PUBLIC_R2_URL
+  → src/lib/galeria.ts (wczytajZdjecia) czyta galeria.json i skleja adresy z PUBLIC_R2_URL — wspólne dla / i /galeria
   → Galeria.astro → Karta.astro (<Image> z astro:assets robi miniatury przy buildzie)
-  → galeria.astro robi też przez getImage() wersje do lightboxa (webp, dłuższy bok 1280 i 1920 px)
+  → wczytajZdjecia() robi też przez getImage() wersje do lightboxa (webp, dłuższy bok 1280 i 1920 px)
 ```
 
 - Na stronie nie ma żadnego adresu z R2: miniatury, lightbox i dane dla Google (Schema.org) wskazują pliki w `/_astro/`. Oryginały z R2 pobiera tylko build.
@@ -163,6 +166,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 - Komponenty zawsze opierają się na `galeria.json`, nigdy na bazie SQLite.
 - `astro.config.mjs` buduje `image.remotePatterns` z `PUBLIC_R2_URL`. Przy zmianie domeny zdjęć zmienia się tylko zmienną.
 - EXIF czytany jest z pliku „przed” (oryginał z aparatu), jeśli taki istnieje.
+- Pola `wyroznione` i `paraSuwaka` (ustawia `npm run sync-images -- --wyroznij`) sterują stroną główną: `wyroznione` — sekcja "Wybrane prace", `paraSuwaka` — jedna para do suwaka na pierwszym ekranie. Brak oznaczeń nie przerywa builda — `index.astro` dobiera zastępcze zdjęcia i loguje ostrzeżenie (patrz sekcja 9).
 
 ---
 
@@ -208,6 +212,15 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 - Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.
 - Efekt „wyostrzenia” miniatury: klasy startowe są w `Karta.astro`, a zdejmuje je skrypt w `Galeria.astro` (nie `onload` w HTML).
 - Lightbox jest jeden, wspólny, i podmienia `sizes`, `srcset` i `src` (funkcja `ustawZdjecie`) — dane bierze z atrybutów karty `data-po*` / `data-przed*`. Wersję „przed” pokazuje przycisk „Pokaż przed” (`id="lightbox-przelacznik"`, `aria-pressed`) — działa z klawiatury, myszki i dotyku, resetuje się przy zamknięciu lightboxa i zmianie zdjęcia. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
+- Propy `pokazFiltry` i `pokazZaladujWiecej` (domyślnie `true`) wyłączają pasek filtrów i przycisk „Załaduj więcej” — używa tego `index.astro` (sekcja „Wybrane prace” pokazuje przekazane zdjęcia od razu, bez filtrowania).
+
+**index.astro (strona główna)**
+- Dane bierze z `wczytajZdjecia()` (`src/lib/galeria.ts`), tak jak `/galeria`.
+- Para do suwaka: `wybierzBohatera()` szuka zdjęcia z `paraSuwaka: true`. Jeśli go nie ma, albo jego „przed”/„po” mają różne proporcje (tolerancja 2%, `proporcjeZgodne()`), build **nie przerywa się** — loguje ostrzeżenie (`console.warn`, widoczne przy `npm run build`) i pokazuje zastępcze zdjęcie z przełącznikiem „Pokaż przed” zamiast suwaka. Realny suwak wymaga pary w identycznym kadrze — patrz Roadmapa pkt 4.
+- Sekcja „Wybrane prace”: `wybierzWyroznione()` bierze zdjęcia z `wyroznione: true` (max 6, bez zdjęcia użytego jako bohater). Gdy żadne nie jest oznaczone, tymczasowo pokazuje pierwsze zdjęcia z `galeria.json` (z ostrzeżeniem w logu) — żeby strona nie była pusta, zanim ktoś uruchomi `npm run sync-images -- --wyroznij`.
+- Treść sekcji „Co poprawiam przy retuszu” (`PUNKTY_RETUSZU`) i zaproszenia do kontaktu to na razie tekst tymczasowy — do potwierdzenia.
+
+**PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` sterowanym z `<input type="range">` (tryb suwaka) albo zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. Pozycję suwaka i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.
 
 **ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em.
 

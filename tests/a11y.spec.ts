@@ -37,6 +37,31 @@ test('a11y: Skip link pozwala pominąć nawigację klawiaturą', async ({ page }
 	await expect(page.locator('#glowna-tresc')).toBeFocused();
 });
 
+// Zależnie od tego, czy w galeria.json jest już oznaczona para do suwaka
+// (npm run sync-images -- --wyroznij) z pasującymi proporcjami "przed"/"po",
+// strona główna pokazuje suwak albo zastępczy przełącznik "Pokaż przed" — test
+// sprawdza z klawiatury to, co faktycznie jest na stronie (Roadmapa pkt 4).
+test('a11y: Strona główna – porównanie przed/po działa klawiaturą', async ({ page }) => {
+	await page.goto('/');
+
+	const suwak = page.locator('[data-porownanie-suwak]');
+	if (await suwak.count() > 0) {
+		await suwak.focus();
+		await expect(suwak).toBeFocused();
+		await expect(suwak).toHaveValue('50');
+		await page.keyboard.press('ArrowRight');
+		await expect(suwak).toHaveValue('51');
+		return;
+	}
+
+	const przelacznik = page.locator('[data-porownanie-przelacznik]');
+	await przelacznik.focus();
+	await expect(przelacznik).toBeFocused();
+	await expect(przelacznik).toHaveAttribute('aria-pressed', 'false');
+	await page.keyboard.press('Enter');
+	await expect(przelacznik).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('a11y: Galeria – filtry działają klawiaturą', async ({ page }) => {
 	await page.goto('/galeria');
 

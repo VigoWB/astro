@@ -20,33 +20,40 @@ interface Props {
 			lensModel?: string | null;
 		};
 	}>;
-	kategorie: readonly string[];
+	/** Pomijalne, gdy pokazFiltry={false} (strona główna nie pokazuje paska filtrów). */
+	kategorie?: readonly string[];
+	/** Pasek filtrów kategorii. Domyślnie widoczny (galeria); wyłączany na stronie głównej (Roadmapa pkt 4). */
+	pokazFiltry?: boolean;
+	/** Przycisk "Załaduj więcej". Domyślnie widoczny; wyłączany, gdy strona i tak pokazuje wszystkie przekazane zdjęcia naraz (strona główna). */
+	pokazZaladujWiecej?: boolean;
 }
 
-const { zdjecia, kategorie } = Astro.props;
+const { zdjecia, kategorie = [], pokazFiltry = true, pokazZaladujWiecej = true } = Astro.props;
 
 // Ile zdjęć widać na start i ile dochodzi po każdym kliknięciu "Załaduj więcej".
 // Ta sama liczba trafia do skryptu niżej przez atrybut data-na-strone,
-// więc jest tylko jedno miejsce do zmiany.
-const NA_STRONE = 8;
+// więc jest tylko jedno miejsce do zmiany. Bez przycisku "Załaduj więcej"
+// (pokazZaladujWiecej={false}) pokazujemy od razu wszystkie przekazane zdjęcia.
+const NA_STRONE = pokazZaladujWiecej ? 8 : zdjecia.length;
 
 const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 ---
 
-<!-- Kategorie liczone przy buildzie z galeria.json (src/data/kategorie.ts, Roadmapa pkt 5). -->
-<div class="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
-	{kategorie.map((kat) => (
-		<button
-			type="button"
-			data-filter={kat}
-			data-testid={`filter-${kat.toLowerCase()}`}
-			class={`px-4 py-2 rounded-full border-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-accent text-paper border-accent" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
-			aria-pressed={kat === "Wszystkie"}
-		>
-			{kat}
-		</button>
-	))}
-</div>
+{pokazFiltry && (
+	<div class="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
+		{kategorie.map((kat) => (
+			<button
+				type="button"
+				data-filter={kat}
+				data-testid={`filter-${kat.toLowerCase()}`}
+				class={`px-4 py-2 rounded-full border-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-accent text-paper border-accent" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
+				aria-pressed={kat === "Wszystkie"}
+			>
+				{kat}
+			</button>
+		))}
+	</div>
+)}
 
 <!-- Wszystkie zdjęcia są w HTML od razu; te poza pierwszą porcją mają klasę "hidden"
      (miniatury i tak ładują się dopiero po pokazaniu — loading="lazy"). -->
@@ -64,21 +71,22 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	))}
 </div>
 
-<!-- Load More Button -->
-<div
-	id="load-more-container"
-	class:list={["text-center mt-8 mb-12", { hidden: poczatkowoPozostalo === 0 }]}
-	data-testid="load-more-container"
->
-	<button
-		id="load-more-btn"
-		type="button"
-		class="px-8 py-3 bg-accent text-paper font-semibold rounded-full hover:bg-accent/90 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-		data-testid="load-more-btn"
+{pokazZaladujWiecej && (
+	<div
+		id="load-more-container"
+		class:list={["text-center mt-8 mb-12", { hidden: poczatkowoPozostalo === 0 }]}
+		data-testid="load-more-container"
 	>
-		Załaduj więcej (<span id="load-more-count" data-testid="load-more-count">{poczatkowoPozostalo}</span>)
-	</button>
-</div>
+		<button
+			id="load-more-btn"
+			type="button"
+			class="px-8 py-3 bg-accent text-paper font-semibold rounded-full hover:bg-accent/90 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+			data-testid="load-more-btn"
+		>
+			Załaduj więcej (<span id="load-more-count" data-testid="load-more-count">{poczatkowoPozostalo}</span>)
+		</button>
+	</div>
+)}
 
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia">
 	<button type="button" id="lightbox-close" tabindex="0" class="absolute top-4 right-4 text-white text-3xl leading-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black" aria-label="Zamknij podgląd">
@@ -145,9 +153,11 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 
 	const wszystkieKarty = Array.from(document.querySelectorAll<HTMLElement>("[data-gallery-item]"));
 	const przyciskiFiltrow = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-filter]"));
-	const loadMoreBtn = document.getElementById("load-more-btn")!;
-	const loadMoreCount = document.getElementById("load-more-count")!;
-	const loadMoreContainer = document.getElementById("load-more-container")!;
+	// Przycisk "Załaduj więcej" nie istnieje w HTML, gdy komponent dostał pokazZaladujWiecej={false}
+	// (strona główna, Roadmapa pkt 4) — stąd zapytania mogą zwrócić null.
+	const loadMoreBtn = document.getElementById("load-more-btn");
+	const loadMoreCount = document.getElementById("load-more-count");
+	const loadMoreContainer = document.getElementById("load-more-container");
 
 	let aktywnyFiltr = "Wszystkie";
 	let limit = NA_STRONE; // ile zdjęć (spełniających filtr) ma być teraz widocznych
@@ -231,13 +241,13 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		});
 
 		const pozostalo = Math.max(pasujace - limit, 0);
-		loadMoreCount.textContent = String(pozostalo);
-		loadMoreContainer.classList.toggle("hidden", pozostalo === 0);
+		if (loadMoreCount) loadMoreCount.textContent = String(pozostalo);
+		loadMoreContainer?.classList.toggle("hidden", pozostalo === 0);
 
 		przygotujAnimacje();
 	}
 
-	loadMoreBtn.addEventListener("click", () => {
+	loadMoreBtn?.addEventListener("click", () => {
 		limit += NA_STRONE;
 		odswiez();
 	});

@@ -94,6 +94,10 @@ const gallery = zdjecia?.length
 				...(z.opis ? { name: z.opis } : {}),
 				...(z.po.width ? { width: z.po.width } : {}),
 				...(z.po.height ? { height: z.po.height } : {}),
+				creator: { "@type": "Person", name: siteConfig.person.name },
+				creditText: siteConfig.person.name,
+				copyrightNotice: siteConfig.person.name,
+				acquireLicensePage: new URL("/kontakt/", bazowyUrl).toString(),
 			})),
 		}
 	: null;

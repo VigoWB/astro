@@ -137,8 +137,7 @@ src/
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/a11y.spec.ts, galeria.spec.ts, kontakt.spec.ts, csp.spec.ts
-env.d.ts                   typy zmiennych środowiskowych
+tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
@@ -207,7 +206,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 - Filtry porównują `data-kategoria` karty z przyciskami z `kategorie.ts`.
 - Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.
 - Efekt „wyostrzenia” miniatury: klasy startowe są w `Karta.astro`, a zdejmuje je skrypt w `Galeria.astro` (nie `onload` w HTML).
-- Lightbox jest jeden, wspólny, i podmienia `sizes`, `srcset` i `src` (funkcja `ustawZdjecie`) — dane bierze z atrybutów karty `data-po*` / `data-przed*`. Wersja „przed” pojawia się na `mouseenter` / `touchstart`. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
+- Lightbox jest jeden, wspólny, i podmienia `sizes`, `srcset` i `src` (funkcja `ustawZdjecie`) — dane bierze z atrybutów karty `data-po*` / `data-przed*`. Wersję „przed” pokazuje przycisk „Pokaż przed” (`id="lightbox-przelacznik"`, `aria-pressed`) — działa z klawiatury, myszki i dotyku, resetuje się przy zamknięciu lightboxa i zmianie zdjęcia. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
 
 **ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em.
 

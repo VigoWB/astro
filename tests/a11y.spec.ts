@@ -82,6 +82,25 @@ test('a11y: Lightbox – focus trap działa', async ({ page }) => {
 	await expect(page.locator('[data-gallery-item]').first()).toBeFocused();
 });
 
+test('a11y: Lightbox otwarty – brak naruszeń WCAG AA', async ({ page }) => {
+	await page.goto('/galeria');
+
+	await page.locator('[data-gallery-item]').first().focus();
+	await page.keyboard.press('Enter');
+	await expect(page.locator('#lightbox')).toHaveClass(/flex/);
+
+	const accessibilityScanResults = await new AxeBuilder({ page })
+		.withTags(['wcag2aa', 'wcag21aa', 'best-practice'])
+		.analyze();
+
+	// Te samo ignorowane problemy co przy zwykłym skanie /galeria (patrz wyżej).
+	const ignoreIds = ['image-redundant-alt', 'color-contrast'];
+	const filteredViolations = accessibilityScanResults.violations.filter(
+		(v) => !ignoreIds.includes(v.id)
+	);
+	expect(filteredViolations).toEqual([]);
+});
+
 test('a11y: Menu mobilne – focus trap działa', async ({ page }) => {
 	await page.setViewportSize({ width: 375, height: 667 });
 	await page.goto('/');

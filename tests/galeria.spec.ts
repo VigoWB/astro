@@ -193,4 +193,82 @@ test.describe('Galeria', () => {
 		await expect(przelacznik).toHaveAttribute('aria-pressed', 'false');
 		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.currentSrc)).toBe(adresPo);
 	});
+
+	test('lightbox: przyciski poprzednie/następne, licznik i stan na krawędziach', async ({ page }) => {
+		// Nawigacja liczy tylko zdjęcia aktualnie widoczne (filtr, "Załaduj więcej") —
+		// przy więcej niż jednej porcji to mniej niż wszystkie karty w DOM.
+		const wszystkie = await page.locator('[data-testid="gallery-item"]:not(.hidden)').count();
+		test.skip(wszystkie < 2, 'Potrzeba co najmniej 2 widocznych zdjęć, żeby sprawdzić nawigację');
+
+		await page.locator('[data-testid="gallery-item"]').first().click();
+
+		const licznik = page.locator('[data-testid="lightbox-licznik"]');
+		const poprzednie = page.locator('[data-testid="lightbox-poprzednie"]');
+		const nastepne = page.locator('[data-testid="lightbox-nastepne"]');
+		const zdjecie = page.locator('#lightbox-img');
+
+		// Pierwsze zdjęcie: licznik "1 / N", "poprzednie" wyłączone.
+		await expect(licznik).toHaveText(`1 / ${wszystkie}`);
+		await expect(poprzednie).toBeDisabled();
+		await expect(nastepne).toBeEnabled();
+
+		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+		const adresPierwszego = await zdjecie.evaluate((img: HTMLImageElement) => img.currentSrc);
+
+		await nastepne.click();
+		await expect(licznik).toHaveText(`2 / ${wszystkie}`);
+		await expect(poprzednie).toBeEnabled();
+		await expect.poll(() => zdjecie.evaluate((img: HTMLImageElement) => img.currentSrc)).not.toBe(adresPierwszego);
+
+		// Powrót strzałką klawiatury.
+		await page.keyboard.press('ArrowLeft');
+		await expect(licznik).toHaveText(`1 / ${wszystkie}`);
+		await expect(poprzednie).toBeDisabled();
+
+		// Przejście na sam koniec listy (klawiaturą) — "następne" ma się wyłączyć.
+		for (let i = 1; i < wszystkie; i++) {
+			await page.keyboard.press('ArrowRight');
+		}
+		await expect(licznik).toHaveText(`${wszystkie} / ${wszystkie}`);
+		await expect(nastepne).toBeDisabled();
+		await expect(poprzednie).toBeEnabled();
+	});
+
+	test('lightbox: przełącznik "Pokaż przed" resetuje się po przejściu do kolejnego zdjęcia', async ({ page }) => {
+		const karty = page.locator('[data-testid="gallery-item"]');
+		const wszystkie = await karty.count();
+		test.skip(wszystkie < 2, 'Potrzeba co najmniej 2 zdjęć');
+
+		const pierwszaMaPrzed = Boolean(await karty.first().getAttribute('data-przed'));
+		test.skip(!pierwszaMaPrzed, 'Pierwsze zdjęcie w danych testowych nie ma wersji "przed"');
+
+		await karty.first().click();
+
+		const przelacznik = page.locator('[data-testid="lightbox-przelacznik"]');
+		await przelacznik.click();
+		await expect(przelacznik).toHaveAttribute('aria-pressed', 'true');
+
+		await page.locator('[data-testid="lightbox-nastepne"]').click();
+		await expect(przelacznik).toHaveAttribute('aria-pressed', 'false');
+	});
+
+	test('lightbox: przeglądanie działa dotykiem (przesunięcie palcem)', async ({ page }) => {
+		const wszystkie = await page.locator('[data-testid="gallery-item"]:not(.hidden)').count();
+		test.skip(wszystkie < 2, 'Potrzeba co najmniej 2 widocznych zdjęć');
+
+		await page.locator('[data-testid="gallery-item"]').first().click();
+
+		const zdjecie = page.locator('#lightbox-img');
+		const licznik = page.locator('[data-testid="lightbox-licznik"]');
+		await expect(licznik).toHaveText(`1 / ${wszystkie}`);
+
+		// Symulacja przesunięcia palcem bez potrzeby kontekstu z prawdziwym dotykiem —
+		// odpalamy te same zdarzenia, które łapie nasz listener (touchstart/touchend
+		// z changedTouches[0].clientX). "identifier" jest wymagane przez konstruktor Touch.
+		await zdjecie.dispatchEvent('touchstart', { changedTouches: [{ identifier: 0, clientX: 300, clientY: 200 }] });
+		await zdjecie.dispatchEvent('touchend', { changedTouches: [{ identifier: 0, clientX: 200, clientY: 200 }] });
+
+		// Przesunięcie w lewo (mniejsze X na końcu) → następne zdjęcie.
+		await expect(licznik).toHaveText(`2 / ${wszystkie}`);
+	});
 });

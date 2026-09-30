@@ -87,6 +87,29 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		&times;
 	</button>
 
+	<!-- Przeglądanie zdjęć bez zamykania podglądu (Roadmapa pkt 6). Ukryte całkiem,
+	     gdy aktualnie widoczne jest tylko jedno zdjęcie (nie ma dokąd przejść);
+	     na krawędziach (pierwsze/ostatnie) disabled zamiast zawijania w kółko —
+	     disabled samo wypada z kolejności Tab i z pułapki fokusu. -->
+	<button
+		type="button"
+		id="lightbox-poprzednie"
+		data-testid="lightbox-poprzednie"
+		class="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-3xl leading-none text-white transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:left-4"
+		aria-label="Poprzednie zdjęcie"
+	>
+		&lsaquo;
+	</button>
+	<button
+		type="button"
+		id="lightbox-nastepne"
+		data-testid="lightbox-nastepne"
+		class="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-3xl leading-none text-white transition-colors hover:bg-black/50 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:right-4"
+		aria-label="Następne zdjęcie"
+	>
+		&rsaquo;
+	</button>
+
 	<div class="flex max-h-full max-w-full flex-col items-center gap-4">
 		<img
 			id="lightbox-img"
@@ -110,6 +133,9 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 				Pokaż przed
 			</button>
 		</div>
+		<!-- Licznik "3 / 10" — tylko wśród zdjęć aktualnie widocznych (filtr, "Załaduj więcej").
+		     aria-live, żeby czytnik ekranu ogłosił zmianę po strzałce/przycisku. -->
+		<span id="lightbox-licznik" class="text-sm text-white/70" data-testid="lightbox-licznik" aria-live="polite"></span>
 		<!-- Dane z aparatu (ISO, przysłona, ogniskowa, czas) -->
 		<div id="lightbox-exif" class="text-sm text-white/70 font-mono hidden"></div>
 	</div>
@@ -268,6 +294,9 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	const przelacznikBtn = document.getElementById("lightbox-przelacznik") as HTMLButtonElement;
 	const lightboxExif = document.getElementById("lightbox-exif")!;
 	const closeBtn = document.getElementById("lightbox-close")!;
+	const poprzednieBtn = document.getElementById("lightbox-poprzednie") as HTMLButtonElement;
+	const nastepneBtn = document.getElementById("lightbox-nastepne") as HTMLButtonElement;
+	const lightboxLicznik = document.getElementById("lightbox-licznik")!;
 
 	// Zmniejszona wersja zdjęcia (webp z /_astro/) — przygotowana przy buildzie w galeria.astro.
 	interface WersjaZdjecia {
@@ -278,6 +307,15 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 
 	const current: { po: WersjaZdjecia | null; przed: WersjaZdjecia | null } = { po: null, przed: null };
 	let lastFocusedElement: HTMLElement | null = null;
+
+	// Przeglądanie w lightboxie: lista i pozycja liczone tylko wśród zdjęć aktualnie
+	// widocznych w galerii (po filtrze i "Załaduj więcej"), nie wśród wszystkich.
+	let aktualnaListaZdjec: HTMLElement[] = [];
+	let aktualnyIndeks = -1;
+
+	function aktualnaLista(): HTMLElement[] {
+		return wszystkieKarty.filter((el) => !el.classList.contains("hidden"));
+	}
 
 	// Czyta z karty adresy wersji "po" albo "przed" (atrybuty data-po*, data-przed*).
 	function wersjaZKarty(item: HTMLElement, ktora: "po" | "przed"): WersjaZdjecia | null {
@@ -298,14 +336,19 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		img.src = wersja.src;
 	}
 
-	// Elementy, po których krąży Tab wewnątrz lightboxa (tylko te, które są teraz widoczne).
+	// Elementy, po których krąży Tab wewnątrz lightboxa (tylko te, które są teraz widoczne
+	// i nie są disabled — na krawędziach listy poprzednie/następne są disabled).
 	function elementyFokusowalne(): HTMLElement[] {
 		return Array.from(
-			lightbox.querySelectorAll<HTMLElement>("#lightbox-close, #lightbox-img, #lightbox-opis, #lightbox-przelacznik")
-		).filter((el) => el.getClientRects().length > 0);
+			lightbox.querySelectorAll<HTMLElement>(
+				"#lightbox-close, #lightbox-poprzednie, #lightbox-nastepne, #lightbox-img, #lightbox-opis, #lightbox-przelacznik"
+			)
+		).filter((el) => el.getClientRects().length > 0 && !(el as HTMLButtonElement).disabled);
 	}
 
-	function otworz(item: HTMLElement) {
+	// Wczytuje dane pojedynczego zdjęcia do już otwartego lightboxa — używane
+	// zarówno przy pierwszym otwarciu, jak i przy przejściu poprzednie/następne.
+	function zaladujDane(item: HTMLElement) {
 		current.po = wersjaZKarty(item, "po");
 		current.przed = wersjaZKarty(item, "przed");
 
@@ -314,6 +357,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		lightboxOpis.textContent = item.dataset.opis || "";
 
 		przelacznikBtn.classList.toggle("hidden", !current.przed);
+		// Przełącznik "Pokaż przed" resetuje się przy każdej zmianie zdjęcia (Roadmapa pkt 6).
 		przelacznikBtn.setAttribute("aria-pressed", "false");
 
 		// Wersję "przed" pobieramy już teraz, żeby przełącznik pokazał ją bez czekania.
@@ -326,6 +370,54 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		const exif = item.dataset.exif || "";
 		lightboxExif.textContent = exif;
 		lightboxExif.classList.toggle("hidden", !exif);
+
+		aktualizujNawigacje();
+		wczytajZWyprzedzeniem();
+	}
+
+	// Licznik "3 / 10" + stan przycisków poprzednie/następne (disabled na krawędziach,
+	// cała nawigacja ukryta, gdy w aktualnym widoku jest tylko jedno zdjęcie).
+	function aktualizujNawigacje() {
+		const liczbaZdjec = aktualnaListaZdjec.length;
+		lightboxLicznik.textContent = liczbaZdjec > 0 ? `${aktualnyIndeks + 1} / ${liczbaZdjec}` : "";
+
+		poprzednieBtn.disabled = aktualnyIndeks <= 0;
+		nastepneBtn.disabled = aktualnyIndeks >= liczbaZdjec - 1;
+
+		const pokazNawigacje = liczbaZdjec > 1;
+		poprzednieBtn.classList.toggle("hidden", !pokazNawigacje);
+		nastepneBtn.classList.toggle("hidden", !pokazNawigacje);
+		lightboxLicznik.classList.toggle("hidden", !pokazNawigacje);
+	}
+
+	// Wczytuje z wyprzedzeniem kolejne zdjęcie w kolejności, żeby "następne" nie czekało
+	// na pobranie pliku (Roadmapa pkt 6, "ewentualnie wczytanie z wyprzedzeniem").
+	function wczytajZWyprzedzeniem() {
+		const nastepneZdjecie = aktualnaListaZdjec[aktualnyIndeks + 1];
+		if (!nastepneZdjecie) return;
+		const wersja = wersjaZKarty(nastepneZdjecie, "po");
+		if (wersja) ustawZdjecie(new Image(), wersja);
+	}
+
+	function przejdzDo(indeks: number) {
+		if (indeks < 0 || indeks >= aktualnaListaZdjec.length) return;
+		aktualnyIndeks = indeks;
+		zaladujDane(aktualnaListaZdjec[indeks]);
+	}
+
+	function poprzednie() {
+		przejdzDo(aktualnyIndeks - 1);
+	}
+
+	function nastepne() {
+		przejdzDo(aktualnyIndeks + 1);
+	}
+
+	function otworz(item: HTMLElement) {
+		aktualnaListaZdjec = aktualnaLista();
+		aktualnyIndeks = aktualnaListaZdjec.indexOf(item);
+
+		zaladujDane(item);
 
 		// Zapisz element, który miał focus przed otwarciem
 		lastFocusedElement = document.activeElement as HTMLElement;
@@ -378,6 +470,36 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 
 	closeBtn.addEventListener("click", zamknij);
 
+	poprzednieBtn.addEventListener("click", poprzednie);
+	nastepneBtn.addEventListener("click", nastepne);
+
+	// Przesuwanie palcem po zdjęciu (telefon) — w lewo: następne, w prawo: poprzednie.
+	// passive: true, bo nie blokujemy przewijania strony (lightbox i tak zajmuje cały ekran).
+	let dotykStartX = 0;
+	const PROG_PRZESUNIECIA = 50; // px — poniżej tego traktujemy to jak zwykłe stuknięcie
+
+	lightboxImg.addEventListener(
+		"touchstart",
+		(e) => {
+			dotykStartX = e.changedTouches[0].clientX;
+		},
+		{ passive: true }
+	);
+
+	lightboxImg.addEventListener(
+		"touchend",
+		(e) => {
+			const delta = e.changedTouches[0].clientX - dotykStartX;
+			if (Math.abs(delta) < PROG_PRZESUNIECIA) return;
+			if (delta < 0) {
+				nastepne();
+			} else {
+				poprzednie();
+			}
+		},
+		{ passive: true }
+	);
+
 	// Przełącznik "Pokaż przed" — ta sama obsługa dla klawiatury, myszki i dotyku
 	// (wcześniej trzeba było najechać myszką albo przytrzymać palec: nie dało się
 	// tego zrobić z klawiatury, a na komputerze powiększenie czasem otwierało się
@@ -397,8 +519,19 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	});
 
 	document.addEventListener("keydown", (e) => {
-		// Escape działa tylko przy otwartym lightboxie — inaczej zabierałby focus stronie.
-		if (e.key === "Escape" && !lightbox.classList.contains("hidden")) zamknij();
+		// Wszystkie te klawisze działają tylko przy otwartym lightboxie — inaczej
+		// zabierałyby focus stronie (np. strzałki przewijające zwykłą galerię).
+		if (lightbox.classList.contains("hidden")) return;
+
+		if (e.key === "Escape") {
+			zamknij();
+		} else if (e.key === "ArrowLeft") {
+			e.preventDefault();
+			poprzednie();
+		} else if (e.key === "ArrowRight") {
+			e.preventDefault();
+			nastepne();
+		}
 	});
 
 	// Focus trap handler dla Tab / Shift+Tab

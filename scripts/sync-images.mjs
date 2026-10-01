@@ -704,7 +704,8 @@ async function podmienPlik(db, nazwaPliku) {
   console.log(`   ✅ Zaktualizowano "${nazwaPliku}".\n`);
 }
 
-// --- Plik src/data/galeria.json — to z niego korzysta strona ---async function eksportujJson(db, { cicho = false } = {}) {
+// --- Plik src/data/galeria.json — to z niego korzysta strona ---
+async function eksportujJson(db, { cicho = false } = {}) {
   const wiersze = db.prepare('SELECT * FROM zdjecia ORDER BY nazwa_pliku').all();
 
   const lista = wiersze.map((w) => ({

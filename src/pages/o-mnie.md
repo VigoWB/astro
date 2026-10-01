@@ -11,12 +11,12 @@ date: "11-11-2025"
 
 ![Wiktor](../assets/moje-zdjecie.jpg)
 
-Cześć, mam na imię Wiktor. Fotografuję różne rzeczy — portrety, chwile ze znajomymi, cokolwiek akurat przyciągnie oko. Nie trzymam się jednego gatunku, wolę łapać to, co akurat warte jest zatrzymania.
+Cześć, mam na imię Wiktor. Zajmuję się fotografią produktową i retuszem — głównie zdjęcia do sklepów internetowych i materiałów reklamowych. Lubię tę robotę za szczegóły: równe tło, czyste krawędzie, kolor dokładnie taki, jaki ma produkt naprawdę.
 
 ## Zdjęcie to dopiero połowa
 
-To, co widzisz w galerii, to nie tylko surowe kadry — każde zdjęcie ma swoją wersję „przed" i „po". Lubię tę część procesu równie mocno co samo pstrykanie: dobór kolorów, światła, nastroju. Suwak przed/po w galerii to trochę mój sposób na pokazanie, że retusz to nie oszustwo, tylko druga połowa roboty.
+To, co widzisz w galerii, to nie tylko surowe kadry — każde zdjęcie ma swoją wersję „przed" i „po". Lubię tę część procesu równie mocno co samo pstrykanie: dobór kolorów, światła, usuwanie niedoskonałości. Przy każdym zdjęciu możesz kliknąć „Pokaż przed", żeby zobaczyć różnicę — to mój sposób na pokazanie, że retusz to nie oszustwo, tylko druga połowa roboty.
 
 ## Poza obiektywem
 
-Prywatnie jestem wielkim fanem kapibar. Jeśli chcesz pogadać o sesji albo po prostu o zdjęciach, dane kontaktowe znajdziesz w stopce strony.
+Prywatnie i hobby. Jeśli chcesz pogadać o zleceniu albo po prostu o zdjęciach, [napisz do mnie](/kontakt/).

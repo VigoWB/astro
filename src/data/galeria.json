@@ -9,6 +9,8 @@
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1111.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_1111.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -31,6 +33,8 @@
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1112.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_1112.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -52,6 +56,8 @@
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1113.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_1113.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -73,6 +79,8 @@
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1114.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_1114.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -94,6 +102,8 @@
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1115.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_1115.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -115,6 +125,8 @@
     "wysokosc": 1440,
     "klucz": "zdjecia/DSC_1116.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_1116.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -137,6 +149,8 @@
     "wysokosc": 3412,
     "klucz": "zdjecia/DSC_4968-Edytuj.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_4968-Edytuj.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -158,6 +172,8 @@
     "wysokosc": 3193,
     "klucz": "zdjecia/DSC_4971-Edytuj.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_4971-Edytuj.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -179,6 +195,8 @@
     "wysokosc": 2928,
     "klucz": "zdjecia/DSC_4975-Edytuj.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_4975-Edytuj.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": null,
       "przyslona": null,
@@ -200,12 +218,14 @@
     "wysokosc": 3553,
     "klucz": "zdjecia/DSC_6910.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_6910.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
     "exif": {
       "iso": 100,
       "przyslona": 16,
       "ogniskowa": 50,
       "czasNaswietlania": 0.06666666666666667,
-      "dataWykonania": "2026-07-01T10:18:03.000Z",
+      "dataWykonania": "2026-07-01T08:18:03.000Z",
       "make": "NIKON CORPORATION",
       "model": "NIKON D7500",
       "lensModel": "50.0 mm f/1.4"

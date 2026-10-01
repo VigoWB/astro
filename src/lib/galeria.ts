@@ -107,6 +107,53 @@ async function wersjaPrzed(adres: string, nazwaPliku: string): Promise<WersjaLig
 	return wersjaDoLightboxa(adres, wymiary.width, wymiary.height);
 }
 
+// Czy pod danym adresem w R2 faktycznie jest plik? Potrzebne do siatki bezpieczeństwa
+// niżej — getImage() z astro:assets NIE rzuca błędu, który dałoby się złapać przy
+// generowaniu zdjęcia: prawdziwe pobranie dzieje się w późniejszej, osobnej fazie
+// builda (poza zasięgiem await/try-catch tutaj), więc musimy sprawdzić PRZED jego
+// wywołaniem, a nie łapać wyjątek po.
+async function istniejeWR2(adres: string): Promise<boolean> {
+	try {
+		const odpowiedz = await fetch(adres, { method: "HEAD" });
+		return odpowiedz.ok;
+	} catch {
+		return false;
+	}
+}
+
+// Siatka bezpieczeństwa na czas wdrażania znaku wodnego (Roadmapa pkt 2): zdjęcia
+// dodane przed tą zmianą nie mają jeszcze wersji w "znak/", dopóki ktoś nie uruchomi
+// dla nich `sync-images -- --podmien`. Zamiast wywalać cały build (jak przy prawdziwym
+// braku pliku), pokazujemy czysty oryginał i ostrzegamy w logu — tak samo, jak build
+// radzi sobie dziś z brakiem "wyroznione"/"paraSuwaka" (patrz index.astro).
+async function wersjaDoLightboxaZFallbackiem(
+	adresZnak: string,
+	adresCzysty: string,
+	szerokosc: number,
+	wysokosc: number,
+	nazwaPliku: string
+): Promise<WersjaLightboxa> {
+	if (await istniejeWR2(adresZnak)) {
+		return wersjaDoLightboxa(adresZnak, szerokosc, wysokosc);
+	}
+	console.warn(
+		`galeria: brak wersji ze znakiem wodnym dla ${nazwaPliku} (${adresZnak}) — pokazuję bez znaku. Uzupełnij: npm run sync-images -- --podmien ${nazwaPliku}.`
+	);
+	return wersjaDoLightboxa(adresCzysty, szerokosc, wysokosc);
+}
+
+async function wersjaPrzedZFallbackiem(adresZnak: string, adresCzysty: string, nazwaPliku: string): Promise<WersjaLightboxa> {
+	if (await istniejeWR2(adresZnak)) {
+		return wersjaPrzed(adresZnak, nazwaPliku);
+	}
+	console.warn(
+		`galeria: brak wersji "przed" ze znakiem wodnym dla ${nazwaPliku} (${adresZnak}) — próbuję bez znaku. Uzupełnij: npm run sync-images -- --podmien ${nazwaPliku}.`
+	);
+	// Jeśli i czysta wersja zawiedzie, to już prawdziwy brak pliku "przed" — wersjaPrzed()
+	// rzuci swój zwykły, jasny komunikat.
+	return wersjaPrzed(adresCzysty, nazwaPliku);
+}
+
 export interface Zdjecie {
 	/** Oryginał z R2 — z niego <Image> w Karta.astro robi miniaturę przy buildzie. */
 	po: { src: string; width: number; height: number };
@@ -153,9 +200,19 @@ async function zbudujListeZdjec(): Promise<Zdjecie[]> {
 			return {
 				po: { src: adresPo, width: z.szerokosc!, height: z.wysokosc! },
 				lightbox: {
-					po: await wersjaDoLightboxa(adresZKlucza(kluczZnak(z.klucz!)), z.szerokosc!, z.wysokosc!),
+					po: await wersjaDoLightboxaZFallbackiem(
+						adresZKlucza(kluczZnak(z.klucz!)),
+						adresPo,
+						z.szerokosc!,
+						z.wysokosc!,
+						z.nazwaPliku
+					),
 					przed: z.kluczPrzed
-						? await wersjaPrzed(adresZKlucza(kluczZnak(z.kluczPrzed)), z.nazwaPliku)
+						? await wersjaPrzedZFallbackiem(
+								adresZKlucza(kluczZnak(z.kluczPrzed)),
+								adresZKlucza(z.kluczPrzed),
+								z.nazwaPliku
+						  )
 						: undefined,
 				},
 				opis: z.opis,

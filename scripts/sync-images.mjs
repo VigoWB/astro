@@ -16,10 +16,13 @@
  * Przed uruchomieniem zawsze zrób git pull.
  *
  * Uruchomienie:
- *   npm run sync-images                  — dodaje nowe zdjęcia
- *   npm run sync-images -- --uzupelnij   — pyta o opis/kategorie tam, gdzie są puste
- *   npm run sync-images -- --wyroznij    — wybór zdjęć na stronę główną (Roadmapa pkt 4):
- *                                           pokazywane w sekcji "wybrane" i para do suwaka przed/po
+ *   npm run sync-images                       — dodaje nowe zdjęcia
+ *   npm run sync-images -- --uzupelnij        — pyta o opis/kategorie tam, gdzie są puste
+ *   npm run sync-images -- --wyroznij         — wybór zdjęć na stronę główną (Roadmapa pkt 4):
+ *                                                pokazywane w sekcji "wybrane" i para do suwaka przed/po
+ *   npm run sync-images -- --podmien <plik>   — podmienia "po" i/lub "przed" dla zdjęcia JUŻ w bazie
+ *                                                (np. dorzucenie "przed" do zdjęcia dodanego bez niego)
+ *   npm run sync-images -- --usun <plik>      — TRWALE usuwa zdjęcie z R2, z bazy i z galeria.json
  */
 
 import { DatabaseSync } from 'node:sqlite';
@@ -345,6 +348,17 @@ async function wgrajDoR2(sciezkaLokalna, kluczR2) {
   }
 }
 
+// --- Usuwanie z R2 ---
+async function usunZR2(kluczR2) {
+  const odpowiedz = await pobierzKlienta().fetch(adresR2(kluczR2), { method: 'DELETE' });
+
+  // R2 (tak jak S3) zwraca powodzenie nawet dla klucza, którego już nie ma —
+  // błędem jest więc tylko odpowiedź spoza zakresu 2xx.
+  if (!odpowiedz.ok) {
+    throw new Error(`R2 odrzuciło usuwanie ${kluczR2}: ${odpowiedz.status} ${odpowiedz.statusText}`);
+  }
+}
+
 // --- Tryb "dodaj nowe zdjęcia" ---
 async function dodajNoweZdjecia(db) {
   const wgrane = pobierzWgrane(db);
@@ -562,8 +576,135 @@ async function zarzadzajWyroznieniami(db) {
   console.log('');
 }
 
-// --- Plik src/data/galeria.json — to z niego korzysta strona ---
-async function eksportujJson(db, { cicho = false } = {}) {
+// --- Tryb "usuń": TRWALE kasuje zdjęcie z R2, bazy i galeria.json ---
+// (Roadmapa: "Usuwanie i podmiana zdjęć w sync-images")
+async function usunZdjecie(db, nazwaPliku) {
+  const wiersz = db.prepare('SELECT * FROM zdjecia WHERE nazwa_pliku = ?').get(nazwaPliku);
+
+  if (!wiersz) {
+    console.error(`❌ Nie znaleziono w bazie zdjęcia "${nazwaPliku}".`);
+    return;
+  }
+
+  console.log(`🗑️  Do usunięcia: ${wiersz.nazwa_pliku}${wiersz.opis ? ` — ${wiersz.opis}` : ''}`);
+  console.log(`   Z R2 zniknie: ${[wiersz.r2_klucz, wiersz.r2_klucz_przed].filter(Boolean).join(', ')}`);
+  console.log('   To działanie jest NIEODWRACALNE.');
+
+  const potwierdzenie = await zapytaj(`   Wpisz dokładnie "${wiersz.nazwa_pliku}", żeby potwierdzić: `);
+  if (potwierdzenie !== wiersz.nazwa_pliku) {
+    console.log('   Anulowano — nic nie zmieniono.\n');
+    return;
+  }
+
+  pobierzKlienta(); // klucze R2 sprawdzone przed usuwaniem, a nie dopiero w połowie
+
+  // Usuwamy najpierw z R2, a dopiero po sukcesie z bazy — w razie przerwania w połowie
+  // (np. błąd sieci) wystarczy uruchomić usuwanie tego samego pliku jeszcze raz: DELETE
+  // na już nieistniejącym kluczu w R2 i tak kończy się sukcesem (patrz usunZR2).
+  if (wiersz.r2_klucz) {
+    console.log('   🗑️  Usuwanie "po" z R2...');
+    await usunZR2(wiersz.r2_klucz);
+  }
+  if (wiersz.r2_klucz_przed) {
+    console.log('   🗑️  Usuwanie "przed" z R2...');
+    await usunZR2(wiersz.r2_klucz_przed);
+  }
+
+  db.prepare('DELETE FROM zdjecia WHERE id = ?').run(wiersz.id);
+  await eksportujJson(db, { cicho: true });
+
+  console.log(`   ✅ Usunięto "${wiersz.nazwa_pliku}" — z R2, bazy i ${JSON_PATH}.\n`);
+}
+
+// --- Tryb "podmień": nowy/zmieniony plik dla zdjęcia JUŻ w bazie ---
+// (Roadmapa: "Usuwanie i podmiana zdjęć w sync-images")
+// Zwykłe dodawanie (dodajNoweZdjecia) pomija pliki, których nazwa_pliku już jest w bazie —
+// więc samo dorzucenie "przed_DSC_1111.jpg" do zdjęcia dodanego wcześniej bez wersji "przed"
+// nic by nie zrobiło. Ten tryb wgrywa ponownie to, co akurat znajdzie lokalnie w images/
+// (samo "po", samo "przed" albo oba) i nadpisuje odpowiednie pola w bazie.
+async function podmienPlik(db, nazwaPliku) {
+  const wiersz = db.prepare('SELECT * FROM zdjecia WHERE nazwa_pliku = ?').get(nazwaPliku);
+
+  if (!wiersz) {
+    console.error(`❌ "${nazwaPliku}" nie ma jeszcze w bazie — dodaj je zwykłym "npm run sync-images".`);
+    return;
+  }
+
+  const sciezkaPo = `${IMAGES_DIR}/${nazwaPliku}`;
+  const nazwaPrzed = `przed_${nazwaPliku}`;
+  const sciezkaPrzed = `${IMAGES_DIR}/${nazwaPrzed}`;
+  const maPo = existsSync(sciezkaPo);
+  const maPrzed = existsSync(sciezkaPrzed);
+
+  if (!maPo && !maPrzed) {
+    console.error(`❌ Brak lokalnie "${nazwaPliku}" i "${nazwaPrzed}" w ${IMAGES_DIR}/ — nie ma czego wgrać.`);
+    return;
+  }
+
+  console.log(`🔄 Podmiana dla: ${nazwaPliku}`);
+  if (maPo) console.log('   "po" znaleziono lokalnie — nadpisze wersję w R2.');
+  if (maPrzed) {
+    console.log(`   "przed" znaleziono lokalnie — ${wiersz.r2_klucz_przed ? 'nadpisze wersję w R2.' : 'doda nową wersję "przed".'}`);
+  }
+
+  const potwierdzenie = await zapytaj('   Wgrać do R2 i zaktualizować bazę? (tak/nie): ');
+  if (potwierdzenie.trim().toLowerCase() !== 'tak') {
+    console.log('   Anulowano — nic nie zmieniono.\n');
+    return;
+  }
+
+  pobierzKlienta();
+
+  const kluczPo = wiersz.r2_klucz ?? `zdjecia/${nazwaPliku}`;
+  const kluczPrzed = maPrzed ? (wiersz.r2_klucz_przed ?? `zdjecia/${nazwaPrzed}`) : wiersz.r2_klucz_przed;
+
+  if (maPo) {
+    console.log('   ⬆️  Wgrywanie "po" do R2...');
+    await wgrajDoR2(sciezkaPo, kluczPo);
+  }
+  if (maPrzed) {
+    console.log('   ⬆️  Wgrywanie "przed" do R2...');
+    await wgrajDoR2(sciezkaPrzed, kluczPrzed);
+  }
+
+  // Wymiary (szerokość/wysokość w galeria.json) opisują "po" — odświeżamy je tylko,
+  // gdy naprawdę podmieniamy "po". EXIF wolimy z "przed", tak samo jak przy zwykłym
+  // dodawaniu zdjęcia (patrz dodajNoweZdjecia) — bierzemy z tego, co jest teraz lokalnie.
+  let szerokosc = wiersz.szerokosc;
+  let wysokosc = wiersz.wysokosc;
+  if (maPo) {
+    ({ szerokosc, wysokosc } = await pobierzWymiary(sciezkaPo));
+  }
+  const exif = await pobierzExif(maPrzed ? sciezkaPrzed : sciezkaPo);
+
+  db.prepare(`
+    UPDATE zdjecia SET
+      nazwa_pliku_przed = ?, r2_klucz = ?, r2_klucz_przed = ?, szerokosc = ?, wysokosc = ?,
+      iso = ?, przyslona = ?, ogniskowa = ?, czas_naswietlania = ?, data_wykonania = ?,
+      make = ?, model = ?, lens_model = ?
+    WHERE id = ?
+  `).run(
+    maPrzed ? nazwaPrzed : wiersz.nazwa_pliku_przed,
+    kluczPo,
+    kluczPrzed,
+    szerokosc,
+    wysokosc,
+    exif.iso,
+    exif.przyslona,
+    exif.ogniskowa,
+    exif.czas_naswietlania,
+    exif.data_wykonania,
+    exif.make,
+    exif.model,
+    exif.lens_model,
+    wiersz.id
+  );
+
+  await eksportujJson(db, { cicho: true });
+  console.log(`   ✅ Zaktualizowano "${nazwaPliku}".\n`);
+}
+
+// --- Plik src/data/galeria.json — to z niego korzysta strona ---async function eksportujJson(db, { cicho = false } = {}) {
   const wiersze = db.prepare('SELECT * FROM zdjecia ORDER BY nazwa_pliku').all();
 
   const lista = wiersze.map((w) => ({
@@ -595,19 +736,45 @@ async function eksportujJson(db, { cicho = false } = {}) {
   }
 }
 
+// Zwraca wartość po danej fladze w argumentach, np. dla ["--usun", "DSC_1111.jpg"]
+// pobierzWartoscFlagi('--usun') zwróci "DSC_1111.jpg" (undefined, gdy flagi nie ma
+// albo brakuje po niej wartości — np. na końcu albo przed kolejną flagą "--...").
+function pobierzWartoscFlagi(flaga) {
+  const i = process.argv.indexOf(flaga);
+  if (i === -1) return undefined;
+  const wartosc = process.argv[i + 1];
+  return wartosc && !wartosc.startsWith('--') ? wartosc : undefined;
+}
+
 // --- Główna logika ---
 async function main() {
   console.log('🚀 sync-images — synchronizacja zdjęć z Cloudflare R2 + SQLite\n');
 
   const trybUzupelnij = process.argv.includes('--uzupelnij');
   const trybWyroznij = process.argv.includes('--wyroznij');
+  const nazwaDoUsuniecia = pobierzWartoscFlagi('--usun');
+  const nazwaDoPodmiany = pobierzWartoscFlagi('--podmien');
+
+  if (process.argv.includes('--usun') && !nazwaDoUsuniecia) {
+    console.error('❌ Podaj nazwę pliku, np.: npm run sync-images -- --usun DSC_1111.jpg');
+    process.exit(1);
+  }
+  if (process.argv.includes('--podmien') && !nazwaDoPodmiany) {
+    console.error('❌ Podaj nazwę pliku, np.: npm run sync-images -- --podmien DSC_1111.jpg');
+    process.exit(1);
+  }
+
   const db = initDb();
 
   try {
     await odtworzZJson(db);
     await odswiezWymiary(db);
 
-    if (trybUzupelnij) {
+    if (nazwaDoUsuniecia) {
+      await usunZdjecie(db, nazwaDoUsuniecia);
+    } else if (nazwaDoPodmiany) {
+      await podmienPlik(db, nazwaDoPodmiany);
+    } else if (trybUzupelnij) {
       await uzupelnijOpisy(db);
     } else if (trybWyroznij) {
       await zarzadzajWyroznieniami(db);

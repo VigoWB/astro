@@ -4,7 +4,10 @@
  *
  * Skanuje folder images/ w poszukiwaniu nowych zdjęć (DSC_*.jpg, bez "przed_"),
  * odczytuje wymiary z samego pliku i dane z aparatu (EXIF), pyta o opis i kategorie,
- * wgrywa pliki (po + opcjonalnie przed) do Cloudflare R2
+ * wgrywa pliki (po + opcjonalnie przed) do Cloudflare R2 — każdy w dwóch wersjach:
+ * czystej (klucz "zdjecia/...", z niej strona robi miniatury) i ze znakiem wodnym
+ * (klucz "znak/...", z niej strona robi powiększenia do lightboksa — Roadmapa pkt 2,
+ * na razie sam tekst "foto.vigolab.ovh" w rogu, funkcja nalozZnak() niżej)
  * i zapisuje metadane w lokalnej bazie SQLite (data/galeria.db).
  *
  * Na końcu ZAWSZE generuje plik src/data/galeria.json — to właśnie z niego
@@ -69,6 +72,14 @@ function adresR2(kluczR2) {
   const { R2_ACCOUNT_ID, R2_BUCKET_NAME } = process.env;
   const kluczZakodowany = kluczR2.split('/').map(encodeURIComponent).join('/');
   return `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${kluczZakodowany}`;
+}
+
+// Wersja ze znakiem wodnym leży pod tym samym kluczem, tylko w folderze "znak/"
+// zamiast "zdjecia/" (Roadmapa pkt 2). Miniatury (Karta.astro) biorą oryginał
+// z "zdjecia/", lightbox i duże porównanie "przed/po" na stronie głównej
+// (src/lib/galeria.ts) wersję z "znak/" — tam musi być ta sama funkcja.
+function kluczZnak(kluczR2) {
+  return kluczR2.replace(/^zdjecia\//, 'znak/');
 }
 
 // --- Baza SQLite (wbudowana w Node 22.5+) ---
@@ -333,19 +344,50 @@ async function zapytajOpisIKategorie(dostepneKategorie, obecne = { opis: '', kat
 }
 
 // --- Wgrywanie do R2 ---
-async function wgrajDoR2(sciezkaLokalna, kluczR2) {
-  const dane = await readFile(sciezkaLokalna);
-  const contentType = kluczR2.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-
+async function wyslijBuforDoR2(bufor, kluczR2, contentType) {
   const odpowiedz = await pobierzKlienta().fetch(adresR2(kluczR2), {
     method: 'PUT',
-    body: dane,
+    body: bufor,
     headers: { 'Content-Type': contentType },
   });
 
   if (!odpowiedz.ok) {
     throw new Error(`R2 odrzuciło wgrywanie ${kluczR2}: ${odpowiedz.status} ${odpowiedz.statusText}`);
   }
+}
+
+async function wgrajDoR2(sciezkaLokalna, kluczR2) {
+  const dane = await readFile(sciezkaLokalna);
+  const contentType = kluczR2.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+  await wyslijBuforDoR2(dane, kluczR2, contentType);
+}
+
+// Szkielet znaku wodnego (Roadmapa pkt 2): na razie dokłada półprzezroczysty napis
+// "foto.vigolab.ovh" w rogu zdjęcia. Logo podmienisz tu później (composite() z PNG
+// zamiast SVG z tekstem) — wywołania niżej i klucz w R2 zostają bez zmian.
+async function nalozZnak(bufor, format) {
+  const { width, height } = await sharp(bufor).metadata();
+  const rozmiarTekstu = Math.max(18, Math.round(width * 0.022));
+  const margines = Math.round(width * 0.025);
+  const grubyObrys = Math.max(1, Math.round(rozmiarTekstu * 0.035));
+  const svg = `
+    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+      <text
+        x="${width - margines}" y="${height - margines}" text-anchor="end"
+        font-family="Arial, Helvetica, sans-serif" font-size="${rozmiarTekstu}" font-weight="600"
+        fill="#eaf4f4" fill-opacity="0.65"
+        style="paint-order: stroke; stroke: #171512; stroke-opacity: 0.5; stroke-width: ${grubyObrys}px;"
+      >foto.vigolab.ovh</text>
+    </svg>`;
+  const zeZnakiem = sharp(bufor).composite([{ input: Buffer.from(svg), top: 0, left: 0 }]);
+  return format === 'png' ? zeZnakiem.png().toBuffer() : zeZnakiem.jpeg({ quality: 88 }).toBuffer();
+}
+
+async function wgrajZnakowanaDoR2(sciezkaLokalna, kluczR2Znak) {
+  const oryginal = await readFile(sciezkaLokalna);
+  const format = kluczR2Znak.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
+  const zeZnakiem = await nalozZnak(oryginal, format);
+  await wyslijBuforDoR2(zeZnakiem, kluczR2Znak, format === 'png' ? 'image/png' : 'image/jpeg');
 }
 
 // --- Usuwanie z R2 ---
@@ -419,8 +461,10 @@ async function dodajNoweZdjecia(db) {
 
       console.log('   ⬆️  Wgrywanie do R2...');
       await wgrajDoR2(sciezkaPo, kluczR2Po);
+      await wgrajZnakowanaDoR2(sciezkaPo, kluczZnak(kluczR2Po));
       if (maWersjePrzed) {
         await wgrajDoR2(sciezkaPrzed, kluczR2Przed);
+        await wgrajZnakowanaDoR2(sciezkaPrzed, kluczZnak(kluczR2Przed));
       }
 
       insertStmt.run(
@@ -586,10 +630,11 @@ async function usunZdjecie(db, nazwaPliku) {
     return;
   }
 
-  console.log(`🗑️  Do usunięcia: ${wiersz.nazwa_pliku}${wiersz.opis ? ` — ${wiersz.opis}` : ''}`);
-  console.log(`   Z R2 zniknie: ${[wiersz.r2_klucz, wiersz.r2_klucz_przed].filter(Boolean).join(', ')}`);
-  console.log('   To działanie jest NIEODWRACALNE.');
+  const kluczeDoUsuniecia = [wiersz.r2_klucz, wiersz.r2_klucz_przed].filter(Boolean).flatMap((k) => [k, kluczZnak(k)]);
 
+  console.log(`🗑️  Do usunięcia: ${wiersz.nazwa_pliku}${wiersz.opis ? ` — ${wiersz.opis}` : ''}`);
+  console.log(`   Z R2 zniknie: ${kluczeDoUsuniecia.join(', ')}`);
+  console.log('   To działanie jest NIEODWRACALNE.');
   const potwierdzenie = await zapytaj(`   Wpisz dokładnie "${wiersz.nazwa_pliku}", żeby potwierdzić: `);
   if (potwierdzenie !== wiersz.nazwa_pliku) {
     console.log('   Anulowano — nic nie zmieniono.\n');
@@ -602,14 +647,15 @@ async function usunZdjecie(db, nazwaPliku) {
   // (np. błąd sieci) wystarczy uruchomić usuwanie tego samego pliku jeszcze raz: DELETE
   // na już nieistniejącym kluczu w R2 i tak kończy się sukcesem (patrz usunZR2).
   if (wiersz.r2_klucz) {
-    console.log('   🗑️  Usuwanie "po" z R2...');
+    console.log('   🗑️  Usuwanie "po" z R2 (oryginał + wersja ze znakiem)...');
     await usunZR2(wiersz.r2_klucz);
+    await usunZR2(kluczZnak(wiersz.r2_klucz));
   }
   if (wiersz.r2_klucz_przed) {
-    console.log('   🗑️  Usuwanie "przed" z R2...');
+    console.log('   🗑️  Usuwanie "przed" z R2 (oryginał + wersja ze znakiem)...');
     await usunZR2(wiersz.r2_klucz_przed);
+    await usunZR2(kluczZnak(wiersz.r2_klucz_przed));
   }
-
   db.prepare('DELETE FROM zdjecia WHERE id = ?').run(wiersz.id);
   await eksportujJson(db, { cicho: true });
 
@@ -659,12 +705,14 @@ async function podmienPlik(db, nazwaPliku) {
   const kluczPrzed = maPrzed ? (wiersz.r2_klucz_przed ?? `zdjecia/${nazwaPrzed}`) : wiersz.r2_klucz_przed;
 
   if (maPo) {
-    console.log('   ⬆️  Wgrywanie "po" do R2...');
+    console.log('   ⬆️  Wgrywanie "po" do R2 (oryginał + wersja ze znakiem)...');
     await wgrajDoR2(sciezkaPo, kluczPo);
+    await wgrajZnakowanaDoR2(sciezkaPo, kluczZnak(kluczPo));
   }
   if (maPrzed) {
-    console.log('   ⬆️  Wgrywanie "przed" do R2...');
+    console.log('   ⬆️  Wgrywanie "przed" do R2 (oryginał + wersja ze znakiem)...');
     await wgrajDoR2(sciezkaPrzed, kluczPrzed);
+    await wgrajZnakowanaDoR2(sciezkaPrzed, kluczZnak(kluczPrzed));
   }
 
   // Wymiary (szerokość/wysokość w galeria.json) opisują "po" — odświeżamy je tylko,

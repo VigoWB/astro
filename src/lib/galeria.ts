@@ -41,6 +41,14 @@ function adresZKlucza(klucz: string): string {
 	return `${adresZdjec}/${klucz.split("/").map(encodeURIComponent).join("/")}`;
 }
 
+// Ten sam klucz, tylko w folderze "znak/" zamiast "zdjecia/" — tam sync-images
+// wgrywa wersję ze znakiem wodnym (Roadmapa pkt 2). Musi być zgodne z kluczZnak()
+// w scripts/sync-images.mjs. Miniatury (Karta.astro) zostają na czystym oryginale,
+// znak dostają tylko wersje do lightboksa i duże porównanie "przed/po" na stronie głównej.
+function kluczZnak(klucz: string): string {
+	return klucz.replace(/^zdjecia\//, "znak/");
+}
+
 // --- Zdjęcia do lightboxa ---
 // Oryginały w R2 ważą nawet kilka MB. Do powiększenia robimy przy buildzie
 // mniejsze wersje w formacie webp — trafiają do /_astro/ na naszej domenie,
@@ -145,8 +153,10 @@ async function zbudujListeZdjec(): Promise<Zdjecie[]> {
 			return {
 				po: { src: adresPo, width: z.szerokosc!, height: z.wysokosc! },
 				lightbox: {
-					po: await wersjaDoLightboxa(adresPo, z.szerokosc!, z.wysokosc!),
-					przed: z.kluczPrzed ? await wersjaPrzed(adresZKlucza(z.kluczPrzed), z.nazwaPliku) : undefined,
+					po: await wersjaDoLightboxa(adresZKlucza(kluczZnak(z.klucz!)), z.szerokosc!, z.wysokosc!),
+					przed: z.kluczPrzed
+						? await wersjaPrzed(adresZKlucza(kluczZnak(z.kluczPrzed)), z.nazwaPliku)
+						: undefined,
 				},
 				opis: z.opis,
 				kategoria: z.kategorie,

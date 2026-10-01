@@ -114,6 +114,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 .github/workflows/ci.yml   typy + build + Lighthouse + testy przy każdym pushu i PR
 public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
+  fonts/                   podzbiór Noto Sans (2 pliki .woff2) — patrz global.css i sekcja 10
   sw.js                    service worker (offline), ma ręczną listę stron
   manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
 scripts/
@@ -246,6 +247,11 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
 
 **Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Sprawdź kontrast.
+
+**Brakujący znak w czcionce (np. rzadki symbol, znak nowego języka):**
+1. Jeśli w przeglądarce znak wygląda na zastępczy krój systemowy — to nie naprawi sam nowy zakres w `unicode-range` (`src/styles/global.css`), skoro glifu nie ma w pliku `.woff2`.
+2. Pliki w `public/fonts/` to ręcznie wygenerowany podzbiór Noto Sans (`fontTools`, Python) — nie edytuj ich ani nie dopisuj zakresów na oślep.
+3. Zatrzymaj się i zgłoś to jako osobne zadanie do Claude — potrzebna jest nowa wersja podzbioru z tym znakiem.
 
 **Nowe pole w formularzu:**
 1. Dodaj HTML: `label`, `input`, `span` na błąd z `aria-live`, `aria-describedby` i `data-testid`.

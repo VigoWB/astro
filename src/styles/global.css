@@ -1,14 +1,35 @@
 @import "tailwindcss";
-@import "@fontsource-variable/noto-sans";
 @plugin "@tailwindcss/typography";
 
+/* Własny podzbiór Noto Sans (Roadmapa: "Lżejsza czcionka") — dwa pliki zamiast
+   pełnego pakietu @fontsource-variable/noto-sans (8 skryptów, ~270 KB razem).
+   "latin" pokrywa zwykłą łacinę + interpunkcję, "polskie-znaki" dokłada tylko
+   ą ć ę ł ń ś ź ż (+ wielkie litery) — resztę polskich znaków (np. ó) ma już plik
+   "latin". Nowy, nietypowy znak w treści? Patrz AGENTS.md, sekcja 10. */
+@font-face {
+	font-family: "Noto Sans Variable";
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url("/fonts/noto-sans-latin.woff2") format("woff2-variations");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: "Noto Sans Variable";
+	font-style: normal;
+	font-display: swap;
+	font-weight: 100 900;
+	src: url("/fonts/noto-sans-polskie-znaki.woff2") format("woff2-variations");
+	unicode-range: U+0104, U+0105, U+0106, U+0107, U+0118, U+0119, U+0141, U+0142, U+0143, U+0144, U+015A, U+015B, U+0179, U+017A, U+017B, U+017C;
+}
+
 @theme {
-	--color-paper: #eaf4f4;
-	--color-ink: #171512;
-	--color-muted: #55625a;
-	--color-card: #6a9c7d;
-	--color-accent: #3a5a40;
-	--color-line: #8ab8a3;
+  --color-paper: #eaf4f4;
+  --color-ink: #171512;
+  --color-muted: #55625a;
+  --color-card: #6a9c7d;
+  --color-accent: #3a5a40;
+  --color-line: #8ab8a3;
 }
 
 html,body {

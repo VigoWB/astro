@@ -12,7 +12,7 @@
 # - script-src: nasze pliki + Turnstile (challenges.cloudflare.com)
 #   + Cloudflare Web Analytics (static.cloudflareinsights.com)
 # - style-src, img-src, font-src: tylko nasze pliki (zdjęcia z /_astro/,
-#   czcionki z paczki @fontsource — nic z R2 ani Google Fonts)
+#   czcionki z public/fonts/ — nic z R2 ani Google Fonts)
 # - connect-src: Formspree (wysyłka formularza) + statystyki Cloudflare
 #   ('self' = /cdn-cgi/rum na naszej domenie, cloudflareinsights.com = wariant z tokenem)
 #   + Turnstile (jego skrypt potrafi wysłać zgłoszenie do challenges.cloudflare.com)

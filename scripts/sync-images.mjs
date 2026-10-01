@@ -31,6 +31,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
+import piexif from 'piexifjs';
 import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -356,10 +357,42 @@ async function wyslijBuforDoR2(bufor, kluczR2, contentType) {
   }
 }
 
+// Usuwa z EXIF-u lokalizację GPS i numer seryjny (aparatu + obiektywu) przed
+// wysyłką "czystego" oryginału do R2 — ten bucket jest publiczny (Roadmapa
+// pkt 3). Reszta EXIF-u (data wykonania, model aparatu, obiektyw) zostaje —
+// nic poufnego, a w pliku też się przyda. Działa tylko na nagłówku pliku,
+// bez przekodowywania pikseli — zero utraty jakości. Wersji ze znakiem wodnym
+// (nalozZnak niżej) to nie dotyczy — ona i tak wychodzi z sharp bez EXIF-u.
+// PNG pomijamy bez błędu — piexifjs obsługuje tylko JPEG, a aparaty i tak nie
+// produkują PNG (ten format dopuszczamy w kandydatach tylko teoretycznie).
+function wyczyscExifDoR2(bufor, kluczR2) {
+  if (!/\.jpe?g$/i.test(kluczR2)) return bufor;
+
+  const binarny = bufor.toString('binary');
+  let exif;
+  try {
+    exif = piexif.load(binarny);
+  } catch (err) {
+    console.warn(`   ⚠️  Nie udało się odczytać EXIF-u przy czyszczeniu (${kluczR2}): ${err.message} — wysyłam bez zmian.`);
+    return bufor;
+  }
+
+  exif.GPS = {};
+  if (exif.Exif) {
+    delete exif.Exif[piexif.ExifIFD.BodySerialNumber];
+    delete exif.Exif[piexif.ExifIFD.LensSerialNumber];
+    delete exif.Exif[piexif.ExifIFD.MakerNote]; // u części producentów numer seryjny jest schowany tu, nie w polu wyżej
+  }
+
+  const nowyExifBytes = piexif.dump(exif);
+  const zCzystymExif = piexif.insert(nowyExifBytes, binarny);
+  return Buffer.from(zCzystymExif, 'binary');
+}
+
 async function wgrajDoR2(sciezkaLokalna, kluczR2) {
   const dane = await readFile(sciezkaLokalna);
   const contentType = kluczR2.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-  await wyslijBuforDoR2(dane, kluczR2, contentType);
+  await wyslijBuforDoR2(wyczyscExifDoR2(dane, kluczR2), kluczR2, contentType);
 }
 
 // Szkielet znaku wodnego (Roadmapa pkt 2): na razie dokłada półprzezroczysty napis

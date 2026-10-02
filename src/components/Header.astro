@@ -175,39 +175,27 @@ const currentPath = Astro.url.pathname;
 	const menuMobilne = document.getElementById("menu-mobilne");
 
 	if (przyciskMenu && menuMobilne) {
-		let lastFocusedElement: HTMLElement | null = null;
 
 		const otworzMenu = () => {
-			przyciskMenu.setAttribute("aria-expanded", "true");
-			przyciskMenu.setAttribute("aria-label", "Zamknij menu");
-			menuMobilne.classList.remove("hidden");
+	przyciskMenu.setAttribute("aria-expanded", "true");
+	przyciskMenu.setAttribute("aria-label", "Zamknij menu");
+	menuMobilne.classList.remove("hidden");
+	menuMobilne.querySelector("a")?.focus();
+	// Pułapka fokusu od razu (nie w requestAnimationFrame) — inaczej szybkie zamknięcie
+	// menu mogłoby zostawić nasłuchiwacz na document na zawsze.
+	document.addEventListener("keydown", handleMenuFocusTrap);
+};
 
-			// Zapisz element, który miał focus przed otwarciem
-			lastFocusedElement = document.activeElement as HTMLElement;
+const zamknijMenu = () => {
+	// Escape i zmiana szerokości okna wołają tę funkcję zawsze — przy zamkniętym menu nic nie robimy.
+	if (przyciskMenu.getAttribute("aria-expanded") !== "true") return;
 
-			// Focus na pierwszym linku w menu
-			const firstLink = menuMobilne.querySelector("a") as HTMLElement;
-			requestAnimationFrame(() => {
-				firstLink?.focus();
-
-				// Focus trap
-				document.addEventListener("keydown", handleMenuFocusTrap);
-			});
-		}
-
-		const zamknijMenu = () => {
-			przyciskMenu.setAttribute("aria-expanded", "false");
-			przyciskMenu.setAttribute("aria-label", "Otwórz menu");
-			menuMobilne.classList.add("hidden");
-
-			// Usuń focus trap
-			document.removeEventListener("keydown", handleMenuFocusTrap);
-
-			// Przywróć focus na przycisku hamburgera
-			if (lastFocusedElement) {
-				lastFocusedElement.focus();
-			}
-		}
+	przyciskMenu.setAttribute("aria-expanded", "false");
+	przyciskMenu.setAttribute("aria-label", "Otwórz menu");
+	menuMobilne.classList.add("hidden");
+	document.removeEventListener("keydown", handleMenuFocusTrap);
+	przyciskMenu.focus(); // fokus zawsze wraca na przycisk
+};
 
 		przyciskMenu.addEventListener("click", () => {
 			const jestOtwarte = przyciskMenu.getAttribute("aria-expanded") === "true";
@@ -231,28 +219,23 @@ const currentPath = Astro.url.pathname;
 		});
 
 		// Focus trap handler dla menu mobilnego
-		const handleMenuFocusTrap = (e: KeyboardEvent) => {	
+		const handleMenuFocusTrap = (e: KeyboardEvent) => {
 			if (e.key !== "Tab") return;
 
-			const links = menuMobilne.querySelectorAll<HTMLElement>("a");
-			if (links.length === 0) return;
+			// Tab krąży po przycisku menu i wszystkich linkach, w kolejności jak w DOM.
+			const elementy = [przyciskMenu, ...menuMobilne.querySelectorAll<HTMLElement>("a")];
+			const pierwszy = elementy[0];
+			const ostatni = elementy[elementy.length - 1];
 
-			const first = links[0];
-			const last = links[links.length - 1];
-
-			if (e.shiftKey) {
-				// Shift+Tab – cofnij
-				if (document.activeElement === first) {
-					e.preventDefault();
-					last.focus();
-				}
-			} else {
-				// Tab – do przodu
-				if (document.activeElement === last) {
-					e.preventDefault();
-					first.focus();
-				}
+		if (e.shiftKey && document.activeElement === pierwszy) {
+			e.preventDefault();
+			ostatni.focus();
+		} 	
+		else if (!e.shiftKey && document.activeElement === ostatni) {
+			e.preventDefault();
+			pierwszy.focus();
 			}
+		};
 		}
 	}
 </script>

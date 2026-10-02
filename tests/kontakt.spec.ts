@@ -32,7 +32,7 @@ test.describe('Formularz kontaktowy', () => {
 		await page.click('[data-testid="contact-submit"]');
 
 		// Poczekaj na sukces (status "wysyłanie" może być zbyt krótki by go złapać)
-		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-green-700/, { timeout: 10000 });
+		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-success/, { timeout: 10000 });
 		await expect(page.locator('[data-testid="contact-status"]')).toContainText('Dziękuję! Wiadomość została wysłana');
 
 		// Sprawdź, że formularz został zresetowany
@@ -114,7 +114,7 @@ test.describe('Formularz kontaktowy', () => {
 		await page.click('[data-testid="contact-submit"]');
 
 		// Sprawdź komunikat błędu sieci
-		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-red-700/, { timeout: 10000 });
+		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-error/, { timeout: 10000 });
 		await expect(page.locator('[data-testid="contact-status"]')).toContainText('Brak połączenia z internetem');
 	});
 
@@ -136,7 +136,7 @@ test.describe('Formularz kontaktowy', () => {
 		await poczekajNaTurnstile(page);
 		await page.click('[data-testid="contact-submit"]');
 
-		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-red-700/, { timeout: 10000 });
+		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-error/, { timeout: 10000 });
 		// Kod formularza bierze komunikat z odpowiedzi Formspree
 		await expect(page.locator('[data-testid="contact-status"]')).toContainText('Internal server error');
 	});

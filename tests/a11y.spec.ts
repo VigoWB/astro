@@ -150,12 +150,9 @@ test('a11y: Menu mobilne – focus trap działa', async ({ page }) => {
 
 	// Tab po ostatnim wraca do pierwszego
 	await page.keyboard.press('Tab');
-	await expect(page.locator('#menu-mobilne a').first()).toBeFocused();
-
-	// Shift+Tab wstecz
+	await expect(page.locator('#przycisk-menu')).toBeFocused();
 	await page.keyboard.press('Shift+Tab');
 	await expect(page.locator('#menu-mobilne a').last()).toBeFocused();
-
 	// Escape zamyka
 	await page.keyboard.press('Escape');
 	// Focus wraca na przycisk hamburgera

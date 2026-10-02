@@ -42,7 +42,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			class="w-full border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
 			data-testid="contact-name"
 		/>
-		<p id="kontakt-name-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
+		<p id="kontakt-name-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
 	</div>
 
 	<div class="flex flex-col gap-1.5">
@@ -57,7 +57,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			class="w-full border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
 			data-testid="contact-email"
 		/>
-		<p id="kontakt-email-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
+		<p id="kontakt-email-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
 	</div>
 
 	<div class="flex flex-col gap-1.5">
@@ -69,10 +69,9 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			minlength="10"
 			rows="6"
 			aria-describedby="kontakt-message-blad"
-			class="w-full resize-y border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
-			data-testid="contact-message"
+			class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent aria-invalid:border-error"			data-testid="contact-message"
 		></textarea>
-		<p id="kontakt-message-blad" class="min-h-5 text-sm text-red-700" aria-live="polite"></p>
+		<p id="kontakt-message-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
 	</div>
 
 	<!-- Honeypot antyspamowy Formspree: pole ma zostać puste. Ukryte przed ludźmi i czytnikami ekranu,
@@ -167,16 +166,12 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 		const { input, blad } = pola[klucz];
 		blad.textContent = komunikat;
 		input.setAttribute("aria-invalid", "true");
-		input.classList.remove("border-line");
-		input.classList.add("border-red-700");
 	}
 
 	function ukryjBlad(klucz: KluczPola) {
 		const { input, blad } = pola[klucz];
 		blad.textContent = "";
 		input.removeAttribute("aria-invalid");
-		input.classList.remove("border-red-700");
-		input.classList.add("border-line");
 	}
 
 	// pokazujNoweBledy=true przy blur/submit (informujemy od razu o nowym błędzie).
@@ -209,11 +204,10 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 	}
 
 	function ustawStatus(tekst: string, rodzaj: "wysylanie" | "sukces" | "blad" | "") {
-		statusFormularza.textContent = tekst;
-		statusFormularza.classList.remove("text-muted", "text-red-700", "text-green-700");
+		statusFormularza.classList.remove("text-muted", "text-error", "text-success");
 		if (rodzaj === "wysylanie") statusFormularza.classList.add("text-muted");
-		if (rodzaj === "sukces") statusFormularza.classList.add("text-green-700");
-		if (rodzaj === "blad") statusFormularza.classList.add("text-red-700");
+		if (rodzaj === "sukces") statusFormularza.classList.add("text-success");
+		if (rodzaj === "blad") statusFormularza.classList.add("text-error");
 	}
 
 	// Token Turnstile trafia asynchronicznie do ukrytego pola <input name="cf-turnstile-response">
@@ -234,17 +228,28 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 		}
 
 		if (!formspreeId) {
-			ustawStatus("Formularz nie jest jeszcze skonfigurowany — brak PUBLIC_FORMSPREE_ID w .env.", "blad");
+			ustawStatus(`Formularz chwilowo nie działa — ${wskazowkaMail}.`, "blad");
 			console.warn("ContactForm: uzupełnij PUBLIC_FORMSPREE_ID w pliku .env (zob. .env.example).");
-			return;
-		}
+		return;
+}
 
 		if (!tokenTurnstileGotowy()) {
-			ustawStatus("Poczekaj chwilę — trwa weryfikacja, że nie jesteś robotem, i spróbuj wysłać ponownie.", "blad");
-			console.warn("ContactForm: token Turnstile jeszcze niegotowy (albo widget się nie załadował).");
-			return;
-		}
+			ustawStatus(pobierzTurnstile()
+			? "Trwa jeszcze weryfikacja, że nie jesteś robotem. Odczekaj chwilę i wyślij ponownie."
+			: `Weryfikacja antyspamowa jeszcze się nie wczytała — poczekaj chwilę. Jeśli to się powtarza, wyłącz blokadę reklam dla tej strony i odśwież ją albo ${wskazowkaMail}.`,"blad",);
+			console.warn("ContactForm: brak tokenu Turnstile (widget niegotowy albo niewczytany).");
+		return;
+}
+		type TurnstileApi = { reset: (kontener?: string | HTMLElement) => void };
+const pobierzTurnstile = () => (window as unknown as { turnstile?: TurnstileApi }).turnstile;
 
+// Token Turnstile działa tylko raz — po każdej próbie wysyłki prosimy widżet o nowy.
+function odnowTurnstile() {
+	if (!turnstileWlaczony) return;
+	const pole = formularz.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]');
+	if (pole) pole.value = "";
+	pobierzTurnstile()?.reset(formularz.querySelector<HTMLElement>(".cf-turnstile") ?? undefined);
+}
 		przycisk.disabled = true;
 		przycisk.textContent = "Wysyłanie...";
 		ustawStatus("Wysyłanie...", "wysylanie");
@@ -262,18 +267,21 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 				(Object.keys(pola) as KluczPola[]).forEach((klucz) => ukryjBlad(klucz));
 				ustawStatus("Dziękuję! Wiadomość została wysłana — odezwę się najszybciej, jak się da.", "sukces");
 			} else {
-				const wynik = await odpowiedz.json().catch(() => null);
-				const komunikat =
-					wynik && Object.hasOwn(wynik, "errors")
-						? wynik.errors.map((err: { message: string }) => err.message).join(", ")
-						: "Coś poszło nie tak. Spróbuj ponownie albo napisz bezpośrednio na maila.";
-				ustawStatus(komunikat, "blad");
-			}
+	const wynik = await odpowiedz.json().catch(() => null);
+	console.warn("ContactForm: Formspree odrzucił wysyłkę", odpowiedz.status, wynik);
+	ustawStatus(komunikatBleduHttp(odpowiedz.status), "blad");
+}
+function komunikatBleduHttp(status: number): string {
+	if (status === 429) return "Za dużo prób wysyłki z tego łącza. Odczekaj chwilę i spróbuj ponownie.";
+	if (status >= 500) return `Usługa formularza chwilowo nie działa. Spróbuj za kilka minut albo ${wskazowkaMail}.`;
+	return `Nie udało się wysłać wiadomości. Sprawdź dane i spróbuj jeszcze raz albo ${wskazowkaMail}.`;
+}
 		} catch {
 			ustawStatus("Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.", "blad");
 		} finally {
 			przycisk.disabled = false;
 			przycisk.textContent = tekstPrzycisku;
+			odnowTurnstile();
 		}
 	});
 </script>

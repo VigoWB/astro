@@ -30,6 +30,8 @@
   --color-card: #6a9c7d;
   --color-accent: #3a5a40;
   --color-line: #8ab8a3;
+  --color-error: #c10007;   /* komunikaty błędów — 5,73:1 na paper */
+  --color-success: #016630; /* komunikat sukcesu — 6,37:1 na paper */
 }
 
 html,body {

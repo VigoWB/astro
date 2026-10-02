@@ -6,7 +6,6 @@ const currentPath = Astro.url.pathname;
 ---
 
 <header
-	id="glowny-naglowek"
 	class="sticky top-0 z-40 bg-paper text-ink text-xl font-semibold"
 >
 	<!-- Pasek 60px — overflow-hidden i obcięcie siedzi tutaj (nie na całym
@@ -19,7 +18,7 @@ const currentPath = Astro.url.pathname;
 		<div id="tresc-naglowka" class="w-full">
 			<Container>
 				<div class="flex flex-row items-center justify-between w-full">
-					<div class="logo">WB</div>
+					<div>WB</div>
 
 					<nav aria-label="Główna nawigacja" class="hidden md:block">
 						<ul class="flex flex-row gap-4">
@@ -30,7 +29,7 @@ const currentPath = Astro.url.pathname;
 										<a
 											href={link.href}
 											class={isActive
-												? "text-accent font-medium pointer-events-none"
+												? "text-accent pointer-events-none"
 												: "hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
 											aria-current={isActive ? "page" : undefined}
 										>
@@ -48,7 +47,7 @@ const currentPath = Astro.url.pathname;
 						class="relative h-8 w-8 md:hidden focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 						aria-expanded="false"
 						aria-controls="menu-mobilne"
-						aria-label="Otwórz menu"
+						aria-label="Menu"
 					>
 						<span aria-hidden="true"></span>
 						<span aria-hidden="true"></span>
@@ -72,7 +71,7 @@ const currentPath = Astro.url.pathname;
 							<li>
 								<a
 									href={link.href}
-									class={`block py-3 hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent font-medium" : ""}`}
+									class={`block py-3 hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent" : ""}`}
 									aria-current={isActive ? "page" : undefined}
 								>
 									{link.label}
@@ -131,11 +130,6 @@ const currentPath = Astro.url.pathname;
 		right: 0;
 		z-index: 50;
 	}
-
-	a[aria-current="page"] {
-		color: var(--color-accent);
-		font-weight: 600;
-	}
 </style>
 
 <script>
@@ -175,31 +169,39 @@ const currentPath = Astro.url.pathname;
 	const menuMobilne = document.getElementById("menu-mobilne");
 
 	if (przyciskMenu && menuMobilne) {
-
 		const otworzMenu = () => {
-	przyciskMenu.setAttribute("aria-expanded", "true");
-	przyciskMenu.setAttribute("aria-label", "Zamknij menu");
-	menuMobilne.classList.remove("hidden");
-	menuMobilne.querySelector("a")?.focus();
-	// Pułapka fokusu od razu (nie w requestAnimationFrame) — inaczej szybkie zamknięcie
-	// menu mogłoby zostawić nasłuchiwacz na document na zawsze.
-	document.addEventListener("keydown", handleMenuFocusTrap);
-};
+			przyciskMenu.setAttribute("aria-expanded", "true");
+			menuMobilne.classList.remove("hidden");
 
-const zamknijMenu = () => {
-	// Escape i zmiana szerokości okna wołają tę funkcję zawsze — przy zamkniętym menu nic nie robimy.
-	if (przyciskMenu.getAttribute("aria-expanded") !== "true") return;
+			// Focus na pierwszym linku w menu
+			menuMobilne.querySelector("a")?.focus();
 
-	przyciskMenu.setAttribute("aria-expanded", "false");
-	przyciskMenu.setAttribute("aria-label", "Otwórz menu");
-	menuMobilne.classList.add("hidden");
-	document.removeEventListener("keydown", handleMenuFocusTrap);
-	przyciskMenu.focus(); // fokus zawsze wraca na przycisk
-};
+			// Pułapka fokusu od razu (nie w requestAnimationFrame) — inaczej szybkie zamknięcie
+			// menu mogłoby zostawić nasłuchiwacz na document na zawsze.
+			document.addEventListener("keydown", handleMenuFocusTrap);
+		}
+
+		const zamknijMenu = () => {
+			// Escape i zmiana szerokości okna wołają tę funkcję zawsze — przy zamkniętym
+			// menu nic nie robimy (inaczej Escape w dowolnym miejscu strony kradłby fokus).
+			if (przyciskMenu.getAttribute("aria-expanded") !== "true") return;
+
+			przyciskMenu.setAttribute("aria-expanded", "false");
+			menuMobilne.classList.add("hidden");
+
+			// Usuń focus trap
+			document.removeEventListener("keydown", handleMenuFocusTrap);
+
+			// Fokus zawsze wraca na przycisk hamburgera
+			przyciskMenu.focus();
+		}
 
 		przyciskMenu.addEventListener("click", () => {
-			const jestOtwarte = przyciskMenu.getAttribute("aria-expanded") === "true";
-			jestOtwarte ? zamknijMenu() : otworzMenu();
+			if (przyciskMenu.getAttribute("aria-expanded") === "true") {
+				zamknijMenu();
+			} else {
+				otworzMenu();
+			}
 		});
 
 		// Zamknij po kliknięciu w link — inaczej menu zostaje "otwarte" w tle
@@ -218,24 +220,23 @@ const zamknijMenu = () => {
 			if (e.matches) zamknijMenu();
 		});
 
-		// Focus trap handler dla menu mobilnego
+		// Focus trap dla menu mobilnego: Tab krąży po przycisku menu i wszystkich linkach.
 		const handleMenuFocusTrap = (e: KeyboardEvent) => {
 			if (e.key !== "Tab") return;
 
-			// Tab krąży po przycisku menu i wszystkich linkach, w kolejności jak w DOM.
 			const elementy = [przyciskMenu, ...menuMobilne.querySelectorAll<HTMLElement>("a")];
 			const pierwszy = elementy[0];
 			const ostatni = elementy[elementy.length - 1];
 
-		if (e.shiftKey && document.activeElement === pierwszy) {
-			e.preventDefault();
-			ostatni.focus();
-		} 	
-		else if (!e.shiftKey && document.activeElement === ostatni) {
-			e.preventDefault();
-			pierwszy.focus();
+			if (e.shiftKey && document.activeElement === pierwszy) {
+				// Shift+Tab na pierwszym elemencie – skocz na koniec
+				e.preventDefault();
+				ostatni.focus();
+			} else if (!e.shiftKey && document.activeElement === ostatni) {
+				// Tab na ostatnim elemencie – skocz na początek
+				e.preventDefault();
+				pierwszy.focus();
 			}
-		};
 		}
 	}
 </script>

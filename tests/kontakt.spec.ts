@@ -137,7 +137,7 @@ test.describe('Formularz kontaktowy', () => {
 		await page.click('[data-testid="contact-submit"]');
 
 		await expect(page.locator('[data-testid="contact-status"]')).toHaveClass(/text-error/, { timeout: 10000 });
-		// Kod formularza bierze komunikat z odpowiedzi Formspree
-		await expect(page.locator('[data-testid="contact-status"]')).toContainText('Internal server error');
+		// Formularz pokazuje własny, polski komunikat (nie surowy tekst z Formspree)
+		await expect(page.locator('[data-testid="contact-status"]')).toContainText('Usługa formularza chwilowo nie działa');
 	});
 });

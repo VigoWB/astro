@@ -14,10 +14,15 @@
 // `turnstile` przekazany do <Layout> na stronie /kontakt. Weryfikacja tokenu po stronie
 // serwera dzieje się w Formspree (Secret Key ustawiony w ich dashboardzie, nie w tym repo).
 
+import siteConfig from "../data/siteConfig.json";
+
 const formspreeId = import.meta.env.PUBLIC_FORMSPREE_ID ?? "";
 const akcjaFormularza = formspreeId ? `https://formspree.io/f/${formspreeId}` : undefined;
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
+// Adres do komunikatów błędów („napisz na …") — ten sam, co w danych strukturalnych (siteConfig.json).
+const adresMailowy = siteConfig.person.email;
 ---
 
 <form
@@ -26,6 +31,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 	action={akcjaFormularza}
 	method="POST"
 	data-formspree-id={formspreeId}
+	data-email={adresMailowy}
 	data-turnstile-enabled={turnstileSiteKey ? "true" : "false"}
 	data-testid="contact-form"
 >
@@ -39,7 +45,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			minlength="2"
 			autocomplete="name"
 			aria-describedby="kontakt-name-blad"
-			class="w-full border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent aria-invalid:border-error"
 			data-testid="contact-name"
 		/>
 		<p id="kontakt-name-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
@@ -54,7 +60,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			required
 			autocomplete="email"
 			aria-describedby="kontakt-email-blad"
-			class="w-full border border-line bg-paper px-3 py-2.5 text-ink focus:outline-hidden transition-colors focus:border-accent focus:ring-2 focus:ring-accent"
+			class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent aria-invalid:border-error"
 			data-testid="contact-email"
 		/>
 		<p id="kontakt-email-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
@@ -69,7 +75,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 			minlength="10"
 			rows="6"
 			aria-describedby="kontakt-message-blad"
-			class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent aria-invalid:border-error"			data-testid="contact-message"
+			class="w-full resize-y border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent aria-invalid:border-error"
+			data-testid="contact-message"
 		></textarea>
 		<p id="kontakt-message-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
 	</div>
@@ -107,16 +114,28 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 </form>
 
 <script>
-	const formularz = document.getElementById("formularz-kontaktowy") as HTMLFormElement;
-	const przycisk = document.getElementById("przycisk-wyslij") as HTMLButtonElement;
-	const tekstPrzycisku = przycisk.textContent ?? "Wyślij wiadomość";
-	const statusFormularza = document.getElementById("status-formularza")!;
+	// Szuka elementu po id. Gdy go nie ma, od razu rzuca czytelny błąd
+	// (zamiast niezrozumiałego „Cannot read properties of null").
+	function znajdz<T extends HTMLElement = HTMLElement>(id: string): T {
+		const element = document.getElementById(id);
+		if (!element) throw new Error(`ContactForm: brak elementu #${id}`);
+		return element as T;
+	}
 
-	// ID Formspree i flaga Turnstile wracają do nas z serwera (Astro frontmatter) przez
-	// atrybuty data-*, bo zwykła stała z frontmatteru nie jest widoczna w tym skrypcie
+	const formularz = znajdz<HTMLFormElement>("formularz-kontaktowy");
+	const przycisk = znajdz<HTMLButtonElement>("przycisk-wyslij");
+	const tekstPrzycisku = przycisk.textContent ?? "Wyślij wiadomość";
+	const statusFormularza = znajdz("status-formularza");
+
+	// ID Formspree, flaga Turnstile i adres e-mail wracają do nas z serwera (Astro frontmatter)
+	// przez atrybuty data-*, bo zwykła stała z frontmatteru nie jest widoczna w tym skrypcie
 	// (inne środowisko wykonania).
 	const formspreeId = formularz.dataset.formspreeId ?? "";
 	const turnstileWlaczony = formularz.dataset.turnstileEnabled === "true";
+	const adresMailowy = formularz.dataset.email ?? "";
+
+	// Dopisek do komunikatów błędów — odwiedzający musi wiedzieć, dokąd napisać, gdy formularz zawiedzie.
+	const wskazowkaMail = adresMailowy ? `napisz na ${adresMailowy}` : "napisz do mnie bezpośrednio";
 
 	// JS przejmuje walidację od przeglądarki — patrz komentarz w markupie wyżej.
 	formularz.noValidate = true;
@@ -125,21 +144,23 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
 	const pola: Record<KluczPola, { input: HTMLInputElement | HTMLTextAreaElement; blad: HTMLElement }> = {
 		name: {
-			input: document.getElementById("kontakt-name") as HTMLInputElement,
-			blad: document.getElementById("kontakt-name-blad")!,
+			input: znajdz<HTMLInputElement>("kontakt-name"),
+			blad: znajdz("kontakt-name-blad"),
 		},
 		email: {
-			input: document.getElementById("kontakt-email") as HTMLInputElement,
-			blad: document.getElementById("kontakt-email-blad")!,
+			input: znajdz<HTMLInputElement>("kontakt-email"),
+			blad: znajdz("kontakt-email-blad"),
 		},
 		message: {
-			input: document.getElementById("kontakt-message") as HTMLTextAreaElement,
-			blad: document.getElementById("kontakt-message-blad")!,
+			input: znajdz<HTMLTextAreaElement>("kontakt-message"),
+			blad: znajdz("kontakt-message-blad"),
 		},
 	};
 
 	// Prosty, ale skuteczny regex na email — dodatkowa warstwa poza type="email" z HTML5.
 	const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+	const komunikatPoprawPola = "Popraw zaznaczone pola powyżej.";
 
 	function walidujPole(klucz: KluczPola): { ok: boolean; komunikat?: string } {
 		const wartosc = pola[klucz].input.value.trim();
@@ -162,6 +183,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 		return { ok: true };
 	}
 
+	// Czerwoną ramkę pola rysuje sam CSS (klasa aria-invalid:border-error w markupie),
+	// więc tu wystarczy ustawić atrybut aria-invalid i tekst błędu.
 	function pokazBlad(klucz: KluczPola, komunikat: string) {
 		const { input, blad } = pola[klucz];
 		blad.textContent = komunikat;
@@ -179,12 +202,20 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 	// ale jeśli błąd już był pokazany, aktualizuj go na bieżąco, aż zniknie).
 	function odswiezPole(klucz: KluczPola, pokazujNoweBledy: boolean): boolean {
 		const wynik = walidujPole(klucz);
-		const miałJużBlad = pola[klucz].blad.textContent !== "";
+		const mialJuzBlad = pola[klucz].blad.textContent !== "";
 
-		if (!wynik.ok && (pokazujNoweBledy || miałJużBlad)) {
+		if (!wynik.ok && (pokazujNoweBledy || mialJuzBlad)) {
 			pokazBlad(klucz, wynik.komunikat!);
 		} else if (wynik.ok) {
 			ukryjBlad(klucz);
+		}
+
+		// Gdy żadne pole nie ma już błędu, zdejmij czerwone „Popraw zaznaczone pola".
+		if (
+			statusFormularza.textContent === komunikatPoprawPola &&
+			!Object.values(pola).some(({ blad }) => blad.textContent !== "")
+		) {
+			ustawStatus("", "");
 		}
 
 		return wynik.ok;
@@ -195,15 +226,18 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 		pola[klucz].input.addEventListener("input", () => odswiezPole(klucz, false));
 	});
 
+	// Sprawdza wszystkie pola; fokus trafia do pierwszego błędnego.
 	function walidujCalyFormularz(): boolean {
-		let poprawny = true;
-		(Object.keys(pola) as KluczPola[]).forEach((klucz) => {
-			if (!odswiezPole(klucz, true)) poprawny = false;
-		});
-		return poprawny;
+		let pierwszyBledny: KluczPola | null = null;
+		for (const klucz of Object.keys(pola) as KluczPola[]) {
+			if (!odswiezPole(klucz, true) && !pierwszyBledny) pierwszyBledny = klucz;
+		}
+		if (pierwszyBledny) pola[pierwszyBledny].input.focus();
+		return !pierwszyBledny;
 	}
 
 	function ustawStatus(tekst: string, rodzaj: "wysylanie" | "sukces" | "blad" | "") {
+		statusFormularza.textContent = tekst;
 		statusFormularza.classList.remove("text-muted", "text-error", "text-success");
 		if (rodzaj === "wysylanie") statusFormularza.classList.add("text-muted");
 		if (rodzaj === "sukces") statusFormularza.classList.add("text-success");
@@ -219,37 +253,49 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 		return Boolean(pole?.value);
 	}
 
+	type TurnstileApi = { reset: (kontener?: string | HTMLElement) => void };
+	const pobierzTurnstile = () => (window as unknown as { turnstile?: TurnstileApi }).turnstile;
+
+	// Token Turnstile działa tylko raz — po każdej próbie wysyłki prosimy widżet o nowy.
+	function odnowTurnstile() {
+		if (!turnstileWlaczony) return;
+		const pole = formularz.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]');
+		if (pole) pole.value = "";
+		pobierzTurnstile()?.reset(formularz.querySelector<HTMLElement>(".cf-turnstile") ?? undefined);
+	}
+
+	// Komunikat po polsku zamiast surowego tekstu z Formspree (który bywa po angielsku).
+	function komunikatBleduHttp(status: number): string {
+		if (status === 429) return "Za dużo prób wysyłki z tego łącza. Odczekaj chwilę i spróbuj ponownie.";
+		if (status >= 500) return `Usługa formularza chwilowo nie działa. Spróbuj za kilka minut albo ${wskazowkaMail}.`;
+		return `Nie udało się wysłać wiadomości. Sprawdź dane i spróbuj jeszcze raz albo ${wskazowkaMail}.`;
+	}
+
 	formularz.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
 		if (!walidujCalyFormularz()) {
-			ustawStatus("Popraw zaznaczone pola powyżej.", "blad");
+			ustawStatus(komunikatPoprawPola, "blad");
 			return;
 		}
 
 		if (!formspreeId) {
 			ustawStatus(`Formularz chwilowo nie działa — ${wskazowkaMail}.`, "blad");
 			console.warn("ContactForm: uzupełnij PUBLIC_FORMSPREE_ID w pliku .env (zob. .env.example).");
-		return;
-}
+			return;
+		}
 
 		if (!tokenTurnstileGotowy()) {
-			ustawStatus(pobierzTurnstile()
-			? "Trwa jeszcze weryfikacja, że nie jesteś robotem. Odczekaj chwilę i wyślij ponownie."
-			: `Weryfikacja antyspamowa jeszcze się nie wczytała — poczekaj chwilę. Jeśli to się powtarza, wyłącz blokadę reklam dla tej strony i odśwież ją albo ${wskazowkaMail}.`,"blad",);
+			ustawStatus(
+				pobierzTurnstile()
+					? "Trwa jeszcze weryfikacja, że nie jesteś robotem. Odczekaj chwilę i wyślij ponownie."
+					: `Weryfikacja antyspamowa jeszcze się nie wczytała — poczekaj chwilę. Jeśli to się powtarza, wyłącz blokadę reklam dla tej strony i odśwież ją albo ${wskazowkaMail}.`,
+				"blad",
+			);
 			console.warn("ContactForm: brak tokenu Turnstile (widget niegotowy albo niewczytany).");
-		return;
-}
-		type TurnstileApi = { reset: (kontener?: string | HTMLElement) => void };
-const pobierzTurnstile = () => (window as unknown as { turnstile?: TurnstileApi }).turnstile;
+			return;
+		}
 
-// Token Turnstile działa tylko raz — po każdej próbie wysyłki prosimy widżet o nowy.
-function odnowTurnstile() {
-	if (!turnstileWlaczony) return;
-	const pole = formularz.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]');
-	if (pole) pole.value = "";
-	pobierzTurnstile()?.reset(formularz.querySelector<HTMLElement>(".cf-turnstile") ?? undefined);
-}
 		przycisk.disabled = true;
 		przycisk.textContent = "Wysyłanie...";
 		ustawStatus("Wysyłanie...", "wysylanie");
@@ -260,6 +306,7 @@ function odnowTurnstile() {
 				method: "POST",
 				body: dane,
 				headers: { Accept: "application/json" },
+				signal: AbortSignal.timeout(15000),
 			});
 
 			if (odpowiedz.ok) {
@@ -267,17 +314,18 @@ function odnowTurnstile() {
 				(Object.keys(pola) as KluczPola[]).forEach((klucz) => ukryjBlad(klucz));
 				ustawStatus("Dziękuję! Wiadomość została wysłana — odezwę się najszybciej, jak się da.", "sukces");
 			} else {
-	const wynik = await odpowiedz.json().catch(() => null);
-	console.warn("ContactForm: Formspree odrzucił wysyłkę", odpowiedz.status, wynik);
-	ustawStatus(komunikatBleduHttp(odpowiedz.status), "blad");
-}
-function komunikatBleduHttp(status: number): string {
-	if (status === 429) return "Za dużo prób wysyłki z tego łącza. Odczekaj chwilę i spróbuj ponownie.";
-	if (status >= 500) return `Usługa formularza chwilowo nie działa. Spróbuj za kilka minut albo ${wskazowkaMail}.`;
-	return `Nie udało się wysłać wiadomości. Sprawdź dane i spróbuj jeszcze raz albo ${wskazowkaMail}.`;
-}
-		} catch {
-			ustawStatus("Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.", "blad");
+				const wynik = await odpowiedz.json().catch(() => null);
+				console.warn("ContactForm: Formspree odrzucił wysyłkę", odpowiedz.status, wynik);
+				ustawStatus(komunikatBleduHttp(odpowiedz.status), "blad");
+			}
+		} catch (blad) {
+			const przekroczonoCzas = blad instanceof DOMException && blad.name === "TimeoutError";
+			ustawStatus(
+				przekroczonoCzas
+					? `Wysyłka trwa zbyt długo. Spróbuj ponownie za chwilę albo ${wskazowkaMail}.`
+					: "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.",
+				"blad",
+			);
 		} finally {
 			przycisk.disabled = false;
 			przycisk.textContent = tekstPrzycisku;

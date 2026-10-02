@@ -15,6 +15,18 @@ if (!adresZdjec) {
 	);
 }
 
+/** Dane z aparatu — ten sam kształt co pole "exif" w galeria.json (zapisuje je sync-images). */
+export interface ExifZdjecia {
+	iso: number | null;
+	przyslona: number | null;
+	ogniskowa: number | null;
+	czasNaswietlania: number | null;
+	dataWykonania: string | null;
+	make: string | null;
+	model: string | null;
+	lensModel: string | null;
+}
+
 interface ZdjecieZPliku {
 	nazwaPliku: string;
 	opis: string;
@@ -27,13 +39,7 @@ interface ZdjecieZPliku {
 	wyroznione?: boolean;
 	/** Ta jedna para (wymaga identycznego kadru "po"/"przed") trafia do suwaka na pierwszym ekranie strony głównej. */
 	paraSuwaka?: boolean;
-	exif: {
-		iso: number | null;
-		przyslona: number | null;
-		ogniskowa: number | null;
-		czasNaswietlania: number | null;
-		dataWykonania: string | null;
-	};
+	exif: ExifZdjecia;
 }
 
 // Klucz w R2 (np. "zdjecia/DSC_1111.jpg") zamieniamy na pełny adres zdjęcia.
@@ -85,8 +91,9 @@ async function wersjaDoLightboxa(adres: string, szerokosc: number, wysokosc: num
 		src: obraz.src,
 		srcset: obraz.srcSet.attribute,
 		// Jak szeroko zdjęcie wyświetla się w lightboxie: szerokość ekranu minus margines,
-		// ale nie więcej, niż pozwala wysokość (80% ekranu) i proporcje zdjęcia.
-		sizes: `min(calc(100vw - 2rem), calc(80vh * ${(szerokosc / wysokosc).toFixed(3)}))`,
+		// ale nie więcej, niż pozwala wysokość (ekran minus 10rem na podpis, licznik i EXIF —
+		// to samo co max-h w Galeria.astro) i proporcje zdjęcia.
+		sizes: `min(calc(100vw - 2rem), calc((100dvh - 10rem) * ${(szerokosc / wysokosc).toFixed(3)}))`,
 		szerokosc: najwieksza,
 		wysokosc: wysokoscNajwiekszej,
 	};
@@ -112,13 +119,18 @@ async function wersjaPrzed(adres: string, nazwaPliku: string): Promise<WersjaLig
 // generowaniu zdjęcia: prawdziwe pobranie dzieje się w późniejszej, osobnej fazie
 // builda (poza zasięgiem await/try-catch tutaj), więc musimy sprawdzić PRZED jego
 // wywołaniem, a nie łapać wyjątek po.
+// false TYLKO przy 404 (pliku naprawdę nie ma). Inna odpowiedź (5xx, 403, 429) albo brak połączenia
+// przerywa build — inaczej chwilowa awaria R2 po cichu wypuściłaby zdjęcia bez znaku wodnego.
 async function istniejeWR2(adres: string): Promise<boolean> {
+	let odpowiedz: Response;
 	try {
-		const odpowiedz = await fetch(adres, { method: "HEAD" });
-		return odpowiedz.ok;
-	} catch {
-		return false;
+		odpowiedz = await fetch(adres, { method: "HEAD" });
+	} catch (blad) {
+		throw new Error(`galeria: R2 nie odpowiada (${adres}) — przerywam build, żeby nie wypuścić zdjęć bez znaku wodnego.`, { cause: blad });
 	}
+	if (odpowiedz.ok) return true;
+	if (odpowiedz.status === 404) return false;
+	throw new Error(`galeria: R2 zwróciło ${odpowiedz.status} dla ${adres} — przerywam build, żeby nie wypuścić zdjęć bez znaku wodnego.`);
 }
 
 // Siatka bezpieczeństwa na czas wdrażania znaku wodnego (Roadmapa pkt 2): zdjęcia
@@ -165,13 +177,7 @@ export interface Zdjecie {
 	kategoria: string[];
 	wyroznione: boolean;
 	paraSuwaka: boolean;
-	exif?: {
-		iso?: number | null;
-		przyslona?: number | null;
-		ogniskowa?: number | null;
-		czasNaswietlania?: number | null;
-		dataWykonania?: string | null;
-	};
+	exif: ExifZdjecia;
 }
 
 let obietnicaZdjec: Promise<Zdjecie[]> | null = null;

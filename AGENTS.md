@@ -209,11 +209,11 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 **Galeria.astro**
 - Siatka to kolumny CSS (`columns-2` … `2xl:columns-6`), bez JS.
 - Na start widać `NA_STRONE` (8) zdjęć, reszta ma `hidden`. O tym, co jest widoczne, decyduje jedna funkcja (filtr + „Załaduj więcej”).
-- Filtry porównują `data-kategoria` karty z przyciskami z `kategorie.ts`.
+- Filtry porównują `data-kategoria` karty (lista kategorii jako JSON — nazwa może mieć spację) z przyciskami z `kategorie.ts`.
 - Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.
 - Efekt „wyostrzenia” miniatury: klasy startowe są w `Karta.astro`, a zdejmuje je skrypt w `Galeria.astro` (nie `onload` w HTML).
 - Lightbox jest jeden, wspólny, i podmienia `sizes`, `srcset` i `src` (funkcja `ustawZdjecie`) — dane bierze z atrybutów karty `data-po*` / `data-przed*`. Wersję „przed” pokazuje przycisk „Pokaż przed” (`id="lightbox-przelacznik"`, `aria-pressed`) — działa z klawiatury, myszki i dotyku, resetuje się przy zamknięciu lightboxa i zmianie zdjęcia. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
-- Propy `pokazFiltry` i `pokazZaladujWiecej` (domyślnie `true`) wyłączają pasek filtrów i przycisk „Załaduj więcej” — używa tego `index.astro` (sekcja „Wybrane prace” pokazuje przekazane zdjęcia od razu, bez filtrowania).
+- Propy `pokazFiltry`, `pokazZaladujWiecej` i `priorytetPierwszego` (domyślnie `true`) wyłączają pasek filtrów, przycisk „Załaduj więcej” i wysoki priorytet pierwszego zdjęcia — używa tego `index.astro` (sekcja „Wybrane prace” pokazuje przekazane zdjęcia od razu, bez filtrowania).
 
 **index.astro (strona główna)**
 - Dane bierze z `wczytajZdjecia()` (`src/lib/galeria.ts`), tak jak `/galeria`.
@@ -221,7 +221,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
 - Sekcja „Wybrane prace”: `wybierzWyroznione()` bierze zdjęcia z `wyroznione: true` (max 6, bez zdjęcia użytego jako bohater). Gdy żadne nie jest oznaczone, tymczasowo pokazuje pierwsze zdjęcia z `galeria.json` (z ostrzeżeniem w logu) — żeby strona nie była pusta, zanim ktoś uruchomi `npm run sync-images -- --wyroznij`.
 - Treść sekcji „Co poprawiam przy retuszu” (`PUNKTY_RETUSZU`) i zaproszenia do kontaktu to na razie tekst tymczasowy — do potwierdzenia.
 
-**PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` sterowanym z `<input type="range">` (tryb suwaka) albo zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. Pozycję suwaka i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.
+**PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` sterowanym z `<input type="range">` (tryb suwaka; połowa odsłonięta już w CSS, zanim zadziała skrypt) albo pokazywane w całości (`object-contain`) zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. Pozycję suwaka i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.
 
 **ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em.
 

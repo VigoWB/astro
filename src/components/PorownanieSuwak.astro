@@ -15,8 +15,9 @@ import type { WersjaLightboxa } from "../lib/galeria.ts";
  * w galerii) — bez dodatkowego przetwarzania zdjęcia tutaj.
  *
  * Proporcje pudełka pilnują atrybuty width/height na <img> "po" (przeglądarka sama
- * rezerwuje miejsce, bez przesunięcia layoutu) — "przed" wypełnia to samo pudełko
- * przez object-cover, więc nie musi mieć identycznych pikseli, żeby wizualnie pasować.
+ * rezerwuje miejsce, bez przesunięcia layoutu). "przed" leży w tym samym pudełku:
+ * w trybie suwaka przez object-cover (ten sam kadr, nie musi mieć identycznych pikseli),
+ * w trybie przełącznika przez object-contain (inny kadr widać w całości, bez przycinania).
  */
 interface Props {
 	po: WersjaLightboxa;
@@ -30,14 +31,18 @@ interface Props {
 const { po, przed, opis, szerokoscOryginalu, wysokoscOryginalu, trybSuwaka } = Astro.props;
 const pokazSuwak = trybSuwaka && Boolean(przed);
 const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
+
+// Szerokość porównania NA STRONIE: kolumna Container (max-w-240 = 60rem minus px-4 z obu
+// stron = 58rem), węziej 100vw - 2rem. Nie "sizes" z lightboxa — tam limitem jest wysokość ekranu.
+const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 ---
 
-<div class="relative overflow-hidden rounded-sm bg-black/5" data-porownanie>
+<div class="relative overflow-hidden rounded-sm bg-ink/5" data-porownanie>
 	<!-- "po" zawsze widoczne w tle — LCP, dlatego eager + fetchpriority high. -->
 	<img
 		src={po.src}
 		srcset={po.srcset}
-		sizes={po.sizes}
+		sizes={ROZMIAR_NA_STRONIE}
 		width={szerokoscOryginalu}
 		height={wysokoscOryginalu}
 		alt={opis || "Zdjęcie po retuszu"}
@@ -46,14 +51,13 @@ const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
 		decoding="async"
 		draggable="false"
 		class="block h-auto w-full select-none"
-		data-porownanie-po
 	/>
 
 	{przed && (
 		<img
 			src={przed.src}
 			srcset={przed.srcset}
-			sizes={przed.sizes}
+			sizes={ROZMIAR_NA_STRONIE}
 			width={szerokoscOryginalu}
 			height={wysokoscOryginalu}
 			alt=""
@@ -61,8 +65,14 @@ const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
 			draggable="false"
 			loading="eager"
 			class:list={[
-				"absolute inset-0 h-full w-full select-none object-cover",
-				{ hidden: !pokazSuwak, "motion-safe:transition-[clip-path] motion-safe:duration-150": pokazSuwak },
+				"absolute inset-0 h-full w-full select-none",
+				{
+					// Suwak: ten sam kadr; połowa odsłonięta już w CSS, zanim zadziała skrypt.
+					// Bez animacji clip-path — krawędź idzie równo z linią i palcem.
+					"object-cover [clip-path:inset(0_50%_0_0)]": pokazSuwak,
+					// Przełącznik: kadr bywa inny — całe "przed", bez przycinania.
+					"hidden object-contain bg-paper": !pokazSuwak,
+				},
 			]}
 			data-porownanie-przed
 		/>
@@ -71,23 +81,23 @@ const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
 	{pokazSuwak && (
 		<>
 			<div
-				class="pointer-events-none absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-paper shadow-[0_0_0_1px_rgba(0,0,0,0.25)]"
+				class="pointer-events-none absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-paper shadow-[0_0_0_1px] shadow-ink/25"
 				data-porownanie-linia
 				aria-hidden="true"
 			></div>
-			<div class="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-black/40 px-4 py-3 backdrop-blur-sm">
-				<span class="text-xs font-semibold text-white/90" aria-hidden="true">Przed</span>
+			<div class="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-ink/40 px-4 py-3 backdrop-blur-sm">
+				<span class="text-xs font-semibold text-paper/90" aria-hidden="true">Przed</span>
 				<input
 					type="range"
 					min="0"
 					max="100"
 					value="50"
 					step="1"
-					class="h-2 w-full cursor-ew-resize appearance-none rounded-full bg-white/30 accent-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+					class="h-2 w-full cursor-ew-resize appearance-none rounded-full bg-paper/30 accent-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
 					aria-label={`Porównaj zdjęcie przed i po retuszu${opis ? `: ${opis}` : ""}`}
 					data-porownanie-suwak
 				/>
-				<span class="text-xs font-semibold text-white/90" aria-hidden="true">Po</span>
+				<span class="text-xs font-semibold text-paper/90" aria-hidden="true">Po</span>
 			</div>
 		</>
 	)}
@@ -97,7 +107,7 @@ const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
 			type="button"
 			aria-pressed="false"
 			data-porownanie-przelacznik
-			class="absolute bottom-3 right-3 rounded-full border-2 border-white/50 bg-black/30 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:border-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-paper"
+			class="absolute bottom-3 right-3 rounded-full border-2 border-paper/50 bg-ink/30 px-4 py-1.5 text-sm font-semibold text-paper backdrop-blur-sm transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ink aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-paper"
 		>
 			Pokaż przed
 		</button>

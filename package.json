@@ -16,7 +16,7 @@
     "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.1.17",
-    "astro": "^7.2.10",
+    "astro": "^7.3.5",
     "tailwindcss": "^4.1.17"
   },
   "devDependencies": {

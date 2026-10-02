@@ -57,7 +57,10 @@ async function main() {
 	}
 
 	console.log(`Serwer podglądu gotowy na ${URL}.`);
-	// Zostajemy aktywni — patrz komentarz na górze pliku.
+	// Zostajemy aktywni — patrz komentarz na górze pliku. Sama obietnica, która
+	// nigdy się nie kończy, NIE trzyma Node'a przy życiu (pusta pętla zdarzeń =
+	// koniec procesu), dlatego dokładamy zegar, który tyka w nieskończoność.
+	setInterval(() => {}, 60 * 60 * 1000);
 	await new Promise(() => {});
 }
 

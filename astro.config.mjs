@@ -14,7 +14,17 @@ import sitemap from '@astrojs/sitemap';
 // Gdy zmienisz adres (np. na własną subdomenę), wystarczy podmienić
 // samą zmienną PUBLIC_R2_URL — tutaj nic nie trzeba poprawiać.
 const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
-const adresZdjec = env.PUBLIC_R2_URL ? new URL(env.PUBLIC_R2_URL) : null;
+// Literówka w adresie (np. brak "https://") nie może wywalać całego configu
+// tajemniczym "Invalid URL" — czytelny komunikat daje sprawdzZmienneSrodowiskowe().
+/** @param {string | undefined} tekst */
+function odczytajAdres(tekst) {
+  try {
+    return tekst ? new URL(tekst) : null;
+  } catch {
+    return null;
+  }
+}
+const adresZdjec = odczytajAdres(env.PUBLIC_R2_URL);
 
 // --- Sprawdzanie zmiennych środowiskowych (jedno miejsce dla całego builda) ---
 // Dwie grupy:
@@ -57,6 +67,12 @@ function sprawdzZmienneSrodowiskowe(logger) {
     const lista = brakujaceWymagane.map(({ klucz, powod }) => `  - ${klucz}: ${powod}`).join('\n');
     throw new Error(
       `Brak wymaganych zmiennych środowiskowych:\n${lista}\n\nUstaw je w pliku .env (lokalnie) oraz w ustawieniach Cloudflare Pages (produkcja). Zob. .env.example.`
+    );
+  }
+
+  if (env.PUBLIC_R2_URL && !adresZdjec) {
+    throw new Error(
+      `PUBLIC_R2_URL ma niepoprawną wartość: "${env.PUBLIC_R2_URL}". Adres musi zaczynać się od https:// (np. https://pub-xxxx.r2.dev). Zob. .env.example.`
     );
   }
 

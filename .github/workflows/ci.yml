@@ -6,7 +6,12 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 3 * * 1'  # Weekly on Monday 3 AM UTC - run Lighthouse CI
+    - cron: '0 3 * * 1'  # co poniedziałek 3:00 UTC — pełny przebieg (build, Lighthouse, testy)
+
+# Build i testy niczego nie zapisują w repozytorium, a repo jest publiczne —
+# token ma więc tylko prawo odczytu.
+permissions:
+  contents: read
 
 jobs:
   build-and-test:
@@ -36,6 +41,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # Uwaga: PUBLIC_R2_URL musi istnieć TAKŻE jako sekret Dependabota
+      # (Settings → Secrets and variables → Dependabot). Przebiegi uruchomione
+      # przez Dependabota nie widzą zwykłych sekretów Actions i bez tego
+      # każdy jego PR kończy się tu błędem "Brak wymaganych zmiennych".
       - name: Build
         run: npm run build
         env:
@@ -44,16 +53,26 @@ jobs:
           PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA'
           PUBLIC_R2_URL: ${{ secrets.PUBLIC_R2_URL }}
 
-      - name: Run Lighthouse (continue on error)
-        run: npx lhci autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-        continue-on-error: true
-
       # Strona jest już zbudowana w kroku "Build". `npm run test` zbudowałby ją
       # drugi raz (skrypt "pretest"), więc uruchamiamy same testy.
       - name: Run tests
         run: npx playwright test
+
+      # Progi z lighthouserc.json (wydajność ≥ 90, dostępność = 100) mają
+      # "error" — dlatego ten krok ma zapalać CI na czerwono, gdy ich nie spełnia.
+      # Stoi PO testach, żeby błąd Lighthouse nie zasłaniał wyniku testów.
+      - name: Run Lighthouse
+        run: npx lhci autorun
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
       - name: Upload Lighthouse report
         uses: actions/upload-artifact@v6

@@ -13,9 +13,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# environment variables
+# environment variables (klucze R2 — repo jest publiczne!)
 .env
-.env.production
+.env.*
+!.env.example
 
 # macOS-specific files
 .DS_Store
@@ -34,6 +35,6 @@ test-results/
 test.db
 
 # Oryginały zdjęć — tylko lokalnie, źródło dla sync-images
-images/
+/images/
 
 data/*.db

@@ -1,17 +1,26 @@
 ---
 import Layout from "./Layout.astro";
+
+interface Props {
+	/** Pola z frontmattera pliku .md, który używa tego layoutu. */
+	frontmatter: {
+		title?: string;
+		description?: string;
+		/** Krótsza nazwa do ścieżki nawigacji (np. "O mnie" zamiast "O mnie — Wiktor"). */
+		breadcrumbLabel?: string;
+	};
+}
+
 const { frontmatter } = Astro.props;
 
 // Breadcrumb dla podstron na tym layoucie: "Strona główna" + etykieta tej
 // podstrony. breadcrumbLabel we frontmatterze pozwala użyć krótszej nazwy
-// niż pełny <title> (np. "O mnie" zamiast "O mnie — Wiktor"). Adres liczony
-// z bieżącej ścieżki, więc każda podstrona dostaje poprawny link sama.
+// niż pełny <title>. Adres bierzemy z bieżącej ścieżki, więc każda podstrona
+// dostaje poprawny link sama; pełny adres składa z niej Schema.astro.
 const breadcrumbLabel = frontmatter?.breadcrumbLabel ?? frontmatter?.title;
 const breadcrumbs = [
-	{ name: "Strona główna", url: "https://foto.vigolab.ovh/" },
-	...(breadcrumbLabel
-		? [{ name: breadcrumbLabel, url: new URL(Astro.url.pathname, Astro.site).toString() }]
-		: []),
+	{ name: "Strona główna", url: "/" },
+	...(breadcrumbLabel ? [{ name: breadcrumbLabel, url: Astro.url.pathname }] : []),
 ];
 ---
 <Layout title={frontmatter?.title} description={frontmatter?.description} breadcrumbs={breadcrumbs}>
@@ -19,3 +28,26 @@ const breadcrumbs = [
 		<slot />
 	</article>
 </Layout>
+
+<style>
+	/* Kolory artykułu z tokenów motywu (global.css) zamiast domyślnej, szarej
+	   palety wtyczki typography. Zmienne --tw-prose-* czyta klasa "prose". */
+	.prose {
+		--tw-prose-body: var(--color-ink);
+		--tw-prose-headings: var(--color-ink);
+		--tw-prose-lead: var(--color-muted);
+		--tw-prose-links: var(--color-accent);
+		--tw-prose-bold: var(--color-ink);
+		--tw-prose-counters: var(--color-muted);
+		--tw-prose-bullets: var(--color-muted);
+		--tw-prose-hr: var(--color-line);
+		--tw-prose-quotes: var(--color-ink);
+		--tw-prose-quote-borders: var(--color-line);
+		--tw-prose-captions: var(--color-muted);
+		--tw-prose-code: var(--color-ink);
+		--tw-prose-pre-code: var(--color-paper);
+		--tw-prose-pre-bg: var(--color-ink);
+		--tw-prose-th-borders: var(--color-line);
+		--tw-prose-td-borders: var(--color-line);
+	}
+</style>

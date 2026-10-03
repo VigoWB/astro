@@ -22,6 +22,7 @@ interface Zdjecie {
 
 interface BreadcrumbItem {
 	name: string;
+	/** Ścieżka (np. "/galeria/") albo pełny adres. Ścieżkę zamieniamy na pełny adres z Astro.site. */
 	url: string;
 }
 
@@ -87,7 +88,7 @@ const gallery = zdjecia?.length
 			"@type": "ImageGallery",
 			name: siteConfig.gallery.name,
 			description: siteConfig.gallery.description,
-			url: new URL("/galeria", bazowyUrl).toString(),
+			url: new URL("/galeria/", bazowyUrl).toString(),
 			image: zdjecia.map((z) => ({
 				"@type": "ImageObject",
 				contentUrl: new URL(z.po.src, bazowyUrl).toString(),
@@ -103,6 +104,8 @@ const gallery = zdjecia?.length
 	: null;
 
 // --- BreadcrumbList (tylko jeśli przekazano breadcrumbs) ---
+// Adresy składamy z Astro.site, więc zmiana domeny w astro.config.mjs
+// przestawia też ścieżkę nawigacji — nic nie trzeba poprawiać na stronach.
 const breadcrumbList = breadcrumbs?.length
 	? {
 			"@context": "https://schema.org",
@@ -111,7 +114,7 @@ const breadcrumbList = breadcrumbs?.length
 				"@type": "ListItem",
 				position: index + 1,
 				name: item.name,
-				item: item.url,
+				item: new URL(item.url, bazowyUrl).toString(),
 			})),
 		}
 	: null;

@@ -15,9 +15,9 @@ const zdjecia = await wczytajZdjecia();
 
 <Layout
 	title="Galeria — Wiktor"
-	description="Zdjęcia produktowe z podglądem przed i po retuszu — przykłady pracy nad kadrowaniem, tłem i kolorem."
+	description="Zdjęcia produktowe z podglądem przed i po retuszu — zobacz, jak zmieniają się kadr, tło i kolory po obróbce. Kliknij zdjęcie, żeby je powiększyć."
 	zdjecia={zdjeciaDlaGoogle(zdjecia)}
-	breadcrumbs={[{ name: "Strona główna", url: "https://foto.vigolab.ovh/" }, { name: "Galeria", url: "https://foto.vigolab.ovh/galeria/" }]}
+	breadcrumbs={[{ name: "Strona główna", url: "/" }, { name: "Galeria", url: "/galeria/" }]}
 >
 	<h1 class="text-3xl font-bold text-ink py-8">Galeria</h1>
 	<Galeria zdjecia={zdjecia} kategorie={kategorie} />

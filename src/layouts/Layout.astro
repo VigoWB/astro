@@ -1,14 +1,34 @@
 ---
 import "../styles/global.css";
+import type { ComponentProps } from "astro/types";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import Container from "../components/ui/Container.astro";
 import SEO from "../components/SEO.astro";
 import Schema from "../components/Schema.astro";
 
-const { title, frontmatter, description, image, canonicalURL, zdjecia, breadcrumbs, turnstile } = Astro.props;
-const pageTitle = title ?? frontmatter?.title ?? "Wiktor — Fotografia";
-const pageDescription = description ?? frontmatter?.description ?? "Portfolio fotograficzne Wiktora.";
+type SchemaProps = ComponentProps<typeof Schema>;
+
+interface Props {
+	/** Tytuł strony (<title>, Open Graph, Twitter). Bez niego: "Wiktor — Fotografia". */
+	title?: string;
+	/** Opis strony (meta description, Open Graph, Twitter). */
+	description?: string;
+	/** Obrazek do udostępniania linku — ścieżka albo pełny adres (domyślnie /og-default.jpg). */
+	image?: string;
+	/** Pełny adres kanoniczny, jeśli ma być inny niż adres bieżącej strony. */
+	canonicalURL?: string;
+	/** Lista zdjęć dla danych strukturalnych ImageGallery (tylko /galeria). */
+	zdjecia?: SchemaProps["zdjecia"];
+	/** Ścieżka nawigacji dla danych strukturalnych BreadcrumbList. */
+	breadcrumbs?: SchemaProps["breadcrumbs"];
+	/** Załaduj skrypt Cloudflare Turnstile (tylko strona z formularzem). */
+	turnstile?: boolean;
+}
+
+const { title, description, image, canonicalURL, zdjecia, breadcrumbs, turnstile } = Astro.props;
+const pageTitle = title ?? "Wiktor — Fotografia";
+const pageDescription = description ?? "Portfolio fotograficzne Wiktora.";
 
 // Cloudflare Web Analytics - opcjonalny, konfiguracja przez .env
 const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
@@ -18,7 +38,7 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 <html lang="pl">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		{/* Wczytanie z wyprzedzeniem — oba pliki są małe (razem ok. 40 KB) i potrzebne
 		    na każdej stronie, więc ograniczamy migotanie/przesunięcie tekstu (CLS)
 		    przy podmianie na docelowy font. Roadmapa: "Lżejsza czcionka". */}
@@ -57,14 +77,14 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		</script>
 	</head>
 	<body class="flex flex-col min-h-dvh">
-		
-			<a href="#glowna-tresc"
+		<a
+			href="#glowna-tresc"
 			class="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-2 focus-visible:left-2 focus-visible:z-50 focus-visible:rounded-md focus-visible:bg-paper focus-visible:px-4 focus-visible:py-2 focus-visible:font-medium focus-visible:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 		>
 			Przejdź do treści
 		</a>
 		<Header/>
-		<main id="glowna-tresc" tabindex="-1" class="wrapper flex-1 w-full focus:outline-hidden">
+		<main id="glowna-tresc" tabindex="-1" class="flex-1 w-full focus:outline-hidden">
 			<Container>
 				<slot />
 			</Container>

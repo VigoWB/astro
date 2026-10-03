@@ -5,15 +5,14 @@ import PorownanieSuwak from "../components/PorownanieSuwak.astro";
 import { kategorie } from "../data/kategorie.ts";
 import { wczytajZdjecia, type Zdjecie } from "../lib/galeria.ts";
 
-// Strona główna — wizytówka retuszu produktowego (Roadmapa pkt 4):
+// Strona główna — wizytówka retuszu produktowego:
 // (1) suwak przed/po z jedną mocną parą, (2) co poprawiam przy retuszu,
 // (3) kilka wybranych par (kliknięcie otwiera lightbox jak w galerii),
 // (4) zaproszenie do kontaktu.
 const zdjecia = await wczytajZdjecia();
 
 // --- (1) Para do suwaka ---
-// Suwak wymaga identycznego kadru "przed" i "po" (patrz Roadmapa pkt 4 — sposób
-// przygotowania pary w Lightroomie). Dopóki Wiktor takiej pary nie oznaczy
+// Suwak wymaga identycznego kadru "przed" i "po". Dopóki Wiktor takiej pary nie oznaczy
 // (npm run sync-images -- --wyroznij), strona i tak działa: pokazuje zastępcze
 // zdjęcie ze zwykłym przełącznikiem "Pokaż przed", zamiast przerywać build.
 const TOLERANCJA_PROPORCJI = 0.02;
@@ -46,7 +45,7 @@ function wybierzBohatera(lista: Zdjecie[]): { zdjecie: Zdjecie; trybSuwaka: bool
 
 	if (!proporcjeZgodne(kandydat)) {
 		console.warn(
-			`index: zdjęcie oznaczone jako "paraSuwaka" (${kandydat.opis || kandydat.po.src}) ma inne proporcje "przed" i "po" — pokazano przełącznik zamiast suwaka. Przygotuj parę w identycznym kadrze (patrz Roadmapa pkt 4).`
+			`index: zdjęcie oznaczone jako "paraSuwaka" (${kandydat.opis || kandydat.po.src}) ma inne proporcje "przed" i "po" — pokazano przełącznik zamiast suwaka. Przygotuj parę w identycznym kadrze.`
 		);
 		return { zdjecie: kandydat, trybSuwaka: false };
 	}
@@ -72,7 +71,7 @@ function wybierzWyroznione(lista: Zdjecie[], pominiete?: Zdjecie): Zdjecie[] {
 
 const wybranePrace = wybierzWyroznione(zdjecia, bohater?.zdjecie);
 
-// Treść tymczasowa (placeholder) — do potwierdzenia przez Wiktora, patrz Roadmapa pkt 4.
+// Treść tymczasowa (placeholder) — do potwierdzenia przez Wiktora.
 const PUNKTY_RETUSZU = [
 	"Usuwam kurz i rysy",
 	"Równe, czyste białe tło pod sklep internetowy",
@@ -84,7 +83,7 @@ const PUNKTY_RETUSZU = [
 <Layout
 	title="Retusz i fotografia produktowa Poznań — Wiktor"
 	description="Fotografia i retusz produktowy w Poznaniu: czyste ujęcia, równe białe tło i wierne kolory do sklepu internetowego. Zobacz przykłady przed i po retuszu."
-	breadcrumbs={[{ name: "Strona główna", url: "https://foto.vigolab.ovh/" }]}
+	breadcrumbs={[{ name: "Strona główna", url: "/" }]}
 >
 	<div class="space-y-16 py-12">
 		<!-- (1) Pierwszy ekran -->

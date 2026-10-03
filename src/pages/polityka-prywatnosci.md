@@ -11,11 +11,11 @@ To jest informacja, a nie porada prawna — opisuję tu w prostych słowach, jak
 
 ## Kto odpowiada za tę stronę
 
-Wiktor Brzeziński, Poznań. Kontakt: [BrzezinskiWiktor@outlook.com](mailto:BrzezinskiWiktor@outlook.com) — to ten sam adres, na który trafiają wiadomości z formularza kontaktowego.
+Wiktor Brzeziński, Poznań. Kontakt: [BrzezinskiWiktor@proton.me](mailto:BrzezinskiWiktor@proton.me) — to ten sam adres, na który trafiają wiadomości z formularza kontaktowego.
 
 ## Formularz kontaktowy
 
-Gdy wysyłasz wiadomość przez formularz na stronie [/kontakt](/kontakt), biorą w tym udział dwie zewnętrzne usługi:
+Gdy wysyłasz wiadomość przez formularz na stronie [/kontakt](/kontakt/), biorą w tym udział dwie zewnętrzne usługi:
 
 - **Formspree** (firma z USA, serwery Amazon w Stanach Zjednoczonych) odbiera treść, którą wpiszesz — imię, adres e-mail, wiadomość — i przekazuje ją do mnie. Formspree deklaruje zgodność z RODO jako podmiot przetwarzający dane (na podstawie standardowych klauzul umownych) oraz z amerykańską ustawą CCPA. Nie mam wglądu w to, jak długo Formspree przechowuje wiadomości po ich dostarczeniu — to zależy od ich wewnętrznych zasad, opisanych w linku niżej.
 - **Cloudflare Turnstile** sprawdza, zanim formularz się wyśle, kilka technicznych sygnałów Twojej przeglądarki (adres IP, nagłówek User-Agent, tzw. odcisk TLS), żeby odróżnić prawdziwego odwiedzającego od bota. Cloudflare deklaruje, że na podstawie tych sygnałów nie da się bezpośrednio zidentyfikować konkretnej osoby, i traktuje je jako niezbędne do ochrony formularza przed spamem.

@@ -2,11 +2,15 @@
 // Komponent SEO — centralizuje meta tagi, Open Graph, Twitter Cards
 // oraz link kanoniczny. Ma trafiać w <head> layoutu.
 
+import siteConfig from "../data/siteConfig.json";
+
 interface Props {
   title: string;
   description: string;
   /** Ścieżka lub pełny URL do obrazka OG. Domyślnie /og-default.jpg (1200x630). */
   image?: string;
+  /** Opis obrazka OG dla czytników ekranu. Domyślny opisuje /og-default.jpg — przy własnym `image` podaj własny. */
+  imageAlt?: string;
   /** Pełny URL kanoniczny. Jeśli nie podany, wyliczany z Astro.url + Astro.site. */
   canonicalURL?: string;
 }
@@ -15,6 +19,7 @@ const {
   title,
   description,
   image = "/og-default.jpg",
+  imageAlt = "Zdjęcia produktowe — retusz i obróbka",
   canonicalURL,
 } = Astro.props;
 
@@ -35,10 +40,12 @@ const obrazekOG = new URL(image, Astro.site);
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteConfig.business.name} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={kanoniczny} />
 <meta property="og:image" content={obrazekOG} />
+<meta property="og:image:alt" content={imageAlt} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:locale" content="pl_PL" />
@@ -48,3 +55,4 @@ const obrazekOG = new URL(image, Astro.site);
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={obrazekOG} />
+<meta name="twitter:image:alt" content={imageAlt} />

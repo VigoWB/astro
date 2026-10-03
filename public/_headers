@@ -8,7 +8,7 @@
 #
 # Content-Security-Policy (CSP) — lista miejsc, z których przeglądarka może
 # ładować skrypty, style, ramki i z którymi może się łączyć. Wszystko spoza
-# listy jest zgłaszane (tryb próbny) albo blokowane (tryb docelowy).
+# listy przeglądarka blokuje.
 # - script-src: nasze pliki + Turnstile (challenges.cloudflare.com)
 #   + Cloudflare Web Analytics (static.cloudflareinsights.com)
 # - style-src, img-src, font-src: tylko nasze pliki (zdjęcia z /_astro/,
@@ -22,10 +22,10 @@
 # Astro nie wkleja skryptów ani stylów do HTML (patrz astro.config.mjs:
 # inlineStylesheets i assetsInlineLimit), dlatego nie są potrzebne hasze.
 #
-# TRYB PRÓBNY: nagłówek "-Report-Only" niczego nie blokuje, tylko wypisuje
-# ostrzeżenia w konsoli przeglądarki. Gdy przez kilka dni nie będzie
-# ostrzeżeń, zmieniamy nazwę na "Content-Security-Policy" (tryb docelowy).
+# TRYB DOCELOWY: nagłówek "Content-Security-Policy" blokuje wszystko spoza listy.
 # Test tests/csp.spec.ts czyta tę linijkę i sprawdza strony pod kątem naruszeń.
+# Awaryjny powrót do trybu próbnego (tylko zgłasza w konsoli, niczego nie blokuje):
+# dopisz do nazwy nagłówka "-Report-Only".
 # Nowa zewnętrzna usługa (skrypt, ramka, fetch do innej domeny) = dopisz jej
 # domenę do właściwej dyrektywy poniżej.
 /*
@@ -34,7 +34,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), camera=(), microphone=()
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://formspree.io https://cloudflareinsights.com; frame-src https://challenges.cloudflare.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://formspree.io https://cloudflareinsights.com; frame-src https://challenges.cloudflare.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-ancestors 'none'
 
 # Rok cache w przeglądarce, ale tylko dla plików z hashem w nazwie —
 # Astro tak buduje pliki w _astro/ (zmiana treści = nowa nazwa pliku),

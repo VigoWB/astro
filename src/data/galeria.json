@@ -241,8 +241,8 @@
     "wysokosc": 2905,
     "klucz": "zdjecia/wrzesień_26_EDYCJA_DSC7062.jpg",
     "kluczPrzed": "zdjecia/wrzesień_26_EDYCJA_przed_DSC7062.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
+    "wyroznione": true,
+    "paraSuwaka": true,
     "exif": {
       "iso": 100,
       "przyslona": 16,

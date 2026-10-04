@@ -230,5 +230,28 @@
       "model": "NIKON D7500",
       "lensModel": "50.0 mm f/1.4"
     }
+  },
+  {
+    "nazwaPliku": "wrzesień_26_EDYCJA_DSC7062.jpg",
+    "opis": "Zegarek z grawerem",
+    "kategorie": [
+      "Zegarki"
+    ],
+    "szerokosc": 4357,
+    "wysokosc": 2905,
+    "klucz": "zdjecia/wrzesień_26_EDYCJA_DSC7062.jpg",
+    "kluczPrzed": "zdjecia/wrzesień_26_EDYCJA_przed_DSC7062.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
+    "exif": {
+      "iso": 100,
+      "przyslona": 16,
+      "ogniskowa": 50,
+      "czasNaswietlania": 0.06666666666666667,
+      "dataWykonania": "2026-09-01T11:23:31.000Z",
+      "make": "NIKON CORPORATION",
+      "model": "NIKON D7500",
+      "lensModel": null
+    }
   }
 ]

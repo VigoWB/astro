@@ -232,6 +232,29 @@
     }
   },
   {
+    "nazwaPliku": "wrzesień_26_EDYCJA_DSC7060.jpg",
+    "opis": "Spinki",
+    "kategorie": [
+      "Spinki"
+    ],
+    "szerokosc": 3315,
+    "wysokosc": 3315,
+    "klucz": "zdjecia/wrzesień_26_EDYCJA_DSC7060.jpg",
+    "kluczPrzed": "zdjecia/wrzesień_26_EDYCJA_przed_DSC7060.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
+    "exif": {
+      "iso": 100,
+      "przyslona": 16,
+      "ogniskowa": 50,
+      "czasNaswietlania": 0.04,
+      "dataWykonania": "2026-09-01T11:20:34.000Z",
+      "make": "NIKON CORPORATION",
+      "model": "NIKON D7500",
+      "lensModel": null
+    }
+  },
+  {
     "nazwaPliku": "wrzesień_26_EDYCJA_DSC7062.jpg",
     "opis": "Zegarek z grawerem",
     "kategorie": [

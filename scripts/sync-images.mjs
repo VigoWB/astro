@@ -2,7 +2,9 @@
 /**
  * sync-images.mjs
  *
- * Skanuje folder images/ w poszukiwaniu nowych zdjęć (DSC_*.jpg, bez "przed_"),
+ * Skanuje folder images/ w poszukiwaniu nowych zdjęć (nazwa z numerem "DSC", np. DSC_1234.jpg
+ * albo wrzesien_26_EDYCJA_DSC7062.jpg, bez "przed_" — parę "przed" znajduje po nazwie,
+ * patrz nazwaWersjiPrzed()),
  * odczytuje wymiary z samego pliku i dane z aparatu (EXIF), pyta o opis i kategorie,
  * wgrywa pliki (po + opcjonalnie przed) do Cloudflare R2 — każdy w dwóch wersjach:
  * czystej (klucz "zdjecia/...", z niej strona robi miniatury) i ze znakiem wodnym
@@ -81,6 +83,15 @@ function adresR2(kluczR2) {
 // (src/lib/galeria.ts) wersję z "znak/" — tam musi być ta sama funkcja.
 function kluczZnak(kluczR2) {
   return kluczR2.replace(/^zdjecia\//, 'znak/');
+}
+
+// Nazwa pliku "przed" dla danego pliku "po": "przed_" wchodzi tuż przed numerem "DSC",
+// więc DSC_1234.jpg → przed_DSC_1234.jpg, DSC_4968-Edytuj.jpg → przed_DSC_4968-Edytuj.jpg,
+// a wrzesien_26_EDYCJA_DSC7062.jpg → wrzesien_26_EDYCJA_przed_DSC7062.jpg.
+// Nazwa bez numeru "DSC" dostaje "przed_" na początku (jak dawniej).
+function nazwaWersjiPrzed(nazwaPliku) {
+  const zPrzed = nazwaPliku.replace(/(DSC_?\d)/i, 'przed_$1');
+  return zPrzed === nazwaPliku ? `przed_${nazwaPliku}` : zPrzed;
 }
 
 // --- Baza SQLite (wbudowana w Node 22.5+) ---
@@ -190,7 +201,7 @@ async function odtworzZJson(db) {
     for (const z of lista) {
       wstaw.run(
         z.nazwaPliku,
-        z.kluczPrzed ? `przed_${z.nazwaPliku}` : null,
+        z.kluczPrzed ? nazwaWersjiPrzed(z.nazwaPliku) : null,
         z.opis ?? '',
         JSON.stringify(z.kategorie ?? []),
         z.szerokosc ?? null,
@@ -444,7 +455,7 @@ async function dodajNoweZdjecia(db) {
 
   const wszystkiePliki = existsSync(IMAGES_DIR) ? await readdir(IMAGES_DIR) : [];
   const kandydaci = wszystkiePliki
-    .filter((f) => f.startsWith('DSC_') && !f.startsWith('przed_'))
+    .filter((f) => /DSC_?\d/i.test(f) && !/przed_/i.test(f))
     .filter((f) => /\.(jpe?g|png)$/i.test(f))
     .sort();
 
@@ -475,7 +486,7 @@ async function dodajNoweZdjecia(db) {
     console.log(`\n🖼️  ${nazwaPliku}`);
 
     const sciezkaPo = `${IMAGES_DIR}/${nazwaPliku}`;
-    const nazwaPrzed = `przed_${nazwaPliku}`;
+    const nazwaPrzed = nazwaWersjiPrzed(nazwaPliku);
     const sciezkaPrzed = `${IMAGES_DIR}/${nazwaPrzed}`;
     const maWersjePrzed = existsSync(sciezkaPrzed);
 
@@ -710,7 +721,7 @@ async function podmienPlik(db, nazwaPliku) {
   }
 
   const sciezkaPo = `${IMAGES_DIR}/${nazwaPliku}`;
-  const nazwaPrzed = `przed_${nazwaPliku}`;
+  const nazwaPrzed = nazwaWersjiPrzed(nazwaPliku);
   const sciezkaPrzed = `${IMAGES_DIR}/${nazwaPrzed}`;
   const maPo = existsSync(sciezkaPo);
   const maPrzed = existsSync(sciezkaPrzed);

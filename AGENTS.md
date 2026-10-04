@@ -151,7 +151,8 @@ images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ## 7. Przepływ zdjęć
 
 ```
-images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg)
+images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z prefiksem,
+                      np. wrzesien_26_EDYCJA_DSC7062.jpg + wrzesien_26_EDYCJA_przed_DSC7062.jpg)
   → npm run sync-images
       ├─ wysyła pliki do Cloudflare R2
       ├─ zapisuje dane (opis, kategorie, wymiary, EXIF) do data/galeria.db

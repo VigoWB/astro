@@ -23,53 +23,6 @@
     }
   },
   {
-    "nazwaPliku": "DSC_1112.jpg",
-    "opis": "Portret w zielonym świetle, ujęcie z pracowni",
-    "kategorie": [
-      "Portrety",
-      "Pracownia"
-    ],
-    "szerokosc": 2560,
-    "wysokosc": 1440,
-    "klucz": "zdjecia/DSC_1112.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_1112.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
-    "nazwaPliku": "DSC_1113.jpg",
-    "opis": "Portret w fioletowej tonacji",
-    "kategorie": [
-      "Portrety"
-    ],
-    "szerokosc": 2560,
-    "wysokosc": 1440,
-    "klucz": "zdjecia/DSC_1113.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_1113.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
     "nazwaPliku": "DSC_1114.jpg",
     "opis": "Kwadratowy kadr z pracowni w zieleni",
     "kategorie": [

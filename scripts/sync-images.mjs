@@ -254,7 +254,8 @@ async function pobierzExif(sciezka) {
   const exifr = (await import('exifr')).default;
   let exif = {};
   try {
-    exif = (await exifr.parse(sciezka, { pick: ['ISO', 'FNumber', 'FocalLength', 'ExposureTime', 'CreateDate', 'Make', 'Model', 'LensModel'] })) ?? {};
+        // Node 26 psuje czytanie po ścieżce w exifr 7.1.3 — podajemy gotowy bufor zamiast ścieżki.
+    exif = (await exifr.parse(await readFile(sciezka), { pick: ['ISO', 'FNumber', 'FocalLength', 'ExposureTime', 'CreateDate', 'Make', 'Model', 'LensModel'] })) ?? {};
   } catch {
     console.warn('⚠️  Nie udało się odczytać EXIF dla:', sciezka);
   }

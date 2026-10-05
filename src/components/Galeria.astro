@@ -6,7 +6,7 @@ interface Props {
 	zdjecia: Zdjecie[];
 	/** Pomijalne, gdy pokazFiltry={false} (strona główna nie pokazuje paska filtrów). */
 	kategorie?: readonly string[];
-	/** Pasek filtrów kategorii. Domyślnie widoczny (galeria); wyłączany na stronie głównej (Roadmapa pkt 4). */
+	/** Pasek filtrów kategorii. Domyślnie widoczny (galeria); wyłączany na stronie głównej. */
 	pokazFiltry?: boolean;
 	/** Przycisk "Załaduj więcej". Domyślnie widoczny; wyłączany, gdy strona i tak pokazuje wszystkie przekazane zdjęcia naraz (strona główna). */
 	pokazZaladujWiecej?: boolean;
@@ -79,7 +79,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		&times;
 	</button>
 
-	<!-- Przeglądanie zdjęć bez zamykania podglądu (Roadmapa pkt 6). Ukryte całkiem,
+	<!-- Przeglądanie zdjęć bez zamykania podglądu. Ukryte całkiem,
 	     gdy aktualnie widoczne jest tylko jedno zdjęcie (nie ma dokąd przejść);
 	     na krawędziach (pierwsze/ostatnie) disabled zamiast zawijania w kółko —
 	     disabled samo wypada z kolejności Tab i z pułapki fokusu. -->
@@ -113,7 +113,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		<div class="flex items-center gap-4 text-paper">
 			<span id="lightbox-opis" class="font-bold" tabindex="0"></span>
 			<!-- Widoczny przełącznik zamiast najechania myszką/przytrzymania palca —
-			     działa z klawiatury i czytnika ekranu (Roadmapa pkt 9). -->
+			     działa z klawiatury i czytnika ekranu. -->
 			<button
 				type="button"
 				id="lightbox-przelacznik"
@@ -141,7 +141,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	const wszystkieKarty = Array.from(document.querySelectorAll<HTMLElement>("[data-gallery-item]"));
 	const przyciskiFiltrow = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-filter]"));
 	// Przycisk "Załaduj więcej" nie istnieje w HTML, gdy komponent dostał pokazZaladujWiecej={false}
-	// (strona główna, Roadmapa pkt 4) — stąd zapytania mogą zwrócić null.
+	// (strona główna) — stąd zapytania mogą zwrócić null.
 	const loadMoreBtn = document.getElementById("load-more-btn");
 	const loadMoreCount = document.getElementById("load-more-count");
 	const loadMoreContainer = document.getElementById("load-more-container");
@@ -363,7 +363,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		lightboxOpis.classList.toggle("hidden", !item.dataset.opis);
 
 		przelacznikBtn.classList.toggle("hidden", !current.przed);
-		// Przełącznik "Pokaż przed" resetuje się przy każdej zmianie zdjęcia (Roadmapa pkt 6).
+		// Przełącznik "Pokaż przed" resetuje się przy każdej zmianie zdjęcia.
 		przelacznikBtn.setAttribute("aria-pressed", "false");
 
 		// Wersję "przed" pobieramy już teraz, żeby przełącznik pokazał ją bez czekania.
@@ -406,7 +406,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	}
 
 	// Wczytuje z wyprzedzeniem kolejne zdjęcie w kolejności, żeby "następne" nie czekało
-	// na pobranie pliku (Roadmapa pkt 6, "ewentualnie wczytanie z wyprzedzeniem").
+	// na pobranie pliku.
 	function wczytajZWyprzedzeniem() {
 		const nastepneZdjecie = aktualnaListaZdjec[aktualnyIndeks + 1];
 		if (!nastepneZdjecie) return;

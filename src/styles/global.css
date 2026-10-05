@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* Własny podzbiór Noto Sans (Roadmapa: "Lżejsza czcionka") — dwa pliki zamiast
+/* Własny podzbiór Noto Sans — dwa pliki zamiast
    pełnego pakietu @fontsource-variable/noto-sans (8 skryptów, ~270 KB razem).
    "latin" pokrywa zwykłą łacinę + interpunkcję, "polskie-znaki" dokłada tylko
    ą ć ę ł ń ś ź ż (+ wielkie litery) — resztę polskich znaków (np. ó) ma już plik

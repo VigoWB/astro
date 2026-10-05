@@ -2,7 +2,7 @@ import { getImage, inferRemoteSize } from "astro:assets";
 import galeriaDane from "../data/galeria.json";
 
 // Wspólne wczytywanie danych galerii — używane przez /galeria (siatka + filtry)
-// i przez stronę główną (suwak przed/po + wybrane pary, Roadmapa pkt 4).
+// i przez stronę główną (suwak przed/po + wybrane pary).
 // Adres zdjęć budujemy tu raz, więc obie strony korzystają z tej samej logiki
 // (miniatury, wersje do lightboxa, zabezpieczenie przed brakiem pliku "przed").
 
@@ -35,7 +35,7 @@ interface ZdjecieZPliku {
 	wysokosc: number | null;
 	klucz: string | null;
 	kluczPrzed: string | null;
-	/** Pokazywane w sekcji "wybrane" na stronie głównej (Roadmapa pkt 4). Ustawia `sync-images -- --wyroznij`. */
+	/** Pokazywane w sekcji "wybrane" na stronie głównej. Ustawia `sync-images -- --wyroznij`. */
 	wyroznione?: boolean;
 	/** Ta jedna para (wymaga identycznego kadru "po"/"przed") trafia do suwaka na pierwszym ekranie strony głównej. */
 	paraSuwaka?: boolean;
@@ -48,7 +48,7 @@ function adresZKlucza(klucz: string): string {
 }
 
 // Ten sam klucz, tylko w folderze "znak/" zamiast "zdjecia/" — tam sync-images
-// wgrywa wersję ze znakiem wodnym (Roadmapa pkt 2). Musi być zgodne z kluczZnak()
+// wgrywa wersję ze znakiem wodnym. Musi być zgodne z kluczZnak()
 // w scripts/sync-images.mjs. Miniatury (Karta.astro) zostają na czystym oryginale,
 // znak dostają tylko wersje do lightboksa i duże porównanie "przed/po" na stronie głównej.
 function kluczZnak(klucz: string): string {
@@ -133,7 +133,7 @@ async function istniejeWR2(adres: string): Promise<boolean> {
 	throw new Error(`galeria: R2 zwróciło ${odpowiedz.status} dla ${adres} — przerywam build, żeby nie wypuścić zdjęć bez znaku wodnego.`);
 }
 
-// Siatka bezpieczeństwa na czas wdrażania znaku wodnego (Roadmapa pkt 2): zdjęcia
+// Siatka bezpieczeństwa na czas wdrażania znaku wodnego: zdjęcia
 // dodane przed tą zmianą nie mają jeszcze wersji w "znak/", dopóki ktoś nie uruchomi
 // dla nich `sync-images -- --podmien`. Zamiast wywalać cały build (jak przy prawdziwym
 // braku pliku), pokazujemy czysty oryginał i ostrzegamy w logu — tak samo, jak build

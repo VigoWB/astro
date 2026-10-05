@@ -2,11 +2,11 @@
 import type { WersjaLightboxa } from "../lib/galeria.ts";
 
 /**
- * Duże porównanie "przed/po" na pierwszym ekranie strony głównej (Roadmapa pkt 4).
+ * Duże porównanie "przed/po" na pierwszym ekranie strony głównej.
  *
  * Dwa tryby, decyduje o tym build w index.astro (patrz wybierzBohatera):
  * - trybSuwaka=true: interaktywny suwak (<input type="range">) — tylko gdy "przed"
- *   i "po" mają identyczny kadr (build to sprawdza, patrz Roadmapa "Zabezpieczenie").
+ *   i "po" mają identyczny kadr (build to sprawdza).
  * - trybSuwaka=false: zwykły przełącznik "Pokaż przed", jak w lightboksie galerii —
  *   używany, gdy kadry się różnią albo gdy nie ma jeszcze zdjęcia oznaczonego
  *   jako "paraSuwaka" (npm run sync-images -- --wyroznij).

@@ -41,7 +41,7 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		{/* Wczytanie z wyprzedzeniem — oba pliki są małe (razem ok. 40 KB) i potrzebne
 		    na każdej stronie, więc ograniczamy migotanie/przesunięcie tekstu (CLS)
-		    przy podmianie na docelowy font. Roadmapa: "Lżejsza czcionka". */}
+		    przy podmianie na docelowy font. */}
 		<link rel="preload" href="/fonts/noto-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href="/fonts/noto-sans-polskie-znaki.woff2" as="font" type="font/woff2" crossorigin />
 		<SEO title={pageTitle} description={pageDescription} image={image} canonicalURL={canonicalURL} />

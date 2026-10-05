@@ -103,7 +103,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 - `npm run test`: build, potem testy Playwright (Chrome desktop i mobile, testy dostępności axe)
 - `npm run sync-images`: dodaje nowe zdjęcia z `images/` (uruchamiam ja, nie Ty)
 - `npm run sync-images -- --uzupelnij`: dopytuje o brakujące opisy i kategorie
-- `npm run sync-images -- --wyroznij`: wybór zdjęć na stronę główną — które pokazują się w sekcji "Wybrane prace" i która jedna para trafia do suwaka przed/po (Roadmapa pkt 4)
+- `npm run sync-images -- --wyroznij`: wybór zdjęć na stronę główną — które pokazują się w sekcji "Wybrane prace" i która jedna para trafia do suwaka przed/po
 
 ---
 
@@ -167,7 +167,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 
 - Komponenty zawsze opierają się na `galeria.json`, nigdy na bazie SQLite.
 - `astro.config.mjs` buduje `image.remotePatterns` z `PUBLIC_R2_URL`. Przy zmianie domeny zdjęć zmienia się tylko zmienną.
-- EXIF czytany jest z pliku „przed” (oryginał z aparatu), jeśli taki istnieje.
+- EXIF czytany jest z pliku „przed” (oryginał z aparatu), jeśli taki istnieje; pola, których tam brakuje, skrypt uzupełnia z pliku „po” (`pobierzExifZPary()`).
 - Pola `wyroznione` i `paraSuwaka` (ustawia `npm run sync-images -- --wyroznij`) sterują stroną główną: `wyroznione` — sekcja "Wybrane prace", `paraSuwaka` — jedna para do suwaka na pierwszym ekranie. Brak oznaczeń nie przerywa builda — `index.astro` dobiera zastępcze zdjęcia i loguje ostrzeżenie (patrz sekcja 9).
 
 ---
@@ -218,7 +218,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 
 **index.astro (strona główna)**
 - Dane bierze z `wczytajZdjecia()` (`src/lib/galeria.ts`), tak jak `/galeria`.
-- Para do suwaka: `wybierzBohatera()` szuka zdjęcia z `paraSuwaka: true`. Jeśli go nie ma, albo jego „przed”/„po” mają różne proporcje (tolerancja 2%, `proporcjeZgodne()`), build **nie przerywa się** — loguje ostrzeżenie (`console.warn`, widoczne przy `npm run build`) i pokazuje zastępcze zdjęcie z przełącznikiem „Pokaż przed” zamiast suwaka. Realny suwak wymaga pary w identycznym kadrze — patrz Roadmapa pkt 4.
+- Para do suwaka: `wybierzBohatera()` szuka zdjęcia z `paraSuwaka: true`. Jeśli go nie ma, albo jego „przed”/„po” mają różne proporcje (tolerancja 2%, `proporcjeZgodne()`), build **nie przerywa się** — loguje ostrzeżenie (`console.warn`, widoczne przy `npm run build`) i pokazuje zastępcze zdjęcie z przełącznikiem „Pokaż przed” zamiast suwaka. Realny suwak wymaga pary w identycznym kadrze.
 - Sekcja „Wybrane prace”: `wybierzWyroznione()` bierze zdjęcia z `wyroznione: true` (max 6, bez zdjęcia użytego jako bohater). Gdy żadne nie jest oznaczone, tymczasowo pokazuje pierwsze zdjęcia z `galeria.json` (z ostrzeżeniem w logu) — żeby strona nie była pusta, zanim ktoś uruchomi `npm run sync-images -- --wyroznij`.
 - Treść sekcji „Co poprawiam przy retuszu” (`PUNKTY_RETUSZU`) i zaproszenia do kontaktu to na razie tekst tymczasowy — do potwierdzenia.
 

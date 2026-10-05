@@ -26,10 +26,10 @@ npx playwright install chromium
 
 Bez tego wszystkie testy padają od razu z komunikatem `Executable doesn't exist … Please run: npx playwright install`.
 
-Bez klucza testowego Turnstile 6 testów formularza kontaktowego pada (czekają na widżet Turnstile). W PowerShellu:
+Testy formularza kontaktowego podmieniają widżet Turnstile atrapą, więc działają bez sieci i bez klucza. Prawdziwy widżet sprawdza jeden test („Turnstile (prawdziwy widżet Cloudflare)”): bez dostępu do Cloudflare jest pomijany, a z kluczem z `.env` może paść (klucz produkcyjny najpewniej nie działa na `localhost`). Żeby go uruchomić lokalnie, w PowerShellu:
 
 ```
 $env:PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"; npm test
 ```
 
-Klucz obowiązuje tylko w tym oknie terminala i nie trafia do repo. Testy filtrów kategorii są pominięte celowo (pasek filtrów jest ukryty).
+Klucz obowiązuje tylko w tym oknie terminala i nie trafia do repo. Test „Załaduj więcej przy włączonym filtrze” jest pomijany, dopóki żadna kategoria nie ma więcej niż 8 zdjęć.

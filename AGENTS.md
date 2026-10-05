@@ -142,7 +142,7 @@ src/
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts
+tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, offline.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
@@ -240,7 +240,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
 2. Dodaj link w `src/data/nav.ts`.
 3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v4` → `foto-v5`).
-4. Dopisz adres do `PAGES` w `tests/a11y.spec.ts`, do `STRONY` w `tests/csp.spec.ts` i do `url` w `lighthouserc.json`.
+4. Dopisz adres do `STRONY` w `tests/pomocnicze.ts` (z tej listy korzystają testy dostępności i CSP) i do `url` w `lighthouserc.json`.
 
 **Nowa zmienna środowiskowa:**
 1. Dodaj ją do `src/env.d.ts` (z opisem po polsku) i do `.env.example`.
@@ -276,7 +276,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
    - żadnych `onclick=` / `onload=`, `style="..."`, `<script>` z atrybutem `is:inline` ani `set:html` z kodem JS — wszystko, co wklejone w HTML, zostanie zablokowane (`set:html` z danymi JSON-LD jest w porządku),
    - w `astro.config.mjs` zostają `build.inlineStylesheets: 'never'` i `vite.build.assetsInlineLimit: 0` — bez nich Astro wkleja małe skrypty i style prosto do HTML,
    - nowa zewnętrzna usługa (skrypt, ramka, `fetch` do innej domeny) = najpierw zapytaj, potem dopisz jej domenę do właściwej dyrektywy CSP w `_headers`,
-   - `tests/csp.spec.ts` czyta politykę z `_headers` i wykrywa naruszenia na wszystkich stronach — nowa podstrona trafia też do `STRONY` w tym pliku.
+   - `tests/csp.spec.ts` czyta politykę z `_headers` i wykrywa naruszenia na wszystkich stronach (także przy wysyłce formularza i rejestracji service workera) — nowa podstrona trafia do `STRONY` w `tests/pomocnicze.ts`.
 
 ---
 

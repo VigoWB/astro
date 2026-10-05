@@ -41,3 +41,8 @@
 # więc te konkretne pliki można bezpiecznie cache'ować "na zawsze".
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Czcionki (public/fonts/): nazwy plików nie mają hasha, więc zamiast "na zawsze"
+# tylko tydzień — po podmianie czcionki odwiedzający zobaczą nową najpóźniej po 7 dniach.
+/fonts/*
+  Cache-Control: public, max-age=604800

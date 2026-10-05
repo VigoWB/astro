@@ -1,13 +1,17 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import ContactForm from "../components/ContactForm.astro";
+
+// Skrypt Turnstile ładujemy tylko wtedy, gdy jest klucz — bez niego ContactForm i tak
+// nie pokazuje widżetu, więc skrypt byłby tylko zbędnym połączeniem z Cloudflare.
+const turnstileWlaczony = Boolean(import.meta.env.PUBLIC_TURNSTILE_SITE_KEY);
 ---
 
 <Layout
     title="Kontakt — Wiktor"
     description="Masz zdjęcia produktowe do retuszu albo pytanie o współpracę? Napisz przez formularz — odpowiem z wyceną i terminem realizacji."
     breadcrumbs={[{ name: "Strona główna", url: "/" }, { name: "Kontakt", url: "/kontakt/" }]}
-    turnstile
+    turnstile={turnstileWlaczony}
 >
     <div class="py-12">
         <h1 class="text-3xl font-bold text-ink">Kontakt</h1>

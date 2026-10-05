@@ -7,14 +7,14 @@
 //   gdy sieć milczy dłużej niż LIMIT_SIECI_MS, pokazuje zapisaną kopię;
 // - czcionki, ikony, obrazki, style i skrypty: najpierw z pamięci, potem z sieci.
 //
-// Zmieniasz listę plików albo logikę poniżej? Podbij CACHE_NAME (foto-v8 → foto-v9),
+// Zmieniasz listę plików albo logikę poniżej? Podbij CACHE_NAME (foto-v9 → foto-v10),
 // inaczej odwiedzający zostaną przy starej kopii. Dotyczy to też plików bez hasha
 // w nazwie (ikony, czcionki, offline.css) — te odświeżają się tylko razem z CACHE_NAME.
 //
 // Obsługujemy tylko zapytania do naszej domeny. Zdjęcia galerii Astro robi przy
 // buildzie do /_astro/, więc strona nie pobiera niczego z R2.
 
-const CACHE_NAME = 'foto-v8';
+const CACHE_NAME = 'foto-v9';
 const LIMIT_SIECI_MS = 4000;
 
 const OFFLINE_URL = '/offline.html';

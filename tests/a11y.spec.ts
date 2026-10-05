@@ -22,10 +22,7 @@ async function naruszeniaAxe(page: Page, wylaczoneReguly: string[] = []): Promis
 for (const sciezka of STRONY) {
 	test(`a11y: ${sciezka} – brak naruszeń WCAG A/AA`, async ({ page }) => {
 		await page.goto(sciezka);
-		// offline.html to osobny, uproszczony plik (public/offline.html) bez <main>. Dopóki go
-		// nie dostanie, dwie reguły "dobrych praktyk" o obszarach strony są tu jawnie wyłączone.
-		const wyjatki = sciezka === '/offline.html' ? ['landmark-one-main', 'region'] : [];
-		expect(await naruszeniaAxe(page, wyjatki)).toEqual([]);
+		expect(await naruszeniaAxe(page)).toEqual([]);
 	});
 }
 

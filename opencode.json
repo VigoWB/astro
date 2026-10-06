@@ -1,0 +1,64 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/big-pickle",
+  "small_model": "opencode/big-pickle",
+  "share": "disabled",
+  "autoupdate": "notify",
+  "agent": {
+    "build": {
+      "steps": 40
+    }
+  },
+  "permission": {
+    "webfetch": "ask",
+    "websearch": "ask",
+    "edit": {
+      "*": "ask",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "ask",
+      "*src/data/galeria.json": "deny",
+      "*data/galeria.db": "deny",
+      "*images/*": "deny",
+      "*package-lock.json": "deny",
+      "*.git/*": "deny",
+      "*opencode.json*": "deny",
+      "*.opencode/*": "deny"
+    },
+    "bash": {
+      "*": "ask",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git show*": "allow",
+      "git add *": "allow",
+      "git commit *": "allow",
+      "npm ci": "allow",
+      "npm run check": "allow",
+      "npm run build": "allow",
+      "npm run test": "allow",
+      "npm test": "allow",
+      "git commit --amend*": "ask",
+      "git add -A*": "deny",
+      "git add --all*": "deny",
+      "git add .": "deny",
+      "git commit -a*": "deny",
+      "git commit --all*": "deny",
+      "git push*": "deny",
+      "git reset --hard*": "deny",
+      "git clean*": "deny",
+      "npm install*": "deny",
+      "npm i *": "deny",
+      "npm uninstall*": "deny",
+      "npm run sync-images*": "deny",
+      "node scripts/*": "deny",
+      "node --env-file*": "deny",
+      "rm -rf*": "deny",
+      "Remove-Item*-Recurse*": "deny",
+      "rmdir /s*": "deny",
+      "rd /s*": "deny",
+      "*.env*": "deny",
+      "*.env.example*": "allow"
+    }
+  }
+}

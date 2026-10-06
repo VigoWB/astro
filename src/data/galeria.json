@@ -171,7 +171,7 @@
     "wysokosc": 3553,
     "klucz": "zdjecia/DSC_6910.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_6910.jpg",
-    "wyroznione": false,
+    "wyroznione": true,
     "paraSuwaka": false,
     "exif": {
       "iso": 100,
@@ -194,7 +194,7 @@
     "wysokosc": 3315,
     "klucz": "zdjecia/wrzesień_26_EDYCJA_DSC7060.jpg",
     "kluczPrzed": "zdjecia/wrzesień_26_EDYCJA_przed_DSC7060.jpg",
-    "wyroznione": false,
+    "wyroznione": true,
     "paraSuwaka": false,
     "exif": {
       "iso": 100,

@@ -1,4 +1,4 @@
-# Portfolio fotograficzne — foto.vigolab.ovh
+# Portfolio fotograficzne — balansbieli.pl
 
 Prywatna strona portfolio fotograficznego Wiktora: Astro 7 (w pełni statyczny), Tailwind CSS v4, hosting na Cloudflare Pages. Zdjęcia trzymane w Cloudflare R2, formularz kontaktowy przez Formspree z ochroną Cloudflare Turnstile.
 

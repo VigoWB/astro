@@ -9,7 +9,7 @@
  * wgrywa pliki (po + opcjonalnie przed) do Cloudflare R2 — każdy w dwóch wersjach:
  * czystej (klucz "zdjecia/...", z niej strona robi miniatury) i ze znakiem wodnym
  * (klucz "znak/...", z niej strona robi powiększenia do lightboksa — na razie sam
- * tekst "foto.vigolab.ovh" w rogu, funkcja nalozZnak() niżej)
+ * tekst "balansbieli.pl" w rogu, funkcja nalozZnak() niżej)
  * i zapisuje metadane w lokalnej bazie SQLite (data/galeria.db).
  *
  * Po każdej zmianie zapisuje plik src/data/galeria.json — to właśnie z niego
@@ -564,7 +564,7 @@ function wyczyscExifDoR2(bufor, kluczR2) {
   }
 }
 
-// Szkielet znaku wodnego: na razie dokłada półprzezroczysty napis "foto.vigolab.ovh"
+// Szkielet znaku wodnego: na razie dokłada półprzezroczysty napis "balansbieli.pl"
 // w rogu zdjęcia. Logo podmienisz tu później (composite() z PNG zamiast SVG z tekstem)
 // — wywołania niżej i klucz w R2 zostają bez zmian.
 async function nalozZnak(bufor, format) {
@@ -583,7 +583,7 @@ async function nalozZnak(bufor, format) {
         font-family="Arial, Helvetica, sans-serif" font-size="${rozmiarTekstu}" font-weight="600"
         fill="#eaf4f4" fill-opacity="0.65"
         style="paint-order: stroke; stroke: #171512; stroke-opacity: 0.5; stroke-width: ${grubyObrys}px;"
-      >foto.vigolab.ovh</text>
+      >balansbieli.pl</text>
     </svg>`;
   const zeZnakiem = sharp(bufor).autoOrient().composite([{ input: Buffer.from(svg), top: 0, left: 0 }]);
   return format === 'png' ? zeZnakiem.png().toBuffer() : zeZnakiem.jpeg({ quality: 88 }).toBuffer();

@@ -138,7 +138,7 @@ async function obrazyGaleriiDlaSitemapy() {
 }
 
 export default defineConfig({
-  site: 'https://foto.vigolab.ovh',
+  site: 'https://balansbieli.pl',
   base: '/',
   integrations: [
     walidacjaZmiennychSrodowiskowych,

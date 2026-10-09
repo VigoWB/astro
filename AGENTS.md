@@ -1,4 +1,4 @@
-# AGENTS.md — portfolio fotograficzne Wiktora (foto.vigolab.ovh)
+# AGENTS.md — portfolio fotograficzne Wiktora (balansbieli.pl)
 
 ## ⚠️ ZASADA #1 — PISZESZ TYLKO PO POLSKU
 

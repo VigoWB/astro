@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://foto.vigolab.ovh/sitemap-index.xml
+Sitemap: https://balansbieli.pl/sitemap-index.xml

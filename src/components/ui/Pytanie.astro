@@ -1,0 +1,35 @@
+---
+// Pytanie.astro — jedno rozwijane pytanie z listy najczęstszych pytań (FAQ).
+// Treść odpowiedzi przychodzi w slocie (zwykłe akapity, mogą mieć linki).
+// <details>/<summary> działa bez JavaScriptu i z klawiatury (Tab, potem Enter albo Spacja),
+// więc nie wymaga zmian w CSP.
+
+interface Props {
+	pytanie: string;
+}
+
+const { pytanie } = Astro.props;
+---
+
+<details class="group border-b border-ink/10" data-testid="pytanie">
+	<summary
+		class="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold text-ink transition-colors hover:text-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper [&::-webkit-details-marker]:hidden"
+	>
+		<span>{pytanie}</span>
+		<svg
+			class="h-5 w-5 shrink-0 text-muted motion-safe:transition-transform group-open:rotate-180"
+			viewBox="0 0 20 20"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M5 8l5 5 5-5" />
+		</svg>
+	</summary>
+	<div class="space-y-3 pb-4 text-muted" data-testid="pytanie-odpowiedz">
+		<slot />
+	</div>
+</details>

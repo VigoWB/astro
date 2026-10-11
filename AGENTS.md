@@ -15,8 +15,8 @@ Jeśli zacząłeś odpowiadać po angielsku, napisz odpowiedź od nowa po polsku
 ## 1. Jak pracujemy
 
 - **Ja (Wiktor)** nie znam się na kodzie. Zlecam pracę i akceptuję zmiany.
-- **Ty (OpenCode)** jesteś wykonawcą. Piszesz kod w moim edytorze i robisz commity.
-- **Claude (w claude.ai)** jest architektem. Planuje większe zmiany, robi code review i sprawdza build po moim pushu.
+- **Ty (OpenCode albo Claude Code)** jesteś wykonawcą. Piszesz kod w moim edytorze i robisz commity. Pracuję z wami na zmianę, a ten plik obowiązuje każdego z was tak samo.
+- **Claude w czacie (claude.ai)** jest architektem. Planuje większe zmiany, robi code review i sprawdza build po moim pushu.
 
 Zasady:
 - Rób **tylko to, o co poproszono**. Żadnych poprawek „przy okazji” w innych plikach. Jeśli coś zauważysz, napisz o tym na końcu odpowiedzi.
@@ -130,8 +130,10 @@ src/
     Galeria.astro          siatka, filtry, "Załaduj więcej", lightbox (używana też na / bez filtrów/"Załaduj więcej")
     PorownanieSuwak.astro  suwak przed/po (albo zastępczy przełącznik) na pierwszym ekranie /
     ContactForm.astro      formularz Formspree + walidacja + Turnstile
+    NajczestszePytania.astro  „Najczęstsze pytania” na /kontakt/, pod formularzem (treść pytań jest tutaj)
     ui/Container.astro     tylko max-w-240 mx-auto px-4
     ui/Karta.astro         kafelek zdjęcia w galerii
+    ui/Pytanie.astro       jedno rozwijane pytanie (<details>, bez JS), odpowiedź w slocie
   data/
     galeria.json           GENEROWANY, nie edytuj ręcznie
     kategorie.ts           lista kategorii LICZONA przy buildzie z galeria.json
@@ -142,7 +144,7 @@ src/
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, offline.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
+tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, offline.spec.ts, pytania.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
@@ -277,6 +279,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
    - w `astro.config.mjs` zostają `build.inlineStylesheets: 'never'` i `vite.build.assetsInlineLimit: 0` — bez nich Astro wkleja małe skrypty i style prosto do HTML,
    - nowa zewnętrzna usługa (skrypt, ramka, `fetch` do innej domeny) = najpierw zapytaj, potem dopisz jej domenę do właściwej dyrektywy CSP w `_headers`,
    - `tests/csp.spec.ts` czyta politykę z `_headers` i wykrywa naruszenia na wszystkich stronach (także przy wysyłce formularza i rejestracji service workera) — nowa podstrona trafia do `STRONY` w `tests/pomocnicze.ts`.
+8. **Link w środku zdania pisz w tej samej linii co tekst wokół niego.** Gdy między tekstem a znacznikiem (np. `<a>`) jest przejście do nowej linii, Astro przy buildzie usuwa spację i na stronie słowa sklejają się z linkiem („przezSwissTransfer”). Dobrze: `Pliki wyślij przez <a href="…">SwissTransfer</a>: jest darmowy`.
 
 ---
 

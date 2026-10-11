@@ -8,7 +8,7 @@ import { wczytajZdjecia, type Zdjecie } from "../lib/galeria.ts";
 // Strona główna — wizytówka retuszu produktowego:
 // (1) suwak przed/po z jedną mocną parą, (2) co poprawiam przy retuszu,
 // (3) kilka wybranych par (kliknięcie otwiera lightbox jak w galerii),
-// (4) zaproszenie do kontaktu.
+// (4) jak zamówić retusz (kroki), (5) zaproszenie do kontaktu.
 const zdjecia = await wczytajZdjecia();
 
 // --- (1) Para do suwaka ---
@@ -78,6 +78,28 @@ const PUNKTY_RETUSZU = [
 	"Wierne kolory produktu",
 	"Usuwam odblaski na szkle i metalu",
 ];
+
+// --- (4) Jak zamówić retusz ---
+// Kroki muszą zgadzać się z najczęstszymi pytaniami na /kontakt/ (NajczestszePytania.astro):
+// przesyłanie plików, bezpłatna wycena, termin, format plików i zasady poprawek.
+const KROKI_ZAMOWIENIA = [
+	{
+		tytul: "Wiadomość i pliki",
+		opis: "Napisz przez formularz, co to za produkty i ile mniej więcej masz zdjęć. Pliki wyślij przez SwissTransfer albo Dysk Google i wklej link do wiadomości.",
+	},
+	{
+		tytul: "Wycena i termin",
+		opis: "Odpiszę z ceną i terminem. Wycena jest bezpłatna i do niczego nie zobowiązuje.",
+	},
+	{
+		tytul: "Retusz",
+		opis: "Trwa zwykle 5–7 dni roboczych od zaakceptowania wyceny.",
+	},
+	{
+		tytul: "Odbiór i poprawki",
+		opis: "Gotowe zdjęcia dostaniesz jako JPG w pełnej rozdzielczości, linkiem przez SwissTransfer. Jeśli coś Ci nie pasuje, w ciągu 7 dni wypisz wszystkie uwagi w jednej wiadomości. Bez dopłaty poprawię do 25% zdjęć z zamówienia.",
+	},
+];
 ---
 
 <Layout
@@ -141,7 +163,25 @@ const PUNKTY_RETUSZU = [
 			</section>
 		)}
 
-		<!-- (4) Zaproszenie do kontaktu -->
+		<!-- (4) Jak zamówić retusz -->
+		<section aria-labelledby="zamowienie-naglowek" class="space-y-4">
+			<h2 id="zamowienie-naglowek" class="text-2xl font-bold text-ink">Jak zamówić retusz</h2>
+			<ol class="grid gap-6 sm:grid-cols-2">
+				{KROKI_ZAMOWIENIA.map((krok, indeks) => (
+					<li class="flex items-start gap-4">
+						<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent font-semibold text-paper">
+							{indeks + 1}
+						</span>
+						<div class="space-y-1">
+							<h3 class="font-semibold text-ink">{krok.tytul}</h3>
+							<p class="text-muted">{krok.opis}</p>
+						</div>
+					</li>
+				))}
+			</ol>
+		</section>
+
+		<!-- (5) Zaproszenie do kontaktu -->
 		<section class="space-y-4 rounded-sm border border-ink/10 bg-card/10 p-8 text-center">
 			<h2 class="text-2xl font-bold text-ink">Masz zdjęcia do obrobienia?</h2>
 			<p class="mx-auto max-w-prose text-muted">

@@ -36,12 +36,6 @@
       "sourceType": "github",
       "skillPath": "skills/migrate/SKILL.md",
       "computedHash": "09cf601e2fac99f472e16b6e7fbe84fee58cc906c49f94ca51f1fa23873ba833"
-    },
-    "miodkuj": {
-      "source": "bartekpucek/miodkuj",
-      "sourceType": "github",
-      "skillPath": "plugins/miodkuj/skills/miodkuj/SKILL.md",
-      "computedHash": "6374642a8815875c445d5994962e1bfade0c94bab414cb725d2fbbea99d42466"
     }
   }
 }

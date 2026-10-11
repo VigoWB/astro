@@ -110,7 +110,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 ## 6. Struktura plików
 
 ```
-.agents/skills/            instrukcje dla agentów dotyczące Astro (patrz sekcja 11)
+.agents/skills/            instrukcje dla agentów: Astro (patrz sekcja 11) i miodkuj (polskie teksty, sekcja 8)
 .github/workflows/ci.yml   typy + build + Lighthouse + testy przy każdym pushu i PR
 public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
@@ -200,6 +200,11 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 - `<Image>` / `<Picture>` z `astro:assets` z `width`, `height`, `loading="lazy"`, `decoding="async"`.
 - Pierwsze zdjęcie na stronie ładuje się `eager` z `fetchpriority="high"`.
 - Zdjęcia galerii mają `draggable="false"`, a prawy klik jest zablokowany (ochrona przed kopiowaniem, nie usuwaj).
+
+**Teksty po polsku**
+- Gdy piszesz albo poprawiasz tekst widoczny na stronie (komponenty, podstrony, `o-mnie.md`, komunikaty formularza, opisy SEO), wczytaj skill `miodkuj` (`.agents/skills/miodkuj/SKILL.md`): minimalna redakcja, bez sztucznego tonu, urzędniczego języka i kalk z angielskiego.
+- Nie zmieniaj faktów, nazw, liczb, linków ani kodu. Teksty, o które nie prosiłem, tylko zgłaszasz na końcu odpowiedzi.
+- Nie dotyczy opisów zdjęć w `src/data/galeria.json` — zmieniam je sam przez `npm run sync-images`.
 
 ---
 

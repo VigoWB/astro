@@ -20,10 +20,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           # Wersja Node z pliku .node-version — ten sam plik czyta Cloudflare Pages.
           node-version-file: .node-version
@@ -65,7 +65,7 @@ jobs:
         run: npx lhci autorun
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
@@ -75,7 +75,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Lighthouse report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lighthouse-report

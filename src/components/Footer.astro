@@ -7,21 +7,22 @@ const rok = new Date().getFullYear();
 // Wygląd linków w stopce (kolor, najechanie, obwódka przy Tab) — tylko klasami Tailwinda,
 // tak samo jak w Header.astro. Nie dublujemy tego w <style>: zwykły CSS z <style>
 // wygrywa z klasami Tailwinda i po cichu je wyłącza.
+// Stopka stoi na ciemnym bloku (bg-blok), dlatego tekst jest jasny, a akcent to szałwia.
 const klasyLinku =
-  "text-base font-semibold text-ink hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
+  "text-base font-semibold text-paper hover:text-przycisk transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok";
 
 // Link do polityki prywatności — celowo mniejszy i osobno od głównej
 // nawigacji (navLinks), która jest współdzielona z Header.astro. To link
 // prawny/informacyjny, nie część głównego menu.
 const klasyLinkuPrawnego =
-  "text-sm text-muted hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper";
+  "text-sm text-blok-tekst hover:text-przycisk transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok";
 ---
 
-<footer class="footer" role="contentinfo">
+<footer class="footer bg-blok" role="contentinfo">
   <Container>
     <div class="footer-grid">
       <div class="footer-brand">
-        <p class="copyright">© {rok} Wiktor</p>
+        <p class="copyright text-paper">© {rok} Wiktor</p>
       </div>
 
       <nav aria-label="Nawigacja">
@@ -44,10 +45,9 @@ const klasyLinkuPrawnego =
 </footer>
 
 <style>
+  /* Tło i kolor tekstu dają klasy (bg-blok, text-paper) — tu tylko układ. */
   .footer {
     padding: 1.5rem 0;  /* py-6 */
-    border-top: 1px solid var(--color-line);
-    background: var(--color-paper);
   }
 
   /* Telefon: jedna kolumna, wszystko wyśrodkowane */
@@ -62,7 +62,6 @@ const klasyLinkuPrawnego =
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--color-ink);
   }
 
   .footer-nav-list {

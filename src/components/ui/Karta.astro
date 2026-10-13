@@ -41,7 +41,7 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 <button
 	type="button"
 	class:list={[
-		"group mb-6 block w-full break-inside-avoid text-left rounded-sm cursor-zoom-in motion-safe:transition-[opacity,translate] motion-safe:duration-500 motion-safe:ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper border border-ink/10",
+		"group mb-6 block w-full break-inside-avoid text-left rounded-sm cursor-zoom-in motion-safe:transition-[opacity,translate] motion-safe:duration-500 motion-safe:ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper border border-cien/10",
 		// Pierwsza karta (priority = LCP) bez animacji wejścia — widoczna od razu, bez czekania na skrypt.
 		{ hidden: ukryta, "opacity-0 translate-y-6": !priority },
 	]}
@@ -57,7 +57,7 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 	data-exif={formatujExif(exif)}
 	data-testid="gallery-item"
 >
-	<div class="relative overflow-hidden bg-ink/5 group-hover:bg-ink/20 transition-colors duration-300">
+	<div class="relative overflow-hidden bg-cien/5 group-hover:bg-cien/20 transition-colors duration-300">
 		<Image
 			src={po.src}
 			width={SZEROKOSC_MINIATURY}
@@ -78,7 +78,7 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 		/>
 		<!-- Podpis po najechaniu myszką — tylko dla oka (aria-hidden). Czytnik ekranu
 		     dostaje opis z alt obrazka, więc bez tego przeczytałby go dwa razy. -->
-		<div class="absolute inset-0 bg-ink/0 group-hover:bg-ink/40 transition-colors duration-300 flex items-end p-3" aria-hidden="true">
+		<div class="absolute inset-0 bg-cien/0 group-hover:bg-cien/40 transition-colors duration-300 flex items-end p-3" aria-hidden="true">
 			<div class="w-full text-center text-paper text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
 				{opis}
 			</div>

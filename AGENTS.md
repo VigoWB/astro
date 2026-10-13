@@ -187,13 +187,17 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 - `<script>` zostaje w tym samym pliku `.astro`.
 
 **Style**
-- Tylko klasy Tailwind v4 i tokeny z `@theme`: `paper`, `ink`, `muted`, `card`, `accent`, `line`.
+- Tylko klasy Tailwind v4 i tokeny z `@theme`: `paper`, `ink`, `muted`, `card`, `accent`, `line`, `error`, `success`, `przycisk`, `przycisk-tekst`, `przycisk-hover`, `blok`, `blok-tekst`, `cien`. Do czego który:
+  - przyciski i stany aktywne (filtr, „Pokaż przed”, numery kroków): `bg-przycisk text-przycisk-tekst hover:bg-przycisk-hover` — nie `bg-accent text-paper`;
+  - `accent`: linki, aktywny link w menu, obwódka fokusu;
+  - ciemny blok (sekcja „Co poprawiam przy retuszu”, zaproszenie na dole strony głównej, stopka): `bg-blok`, w środku `text-paper` (nagłówki, linki), `text-blok-tekst` (zwykły tekst), akcent `przycisk`;
+  - nakładki na zdjęciach, tło lightboxa i ramki zdjęć: `cien` (np. `bg-cien/90`), nigdy `ink` — `ink` jest zielony i barwiłby zdjęcia.
 - Bez stylów wklejonych w HTML — żadnego `style="..."` w HTML, `<style>` wklejanego w stronę ani `setAttribute('style', …)` — blokuje je Content-Security-Policy (pułapka 7). Ze skryptu wolno tylko przez `element.style.nazwa = …` (tak działa `transform` w nagłówku i opóźnienie animacji w galerii).
 - Podejście mobile-first: bazowe klasy są dla telefonu, a `md:`, `lg:` dla większych ekranów.
 
 **Dostępność (obowiązkowo, testy to sprawdzają)**
 - Każdy interaktywny element ma etykietę (`aria-label` albo widoczny tekst).
-- Widoczny fokus przez `focus-visible:ring-2 focus-visible:ring-accent`.
+- Widoczny fokus przez `focus-visible:ring-2 focus-visible:ring-accent`; w ciemnym bloku `focus-visible:ring-przycisk focus-visible:ring-offset-blok`.
 - Szanuj `prefers-reduced-motion`: animacje przez `motion-safe:` albo sprawdzenie w skrypcie.
 - Semantyczny HTML: `<nav>`, `<main>`, `<article>`, `<footer>`, `<button type="button">`.
 - Kontrast tekstu do tła co najmniej 4.5:1.
@@ -250,7 +254,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` (testy korzystają z tego samego buildu) w `.github/workflows/ci.yml`.
 3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
 
-**Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Sprawdź kontrast.
+**Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Sprawdź kontrast (min. 4,5:1 dla tekstu). Te same kolory są też wpisane na sztywno w `public/offline.css`, `public/manifest.webmanifest` (`theme_color`, `background_color`) i `src/components/SEO.astro` (`theme-color`) — zmień je razem i podbij `CACHE_NAME` w `public/sw.js`.
 
 **Brakujący znak w czcionce (np. rzadki symbol, znak nowego języka):**
 1. Jeśli w przeglądarce znak wygląda na zastępczy krój systemowy — to nie naprawi sam nowy zakres w `unicode-range` (`src/styles/global.css`), skoro glifu nie ma w pliku `.woff2`.

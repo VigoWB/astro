@@ -23,15 +23,24 @@
 	unicode-range: U+0104, U+0105, U+0106, U+0107, U+0118, U+0119, U+0141, U+0142, U+0143, U+0144, U+015A, U+015B, U+0179, U+017A, U+017B, U+017C;
 }
 
+/* Kontrast w komentarzach: tekst do tła, na którym stoi (WCAG AA wymaga min. 4,5:1).
+   Przy zmianie koloru: te same wartości są też w public/offline.css,
+   public/manifest.webmanifest i SEO.astro (theme-color) — patrz AGENTS.md, sekcja 10. */
 @theme {
-  --color-paper: #eaf4f4;
-  --color-ink: #171512;
-  --color-muted: #55625a;
-  --color-card: #6a9c7d;
-  --color-accent: #3a5a40;
-  --color-line: #8ab8a3;
-  --color-error: #c10007;   /* komunikaty błędów — 5,73:1 na paper */
-  --color-success: #016630; /* komunikat sukcesu — 6,37:1 na paper */
+  --color-paper: #f6f6f3;          /* tło strony */
+  --color-ink: #072918;            /* tekst — ciemna zieleń (14,48:1 na paper) */
+  --color-muted: #5a645c;          /* tekst drugoplanowy (5,68:1) */
+  --color-card: #ddf1e1;           /* jasna szałwia — tło filtra po najechaniu */
+  --color-accent: #2e6d43;         /* linki, aktywny link w menu, obwódka fokusu (5,73:1) */
+  --color-line: #d4dbd5;           /* linia pod menu */
+  --color-error: #c10007;          /* komunikaty błędów (5,93:1) */
+  --color-success: #016630;        /* komunikat sukcesu (6,59:1) */
+  --color-przycisk: #acd7b6;       /* przyciski i aktywne stany — szałwia */
+  --color-przycisk-tekst: #12361e; /* napis na przycisku (8,36:1) */
+  --color-przycisk-hover: #97c9a3; /* przycisk po najechaniu (napis 7,12:1) */
+  --color-blok: #072918;           /* ciemny blok: „Co poprawiam”, zaproszenie, stopka */
+  --color-blok-tekst: #bfcdc4;     /* zwykły tekst w ciemnym bloku (9,52:1) */
+  --color-cien: #171512;           /* neutralna ciemność na zdjęciach i za lightboxem */
 }
 
 html,body {

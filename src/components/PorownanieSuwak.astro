@@ -37,7 +37,7 @@ const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
 const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 ---
 
-<div class="relative overflow-hidden rounded-sm bg-ink/5" data-porownanie>
+<div class="relative overflow-hidden rounded-sm bg-cien/5" data-porownanie>
 	<!-- "po" zawsze widoczne w tle — LCP, dlatego eager + fetchpriority high. -->
 	<img
 		src={po.src}
@@ -81,11 +81,11 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 	{pokazSuwak && (
 		<>
 			<div
-				class="pointer-events-none absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-paper shadow-[0_0_0_1px] shadow-ink/25"
+				class="pointer-events-none absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-paper shadow-[0_0_0_1px] shadow-cien/25"
 				data-porownanie-linia
 				aria-hidden="true"
 			></div>
-			<div class="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-ink/40 px-4 py-3 backdrop-blur-sm">
+			<div class="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-cien/40 px-4 py-3 backdrop-blur-sm">
 				<span class="text-xs font-semibold text-paper/90" aria-hidden="true">Przed</span>
 				<input
 					type="range"
@@ -93,7 +93,7 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 					max="100"
 					value="50"
 					step="1"
-					class="h-2 w-full cursor-ew-resize appearance-none rounded-full bg-paper/30 accent-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+					class="h-2 w-full cursor-ew-resize appearance-none rounded-full bg-paper/30 accent-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cien"
 					aria-label={`Porównaj zdjęcie przed i po retuszu${opis ? `: ${opis}` : ""}`}
 					data-porownanie-suwak
 				/>
@@ -107,7 +107,7 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 			type="button"
 			aria-pressed="false"
 			data-porownanie-przelacznik
-			class="absolute bottom-3 right-3 rounded-full border-2 border-paper/50 bg-ink/30 px-4 py-1.5 text-sm font-semibold text-paper backdrop-blur-sm transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ink aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-paper"
+			class="absolute bottom-3 right-3 rounded-full border-2 border-paper/50 bg-cien/30 px-4 py-1.5 text-sm font-semibold text-paper backdrop-blur-sm transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
 		>
 			Pokaż przed
 		</button>

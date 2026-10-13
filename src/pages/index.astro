@@ -125,7 +125,7 @@ const KROKI_ZAMOWIENIA = [
 					<div class="flex flex-wrap gap-4">
 						<a
 							href="/galeria/"
-							class="rounded-full bg-accent px-6 py-3 font-semibold text-paper transition-colors hover:bg-accent/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+							class="rounded-full bg-przycisk px-6 py-3 font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 						>
 							Zobacz galerię
 						</a>
@@ -143,12 +143,12 @@ const KROKI_ZAMOWIENIA = [
 		</section>
 
 		<!-- (2) Co poprawiam przy retuszu -->
-		<section aria-labelledby="retusz-naglowek" class="space-y-4">
-			<h2 id="retusz-naglowek" class="text-2xl font-bold text-ink">Co poprawiam przy retuszu</h2>
+		<section aria-labelledby="retusz-naglowek" class="space-y-4 rounded-xl bg-blok p-6 sm:p-8">
+			<h2 id="retusz-naglowek" class="text-2xl font-bold text-paper">Co poprawiam przy retuszu</h2>
 			<ul class="grid gap-3 sm:grid-cols-2">
 				{PUNKTY_RETUSZU.map((punkt) => (
-					<li class="flex items-start gap-2 text-muted">
-						<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+					<li class="flex items-start gap-2 text-blok-tekst">
+						<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-przycisk" aria-hidden="true"></span>
 						{punkt}
 					</li>
 				))}
@@ -169,7 +169,7 @@ const KROKI_ZAMOWIENIA = [
 			<ol class="grid gap-6 sm:grid-cols-2">
 				{KROKI_ZAMOWIENIA.map((krok, indeks) => (
 					<li class="flex items-start gap-4">
-						<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent font-semibold text-paper">
+						<span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-przycisk font-semibold text-przycisk-tekst">
 							{indeks + 1}
 						</span>
 						<div class="space-y-1">
@@ -182,14 +182,14 @@ const KROKI_ZAMOWIENIA = [
 		</section>
 
 		<!-- (5) Zaproszenie do kontaktu -->
-		<section class="space-y-4 rounded-sm border border-ink/10 bg-card/10 p-8 text-center">
-			<h2 class="text-2xl font-bold text-ink">Masz zdjęcia do obrobienia?</h2>
-			<p class="mx-auto max-w-prose text-muted">
+		<section class="space-y-4 rounded-xl bg-blok p-6 text-center sm:p-8">
+			<h2 class="text-2xl font-bold text-paper">Masz zdjęcia do obrobienia?</h2>
+			<p class="mx-auto max-w-prose text-blok-tekst">
 				Napisz, jakie zdjęcia potrzebujesz obrobić — odpiszę z wyceną i terminem.
 			</p>
 			<a
 				href="/kontakt/"
-				class="inline-block rounded-full bg-accent px-6 py-3 font-semibold text-paper transition-colors hover:bg-accent/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+				class="inline-block rounded-full bg-przycisk px-6 py-3 font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
 			>
 				Napisz do mnie
 			</a>

@@ -165,7 +165,9 @@ test.describe('Formularz kontaktowy', () => {
 		expect(wyslane).toHaveLength(1);
 		const bezSzczegolow = polaWysylki(wyslane[0].tresc);
 		for (const nazwa of POLA_SZCZEGOLOW) expect(Object.keys(bezSzczegolow)).not.toContain(nazwa);
-		expect(bezSzczegolow.subject).toBe('Zapytanie o wycenę — {{ name }}');
+		// Temat z imieniem składa nasz skrypt; pole name idzie bez zmian.
+		expect(bezSzczegolow.subject).toBe('Zapytanie o wycenę — Wiktor Testowy');
+		expect(bezSzczegolow.name).toBe('Wiktor Testowy');
 
 		// 2. Wysyłka ze szczegółami (bez odświeżania strony).
 		await wypelnijFormularz(page);

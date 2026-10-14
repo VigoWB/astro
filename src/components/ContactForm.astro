@@ -165,9 +165,9 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 		aria-hidden="true"
 	/>
 
-	<!-- Temat maila od Formspree (pole specjalne `subject`, działa na darmowym planie);
-	     {{ name }} Formspree zamienia na imię z formularza. -->
-	<input type="hidden" name="subject" value="Zapytanie o wycenę — {{ name }}" />
+	<!-- Temat maila od Formspree (pole specjalne `subject`, działa na darmowym planie). Imię dopisuje
+	     skrypt przy wysyłce. Bez szablonu {{ name }} Formspree — wstawiał w mailu temat w miejsce imienia. -->
+	<input type="hidden" name="subject" value="Zapytanie o wycenę" />
 
 	<!-- Cloudflare Turnstile — nieinwazyjne sprawdzenie "czy to człowiek". Renderuje się tylko,
 	     gdy PUBLIC_TURNSTILE_SITE_KEY jest ustawione (zob. .env.example). Widget sam wstrzykuje
@@ -401,6 +401,8 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 				if (wartosc) dane.set(pole.name, wartosc);
 				else dane.delete(pole.name);
 			}
+			// Temat maila z imieniem, np. „Zapytanie o wycenę — Jan Kowalski”.
+			dane.set("subject", `${String(dane.get("subject") ?? "Zapytanie o wycenę")} — ${pola.name.input.value.trim()}`);
 			const odpowiedz = await fetch(`https://formspree.io/f/${formspreeId}`, {
 				method: "POST",
 				body: dane,

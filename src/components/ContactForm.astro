@@ -166,7 +166,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 	/>
 
 	<!-- Temat maila od Formspree (pole specjalne `subject`, działa na darmowym planie). Imię dopisuje
-	     skrypt przy wysyłce. Bez szablonu {{ name }} Formspree — wstawiał w mailu temat w miejsce imienia. -->
+	     skrypt przy wysyłce, dzięki temu test sprawdza cały temat; bez JS temat to sam ten tekst. -->
 	<input type="hidden" name="subject" value="Zapytanie o wycenę" />
 
 	<!-- Cloudflare Turnstile — nieinwazyjne sprawdzenie "czy to człowiek". Renderuje się tylko,

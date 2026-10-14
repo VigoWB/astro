@@ -138,7 +138,7 @@ src/
     galeria.json           GENEROWANY, nie edytuj ręcznie
     kategorie.ts           lista kategorii LICZONA przy buildzie z galeria.json
     nav.ts                 linki w menu
-    siteConfig.json        dane osoby i firmy dla Schema/SEO
+    siteConfig.json        dane osoby i firmy dla Schema/SEO, lista usług do formularza (`uslugi`)
   lib/galeria.ts           wczytywanie zdjęć (adresy R2, wersje do lightboxa) — wspólne dla / i /galeria
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
@@ -231,7 +231,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 
 **PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` (tryb suwaka; połowa odsłonięta już w CSS, zanim zadziała skrypt) albo pokazywane w całości (`object-contain`) zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. W trybie suwaka widać tylko pionową linię z okrągłym uchwytem i etykiety „Przed” / „Po” w górnych rogach. Linię przeciąga się w dowolnym miejscu zdjęcia: zdarzenia `pointerdown` / `pointermove` / `pointerup` na kontenerze z `touch-pan-y` — palcem w poziomie przesuwa się linia, w pionie przewija strona. Pod spodem zostaje `<input type="range">` z klasą `sr-only` (`data-porownanie-suwak`): obsługuje klawiaturę (strzałki) i czytniki ekranu, a jego wartość steruje linią; fokus z klawiatury widać jako obwódkę na uchwycie (`group-has-[input:focus-visible]:ring-2`). Nie usuwaj tego suwaka i nie rób go widocznym — opiera się na nim test dostępności w `tests/a11y.spec.ts`. Pozycję linii i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.
 
-**ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em.
+**ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em. Pola pod wycenę (wszystkie nieobowiązkowe) są w `<fieldset id="szczegoly-zlecenia">`: rodzaj usługi (lista z `uslugi` w `siteConfig.json` + „Inne / jeszcze nie wiem”; pusta lista = pole znika), liczba zdjęć, termin i link do plików (sprawdzany tylko, gdy coś wpisano). Puste pola z tego fieldsetu skrypt usuwa przed wysyłką. Ukryte pole `subject` ustawia temat maila od Formspree.
 
 **Schema.astro:** zawsze `Person` i `ProfessionalService`. `ImageGallery` pojawia się, gdy strona przekaże `zdjecia`, a `BreadcrumbList`, gdy przekaże `breadcrumbs`. Dane pochodzą z `siteConfig.json`, a adresy są absolutne przez `Astro.site`.
 
@@ -266,6 +266,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 2. Dodaj pole do obiektu `pola` w skrypcie.
 3. Dodaj regułę w funkcji `walidujPole()`.
 4. Dodaj test w `tests/kontakt.spec.ts`.
+5. Pole nieobowiązkowe wstaw do `<fieldset id="szczegoly-zlecenia">` (wtedy puste nie trafi do Formspree). Jeśli ma regułę, sprawdzaj je tylko wtedy, gdy coś wpisano — jak link do plików. Nowe pole zbierające dane dopisz też do `src/pages/polityka-prywatnosci.md`.
 
 **Dane dla Google (Schema.org):** `src/data/siteConfig.json`.
 

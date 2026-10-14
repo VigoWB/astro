@@ -16,5 +16,8 @@
 	"gallery": {
 		"name": "Galeria — Wiktor",
 		"description": "Zdjęcia produktowe z podglądem przed i po retuszu."
-	}
+	},
+	"uslugi": [
+		"Retusz zdjęć produktowych"
+	]
 }

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test, expect, type Page } from '@playwright/test';
 import { podstawAtrapeTurnstile, poczekajNaTokenTurnstile, sprawdzIdFormspree, wypelnijFormularz } from './pomocnicze';
 
@@ -26,6 +28,15 @@ async function podstawFormspree(page: Page, reakcja: { status: number; body?: un
 	});
 	return wyslane;
 }
+
+// Zamienia treść wysyłki (multipart/form-data) na pary nazwa pola → wartość.
+function polaWysylki(tresc: string): Record<string, string> {
+	const pola: Record<string, string> = {};
+	for (const [, nazwa, wartosc] of tresc.matchAll(/name="([^"]+)"\r\n\r\n([\s\S]*?)\r\n--/g)) pola[nazwa] = wartosc;
+	return pola;
+}
+
+const POLA_SZCZEGOLOW = ['usluga', 'liczba_zdjec', 'termin', 'link_do_plikow'];
 
 async function otworzFormularz(page: Page) {
 	await podstawAtrapeTurnstile(page);
@@ -95,6 +106,10 @@ test.describe('Formularz kontaktowy', () => {
 		await expect(status(page)).toHaveText('Popraw zaznaczone pola powyżej.');
 		await expect(page.getByTestId('contact-name')).toBeFocused();
 
+		// Szczegóły zlecenia są nieobowiązkowe — puste nie dają błędu.
+		await expect(page.locator('#kontakt-link-blad')).toBeEmpty();
+		await expect(page.getByTestId('contact-link')).not.toHaveAttribute('aria-invalid', 'true');
+
 		expect(wyslane).toHaveLength(0);
 	});
 
@@ -129,6 +144,77 @@ test.describe('Formularz kontaktowy', () => {
 		await email.fill('wiktor@example.com');
 		await expect(blad).toBeEmpty();
 		await expect(email).not.toHaveAttribute('aria-invalid', 'true');
+		await expect(status(page)).toBeEmpty();
+	});
+
+	test('szczegóły zlecenia: puste pola nie idą do Formspree, wypełnione idą bez spacji, temat maila z imieniem', async ({ page }) => {
+		const wyslane = await podstawFormspree(page, { status: 200 });
+		await otworzFormularz(page);
+		await sprawdzIdFormspree(page);
+
+		// Lista usług pochodzi z siteConfig.json, na końcu zawsze „Inne / jeszcze nie wiem”.
+		const { uslugi } = JSON.parse(readFileSync(join(process.cwd(), 'src', 'data', 'siteConfig.json'), 'utf8')) as { uslugi: string[] };
+		const usluga = page.getByTestId('contact-usluga');
+		await expect(usluga.locator('option')).toHaveText(['Wybierz', ...uslugi, 'Inne / jeszcze nie wiem']);
+
+		// 1. Wysyłka bez szczegółów: w mailu nie ma pustych pól.
+		await wypelnijFormularz(page);
+		await poczekajNaTokenTurnstile(page);
+		await page.getByTestId('contact-submit').click();
+		await expect(status(page)).toContainText('Dziękuję! Wiadomość została wysłana');
+		expect(wyslane).toHaveLength(1);
+		const bezSzczegolow = polaWysylki(wyslane[0].tresc);
+		for (const nazwa of POLA_SZCZEGOLOW) expect(Object.keys(bezSzczegolow)).not.toContain(nazwa);
+		expect(bezSzczegolow.subject).toBe('Zapytanie o wycenę — {{ name }}');
+
+		// 2. Wysyłka ze szczegółami (bez odświeżania strony).
+		await wypelnijFormularz(page);
+		await usluga.selectOption(uslugi[0]);
+		await page.getByTestId('contact-liczba-zdjec').selectOption('6–20');
+		await page.getByTestId('contact-termin').fill('  do końca miesiąca  ');
+		await page.getByTestId('contact-link').fill(' https://www.swisstransfer.com/d/atrapa-123 ');
+		await poczekajNaTokenTurnstile(page);
+		await page.getByTestId('contact-submit').click();
+		await expect.poll(() => wyslane.length).toBe(2);
+		expect(polaWysylki(wyslane[1].tresc)).toMatchObject({
+			usluga: uslugi[0],
+			liczba_zdjec: '6–20',
+			termin: 'do końca miesiąca',
+			link_do_plikow: 'https://www.swisstransfer.com/d/atrapa-123',
+		});
+
+		// Po wysyłce szczegóły też są wyczyszczone.
+		await expect(status(page)).toContainText('Dziękuję! Wiadomość została wysłana');
+		await expect(usluga).toHaveValue('');
+		await expect(page.getByTestId('contact-liczba-zdjec')).toHaveValue('');
+		await expect(page.getByTestId('contact-termin')).toHaveValue('');
+		await expect(page.getByTestId('contact-link')).toHaveValue('');
+	});
+
+	test('szczegóły zlecenia: zły link do plików pokazuje błąd i blokuje wysyłkę, puste pole nie przeszkadza', async ({ page }) => {
+		const wyslane = await podstawFormspree(page, { status: 200 });
+		await otworzFormularz(page);
+		await wypelnijFormularz(page);
+
+		const link = page.getByTestId('contact-link');
+		const blad = page.locator('#kontakt-link-blad');
+
+		await link.fill('swisstransfer.com/d/atrapa-123');
+		await expect(blad).toBeEmpty(); // w trakcie pisania jeszcze bez błędu
+		await link.press('Tab'); // wyjście z pola pokazuje błąd
+		await expect(blad).toHaveText('Wklej cały link — zaczyna się od https://');
+		await expect(link).toHaveAttribute('aria-invalid', 'true');
+
+		// Próba wysyłki: nic nie wychodzi, fokus wraca do linku (imię, e-mail i wiadomość są poprawne).
+		await page.getByTestId('contact-submit').click();
+		await expect(status(page)).toHaveText('Popraw zaznaczone pola powyżej.');
+		await expect(link).toBeFocused();
+		expect(wyslane).toHaveLength(0);
+
+		// Wyczyszczenie pola zdejmuje błąd — link jest nieobowiązkowy.
+		await link.fill('');
+		await expect(blad).toBeEmpty();
+		await expect(link).not.toHaveAttribute('aria-invalid', 'true');
 		await expect(status(page)).toBeEmpty();
 	});
 

@@ -23,6 +23,11 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
 // Adres do komunikatów błędów („napisz na …") — ten sam, co w danych strukturalnych (siteConfig.json).
 const adresMailowy = siteConfig.person.email;
+
+// Pole „Rodzaj usługi”: lista z siteConfig.json (`uslugi`) — zmiana oferty to jedna linijka tamże.
+// Na końcu listy zawsze „Inne / jeszcze nie wiem”. Pusta lista w siteConfig.json = pole znika.
+const uslugi: string[] = siteConfig.uslugi;
+const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie wiem"];
 ---
 
 <form
@@ -66,6 +71,74 @@ const adresMailowy = siteConfig.person.email;
 		<p id="kontakt-email-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
 	</div>
 
+	<!-- Szczegóły pod wycenę — wszystkie pola nieobowiązkowe. Puste skrypt usuwa przed wysyłką,
+	     żeby w mailu z Formspree nie było pustych linijek. Nazwy pól (name) widać w mailu. -->
+	<fieldset id="szczegoly-zlecenia" class="border border-line px-4 pt-2 pb-4" data-testid="contact-szczegoly">
+		<legend class="px-1 text-sm font-medium text-ink">
+			Szczegóły zlecenia <span class="font-normal text-muted">(nieobowiązkowe)</span>
+		</legend>
+		<div class="grid gap-4 sm:grid-cols-2">
+			{uslugi.length > 0 && (
+				<div class="flex flex-col gap-1.5">
+					<label for="kontakt-usluga" class="text-sm font-medium text-ink">Rodzaj usługi</label>
+					<select
+						id="kontakt-usluga"
+						name="usluga"
+						class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent"
+						data-testid="contact-usluga"
+					>
+						<option value="">Wybierz</option>
+						{uslugi.map((usluga) => <option value={usluga}>{usluga}</option>)}
+						<option value="Inne / jeszcze nie wiem">Inne / jeszcze nie wiem</option>
+					</select>
+				</div>
+			)}
+
+			<div class="flex flex-col gap-1.5">
+				<label for="kontakt-liczba-zdjec" class="text-sm font-medium text-ink">Ile mniej więcej zdjęć</label>
+				<select
+					id="kontakt-liczba-zdjec"
+					name="liczba_zdjec"
+					class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent"
+					data-testid="contact-liczba-zdjec"
+				>
+					<option value="">Wybierz</option>
+					{PRZEDZIALY_ZDJEC.map((przedzial) => <option value={przedzial}>{przedzial}</option>)}
+				</select>
+			</div>
+
+			<div class="flex flex-col gap-1.5 sm:col-span-2">
+				<label for="kontakt-termin" class="text-sm font-medium text-ink">Na kiedy</label>
+				<input
+					type="text"
+					id="kontakt-termin"
+					name="termin"
+					maxlength="100"
+					autocomplete="off"
+					aria-describedby="kontakt-termin-podpowiedz"
+					class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent"
+					data-testid="contact-termin"
+				/>
+				<p id="kontakt-termin-podpowiedz" class="text-sm text-muted">Na przykład „do 20 listopada” albo „bez pośpiechu”.</p>
+			</div>
+
+			<div class="flex flex-col gap-1.5 sm:col-span-2">
+				<label for="kontakt-link" class="text-sm font-medium text-ink">Link do plików</label>
+				<input
+					type="url"
+					id="kontakt-link"
+					name="link_do_plikow"
+					autocomplete="off"
+					aria-describedby="kontakt-link-podpowiedz kontakt-link-blad"
+					class="w-full border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-accent focus:ring-2 focus:ring-accent aria-invalid:border-error"
+					data-testid="contact-link"
+				/>
+				<p id="kontakt-link-podpowiedz" class="text-sm text-muted">Pliki wyślij przez SwissTransfer albo Dysk Google i wklej tu cały link.</p>
+				<p id="kontakt-link-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
+			</div>
+		</div>
+	</fieldset>
+
 	<div class="flex flex-col gap-1.5">
 		<label for="kontakt-message" class="text-sm font-medium text-ink">Wiadomość</label>
 		<textarea
@@ -91,6 +164,10 @@ const adresMailowy = siteConfig.person.email;
 		class="hidden"
 		aria-hidden="true"
 	/>
+
+	<!-- Temat maila od Formspree (pole specjalne `subject`, działa na darmowym planie);
+	     {{ name }} Formspree zamienia na imię z formularza. -->
+	<input type="hidden" name="subject" value="Zapytanie o wycenę — {{ name }}" />
 
 	<!-- Cloudflare Turnstile — nieinwazyjne sprawdzenie "czy to człowiek". Renderuje się tylko,
 	     gdy PUBLIC_TURNSTILE_SITE_KEY jest ustawione (zob. .env.example). Widget sam wstrzykuje
@@ -140,7 +217,11 @@ const adresMailowy = siteConfig.person.email;
 	// JS przejmuje walidację od przeglądarki — patrz komentarz w markupie wyżej.
 	formularz.noValidate = true;
 
-	type KluczPola = "name" | "email" | "message";
+	// Pola nieobowiązkowe pod wycenę — puste nie idą do Formspree (patrz wysyłka niżej).
+	const szczegolyZlecenia = znajdz<HTMLFieldSetElement>("szczegoly-zlecenia");
+
+	// Kolejność kluczy = kolejność pól na stronie (fokus trafia do pierwszego błędnego).
+	type KluczPola = "name" | "email" | "link" | "message";
 
 	const pola: Record<KluczPola, { input: HTMLInputElement | HTMLTextAreaElement; blad: HTMLElement }> = {
 		name: {
@@ -151,6 +232,10 @@ const adresMailowy = siteConfig.person.email;
 			input: znajdz<HTMLInputElement>("kontakt-email"),
 			blad: znajdz("kontakt-email-blad"),
 		},
+		link: {
+			input: znajdz<HTMLInputElement>("kontakt-link"),
+			blad: znajdz("kontakt-link-blad"),
+		},
 		message: {
 			input: znajdz<HTMLTextAreaElement>("kontakt-message"),
 			blad: znajdz("kontakt-message-blad"),
@@ -159,6 +244,9 @@ const adresMailowy = siteConfig.person.email;
 
 	// Prosty, ale skuteczny regex na email — dodatkowa warstwa poza type="email" z HTML5.
 	const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+	// Link do plików: cały adres z https:// (albo http://), bez spacji.
+	const regexLink = /^https?:\/\/\S+\.\S+$/i;
 
 	const komunikatPoprawPola = "Popraw zaznaczone pola powyżej.";
 
@@ -173,6 +261,11 @@ const adresMailowy = siteConfig.person.email;
 		if (klucz === "email") {
 			if (!wartosc) return { ok: false, komunikat: "Podaj adres email." };
 			if (!regexEmail.test(wartosc)) return { ok: false, komunikat: "Ten adres email wygląda na niepoprawny." };
+		}
+
+		// Link jest nieobowiązkowy — sprawdzamy go tylko wtedy, gdy coś wpisano.
+		if (klucz === "link" && wartosc && !regexLink.test(wartosc)) {
+			return { ok: false, komunikat: "Wklej cały link — zaczyna się od https://" };
 		}
 
 		if (klucz === "message") {
@@ -302,6 +395,12 @@ const adresMailowy = siteConfig.person.email;
 
 		try {
 			const dane = new FormData(formularz);
+			// Szczegóły zlecenia: puste pola usuwamy (w mailu nie ma pustych linijek), wypełnione — bez spacji na brzegach.
+			for (const pole of szczegolyZlecenia.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[name]")) {
+				const wartosc = pole.value.trim();
+				if (wartosc) dane.set(pole.name, wartosc);
+				else dane.delete(pole.name);
+			}
 			const odpowiedz = await fetch(`https://formspree.io/f/${formspreeId}`, {
 				method: "POST",
 				body: dane,

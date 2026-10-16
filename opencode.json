@@ -12,6 +12,12 @@
   "permission": {
     "webfetch": "ask",
     "websearch": "ask",
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    },
     "edit": {
       "*": "ask",
       "*.env": "deny",
@@ -38,12 +44,16 @@
       "npm run build": "allow",
       "npm run test": "allow",
       "npm test": "allow",
+      "*>*": "ask",
       "git commit --amend*": "ask",
       "git add -A*": "deny",
       "git add --all*": "deny",
       "git add .": "deny",
-      "git commit -a*": "deny",
-      "git commit --all*": "deny",
+      "git add ?": "deny",
+      "git add ./": "deny",
+      "git add :/": "deny",
+      "git add -u*": "deny",
+      "git add --update*": "deny",
       "git push*": "deny",
       "git reset --hard*": "deny",
       "git clean*": "deny",
@@ -58,7 +68,14 @@
       "rmdir /s*": "deny",
       "rd /s*": "deny",
       "*.env*": "deny",
-      "*.env.example*": "allow"
+      "git add .env.example": "allow",
+      "git commit -m *": "allow",
+      "git commit -m *>*": "ask",
+      "git commit * --amend*": "ask",
+      "git commit -a*": "deny",
+      "git commit --all*": "deny",
+      "git commit * -a*": "deny",
+      "git commit * --all*": "deny"
     }
   }
 }

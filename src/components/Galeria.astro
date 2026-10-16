@@ -75,7 +75,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 )}
 
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-cien/90 p-4" role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia">
-	<button type="button" id="lightbox-close" class="absolute top-4 right-4 text-paper text-3xl leading-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cien" aria-label="Zamknij podgląd">
+	<button type="button" id="lightbox-close" class="absolute top-4 right-4 text-paper text-3xl leading-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien" aria-label="Zamknij podgląd">
 		&times;
 	</button>
 
@@ -87,7 +87,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		type="button"
 		id="lightbox-poprzednie"
 		data-testid="lightbox-poprzednie"
-		class="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cien/30 text-3xl leading-none text-paper transition-colors hover:bg-cien/50 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:left-4"
+		class="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cien/30 text-3xl leading-none text-paper transition-colors hover:bg-cien/50 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:left-4"
 		aria-label="Poprzednie zdjęcie"
 	>
 		&lsaquo;
@@ -96,7 +96,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		type="button"
 		id="lightbox-nastepne"
 		data-testid="lightbox-nastepne"
-		class="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cien/30 text-3xl leading-none text-paper transition-colors hover:bg-cien/50 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:right-4"
+		class="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cien/30 text-3xl leading-none text-paper transition-colors hover:bg-cien/50 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:right-4"
 		aria-label="Następne zdjęcie"
 	>
 		&rsaquo;
@@ -108,7 +108,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 			alt=""
 			draggable="false"
 			tabindex="0"
-			class="max-h-[calc(100dvh-10rem)] max-w-full object-contain select-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cien"
+			class="max-h-[calc(100dvh-10rem)] max-w-full object-contain select-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien"
 		/>
 		<div class="flex items-center gap-4 text-paper">
 			<span id="lightbox-opis" class="font-bold" tabindex="0"></span>
@@ -119,7 +119,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 				id="lightbox-przelacznik"
 				aria-pressed="false"
 				data-testid="lightbox-przelacznik"
-				class="hidden rounded-full border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
+				class="hidden rounded-full border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
 			>
 				Pokaż przed
 			</button>

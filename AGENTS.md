@@ -191,13 +191,13 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
   - przyciski i stany aktywne (filtr, „Pokaż przed”, numery kroków): `bg-przycisk text-przycisk-tekst hover:bg-przycisk-hover` — nie `bg-accent text-paper`;
   - `accent`: linki, aktywny link w menu, obwódka fokusu;
   - ciemny blok (sekcja „Co poprawiam przy retuszu”, zaproszenie na dole strony głównej, stopka): `bg-blok`, w środku `text-paper` (nagłówki, linki), `text-blok-tekst` (zwykły tekst), akcent `przycisk`;
-  - nakładki na zdjęciach, tło lightboxa i ramki zdjęć: `cien` (np. `bg-cien/90`), nigdy `ink` — `ink` jest zielony i barwiłby zdjęcia.
+  - nakładki na zdjęciach, tło lightboxa i ramki zdjęć: `cien` (np. `bg-cien/90`), nigdy `ink` — `ink` jest zielony i barwiłby zdjęcia. Biały napis na zdjęciu (etykiety „Przed” / „Po”, przycisk „Pokaż przed”) stoi na co najmniej `bg-cien/70` — przy jaśniejszej nakładce na białym zdjęciu kontrast spada poniżej 4,5:1.
 - Bez stylów wklejonych w HTML — żadnego `style="..."` w HTML, `<style>` wklejanego w stronę ani `setAttribute('style', …)` — blokuje je Content-Security-Policy (pułapka 7). Ze skryptu wolno tylko przez `element.style.nazwa = …` (tak działa `transform` w nagłówku i opóźnienie animacji w galerii).
 - Podejście mobile-first: bazowe klasy są dla telefonu, a `md:`, `lg:` dla większych ekranów.
 
 **Dostępność (obowiązkowo, testy to sprawdzają)**
 - Każdy interaktywny element ma etykietę (`aria-label` albo widoczny tekst).
-- Widoczny fokus przez `focus-visible:ring-2 focus-visible:ring-accent`; w ciemnym bloku `focus-visible:ring-przycisk focus-visible:ring-offset-blok`.
+- Widoczny fokus przez `focus-visible:ring-2 focus-visible:ring-accent`; w ciemnym bloku `focus-visible:ring-przycisk focus-visible:ring-offset-blok`, a w lightboksie i na przyciskach leżących na zdjęciu `focus-visible:ring-przycisk focus-visible:ring-offset-cien` — `ring-accent` ma na ciemnym tle poniżej 3:1.
 - Szanuj `prefers-reduced-motion`: animacje przez `motion-safe:` albo sprawdzenie w skrypcie.
 - Semantyczny HTML: `<nav>`, `<main>`, `<article>`, `<footer>`, `<button type="button">`.
 - Kontrast tekstu do tła co najmniej 4.5:1.

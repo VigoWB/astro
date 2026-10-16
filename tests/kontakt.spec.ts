@@ -153,9 +153,12 @@ test.describe('Formularz kontaktowy', () => {
 		await sprawdzIdFormspree(page);
 
 		// Lista usług pochodzi z siteConfig.json, na końcu zawsze „Inne / jeszcze nie wiem”.
+		// Pusta lista = pola „Rodzaj usługi” nie ma wcale (reszta formularza działa tak samo).
 		const { uslugi } = JSON.parse(readFileSync(join(process.cwd(), 'src', 'data', 'siteConfig.json'), 'utf8')) as { uslugi: string[] };
 		const usluga = page.getByTestId('contact-usluga');
-		await expect(usluga.locator('option')).toHaveText(['Wybierz', ...uslugi, 'Inne / jeszcze nie wiem']);
+		const saUslugi = uslugi.length > 0;
+		if (saUslugi) await expect(usluga.locator('option')).toHaveText(['Wybierz', ...uslugi, 'Inne / jeszcze nie wiem']);
+		else await expect(usluga).toHaveCount(0);
 
 		// 1. Wysyłka bez szczegółów: w mailu nie ma pustych pól.
 		await wypelnijFormularz(page);
@@ -171,7 +174,7 @@ test.describe('Formularz kontaktowy', () => {
 
 		// 2. Wysyłka ze szczegółami (bez odświeżania strony).
 		await wypelnijFormularz(page);
-		await usluga.selectOption(uslugi[0]);
+		if (saUslugi) await usluga.selectOption(uslugi[0]);
 		await page.getByTestId('contact-liczba-zdjec').selectOption('6–20');
 		await page.getByTestId('contact-termin').fill('  do końca miesiąca  ');
 		await page.getByTestId('contact-link').fill(' https://www.swisstransfer.com/d/atrapa-123 ');
@@ -179,7 +182,7 @@ test.describe('Formularz kontaktowy', () => {
 		await page.getByTestId('contact-submit').click();
 		await expect.poll(() => wyslane.length).toBe(2);
 		expect(polaWysylki(wyslane[1].tresc)).toMatchObject({
-			usluga: uslugi[0],
+			...(saUslugi ? { usluga: uslugi[0] } : {}),
 			liczba_zdjec: '6–20',
 			termin: 'do końca miesiąca',
 			link_do_plikow: 'https://www.swisstransfer.com/d/atrapa-123',
@@ -187,7 +190,7 @@ test.describe('Formularz kontaktowy', () => {
 
 		// Po wysyłce szczegóły też są wyczyszczone.
 		await expect(status(page)).toContainText('Dziękuję! Wiadomość została wysłana');
-		await expect(usluga).toHaveValue('');
+		if (saUslugi) await expect(usluga).toHaveValue('');
 		await expect(page.getByTestId('contact-liczba-zdjec')).toHaveValue('');
 		await expect(page.getByTestId('contact-termin')).toHaveValue('');
 		await expect(page.getByTestId('contact-link')).toHaveValue('');

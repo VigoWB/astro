@@ -45,8 +45,9 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 <div
 	class:list={[
 		"group relative overflow-hidden rounded-sm bg-cien/5",
-		// touch-pan-y: palcem w poziomie przesuwa się linię, w pionie dalej przewija się strona.
-		{ "cursor-ew-resize touch-pan-y select-none": pokazSuwak },
+		// touch-pan-y touch-pinch-zoom: palcem w poziomie przesuwa się linię, w pionie dalej przewija się strona,
+		// a dwoma palcami można powiększyć zdjęcie.
+		{ "cursor-ew-resize touch-pan-y touch-pinch-zoom select-none": pokazSuwak },
 	]}
 	data-porownanie
 >
@@ -156,6 +157,8 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 			const ustawPozycje = (procent: number) => {
 				obrazPrzed.style.clipPath = `inset(0 ${100 - procent}% 0 0)`;
 				if (linia) linia.style.left = `${procent}%`;
+				// Czytnik ekranu zamiast samej liczby „50” przeczyta, co ona znaczy.
+				suwak.setAttribute("aria-valuetext", `${procent}% zdjęcia przed retuszem, ${100 - procent}% po retuszu`);
 			};
 			ustawPozycje(Number(suwak.value));
 			// Klawiatura (strzałki) i czytniki ekranu zmieniają ukryty <input>.
@@ -168,25 +171,49 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 				suwak.value = String(Math.min(100, Math.max(0, procent)));
 				ustawPozycje(Number(suwak.value));
 			};
-			let przeciaga = false;
+			// Przeciąga jeden wskaźnik naraz (mysz albo pierwszy palec) — drugi palec nic nie zmienia.
+			let aktywnyWskaznik: number | null = null;
+			let startX = 0;
+			let startY = 0;
+			// Palcem linia rusza dopiero przy ruchu w poziomie. Ruch w pionie to przewijanie strony:
+			// przeglądarka przejmuje gest (pointercancel), a linia zostaje tam, gdzie była.
+			let ruchWPoziomie = false;
+			const PROG_RUCHU = 8; // px — drobne drgnięcie palca to jeszcze stuknięcie
+
 			kontener.addEventListener("pointerdown", (e) => {
-				if (e.button !== 0) return; // tylko lewy przycisk myszy / zwykły dotyk
-				przeciaga = true;
+				if (e.button !== 0 || aktywnyWskaznik !== null) return; // tylko lewy przycisk / pierwszy palec
+				aktywnyWskaznik = e.pointerId;
+				startX = e.clientX;
+				startY = e.clientY;
+				ruchWPoziomie = e.pointerType === "mouse"; // myszą linia idzie od razu
 				kontener.setPointerCapture(e.pointerId);
-				// Myszą linia skacze od razu w kliknięte miejsce. Palcem dopiero przy ruchu
-				// w poziomie albo po stuknięciu — przewijanie strony w pionie jej nie rusza.
 				if (e.pointerType === "mouse") ustawZKursora(e);
 			});
 			kontener.addEventListener("pointermove", (e) => {
-				if (przeciaga) ustawZKursora(e);
+				if (e.pointerId !== aktywnyWskaznik) return;
+				if (!ruchWPoziomie) {
+					const dx = Math.abs(e.clientX - startX);
+					const dy = Math.abs(e.clientY - startY);
+					if (dx < PROG_RUCHU || dx <= dy) return; // jeszcze nie wiadomo albo przewijanie w pionie
+					ruchWPoziomie = true;
+				}
+				ustawZKursora(e);
 			});
 			kontener.addEventListener("pointerup", (e) => {
-				if (przeciaga) ustawZKursora(e);
-				przeciaga = false;
+				if (e.pointerId !== aktywnyWskaznik) return;
+				aktywnyWskaznik = null;
+				// Stuknięcie albo koniec przeciągania w poziomie. Ruch w pionie (próba przewijania) linii nie rusza.
+				const stukniecie = Math.abs(e.clientX - startX) < PROG_RUCHU && Math.abs(e.clientY - startY) < PROG_RUCHU;
+				if (ruchWPoziomie || stukniecie) ustawZKursora(e);
 			});
-			// Przeglądarka przejęła gest (np. przewijanie palcem w pionie) — linia zostaje.
-			kontener.addEventListener("pointercancel", () => {
-				przeciaga = false;
+			// Przeglądarka przejęła gest albo wskaźnik zniknął — koniec przeciągania.
+			const zakonczPrzeciaganie = (e: PointerEvent) => {
+				if (e.pointerId === aktywnyWskaznik) aktywnyWskaznik = null;
+			};
+			kontener.addEventListener("pointercancel", zakonczPrzeciaganie);
+			// Siatka bezpieczeństwa: kontener stracił przechwycenie bez pointerup/pointercancel.
+			kontener.addEventListener("lostpointercapture", (e) => {
+				if (e.target === kontener) zakonczPrzeciaganie(e);
 			});
 		}
 

@@ -17,7 +17,7 @@ Wiktor Brzeziński, Poznań. Kontakt: [BrzezinskiWiktor@proton.me](mailto:Brzezi
 
 Gdy wysyłasz wiadomość przez formularz na stronie [/kontakt](/kontakt/), biorą w tym udział dwie zewnętrzne usługi:
 
-- **Formspree** (firma z USA, serwery Amazon w Stanach Zjednoczonych) odbiera to, co wpiszesz — imię, adres e-mail, wiadomość, a jeśli je wypełnisz, także szczegóły zlecenia (rodzaj usługi, liczbę zdjęć, termin i link do plików) — i przekazuje to do mnie. Formspree deklaruje zgodność z RODO jako podmiot przetwarzający dane (na podstawie standardowych klauzul umownych) oraz z amerykańską ustawą CCPA. Nie mam wglądu w to, jak długo Formspree przechowuje wiadomości po ich dostarczeniu — to zależy od ich wewnętrznych zasad, opisanych w linku niżej.
+- **Formspree** (firma z USA, serwery Amazon w Stanach Zjednoczonych) odbiera to, co wpiszesz — imię i nazwisko, adres e-mail, wiadomość, a jeśli je wypełnisz, także szczegóły zlecenia (rodzaj usługi, liczbę zdjęć, termin i link do plików) — i przekazuje to do mnie. Formspree deklaruje zgodność z RODO jako podmiot przetwarzający dane (na podstawie standardowych klauzul umownych) oraz z amerykańską ustawą CCPA. Nie mam wglądu w to, jak długo Formspree przechowuje wiadomości po ich dostarczeniu — to zależy od ich wewnętrznych zasad, opisanych w linku niżej.
 - **Cloudflare Turnstile** sprawdza, zanim formularz się wyśle, kilka technicznych sygnałów Twojej przeglądarki (adres IP, nagłówek User-Agent, tzw. odcisk TLS), żeby odróżnić prawdziwego odwiedzającego od bota. Cloudflare deklaruje, że na podstawie tych sygnałów nie da się bezpośrednio zidentyfikować konkretnej osoby, i traktuje je jako niezbędne do ochrony formularza przed spamem.
 
 Bez tych dwóch usług formularz kontaktowy by nie zadziałał — to jedyny sposób, żeby napisać do mnie przez tę stronę.
@@ -26,7 +26,7 @@ Jeśli wkleisz link do plików, same pliki przechowuje usługa, przez którą je
 
 ## Podstawa prawna i czas przechowywania
 
-Dane, które podajesz w formularzu (imię, e-mail, treść wiadomości i szczegóły zlecenia, jeśli je wypełnisz), przetwarzam na podstawie:
+Dane, które podajesz w formularzu (imię i nazwisko, e-mail, treść wiadomości i szczegóły zlecenia, jeśli je wypełnisz), przetwarzam na podstawie:
 
 - Twojej zgody (art. 6 ust. 1 lit. a RODO) — bo dobrowolnie wysyłasz formularz, oraz
 - mojego prawnie uzasadnionego interesu (art. 6 ust. 1 lit. f RODO), czyli udzielenia Ci odpowiedzi na wiadomość.
@@ -54,4 +54,4 @@ W sprawach dotyczących samego przetwarzania danych przez Formspree albo Cloudfl
 - [Cloudflare Web Analytics — jak to działa](https://developers.cloudflare.com/web-analytics/about/)
 - [Ogólna polityka prywatności Cloudflare](https://www.cloudflare.com/privacypolicy/)
 
-*Ostatnia aktualizacja: 14 października 2026.*
+*Ostatnia aktualizacja: 16 października 2026.*

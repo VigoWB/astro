@@ -1,5 +1,6 @@
 ---
 import Container from "../components/ui/Container.astro";
+import Logo from "../assets/logo.svg";
 import { navLinks } from "../data/nav.ts";
 
 const rok = new Date().getFullYear();
@@ -22,6 +23,9 @@ const klasyLinkuPrawnego =
   <Container>
     <div class="footer-grid">
       <div class="footer-brand">
+        <!-- Logo ozdobne (czytnik ekranu je pomija): mniejsze niż w nagłówku, w jasnym
+             kolorze na ciemnym tle. Na telefonie wyśrodkowane, od 640 px po lewej (jak podpis). -->
+        <Logo class="mx-auto mb-3 h-16 w-auto text-blok-tekst sm:mx-0" aria-hidden="true" focusable="false" />
         <p class="copyright text-paper">© {rok} Wiktor</p>
       </div>
 

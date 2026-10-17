@@ -124,7 +124,7 @@ src/
   assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.md i Schema.astro)
   assets/logo.svg          logo: nagłówek (Header.astro) i znak wodny na zdjęciach (sync-images.mjs)
   components/
-    Header.astro           menu, hamburger na mobile, paralaksa
+    Header.astro           logo i menu: pasek u góry (telefon, tablet) albo pasek boczny (od lg)
     Footer.astro
     SEO.astro              meta, Open Graph, Twitter, canonical
     Schema.astro           dane strukturalne JSON-LD
@@ -145,7 +145,7 @@ src/
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
+tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
@@ -212,7 +212,10 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 
 ## 9. Jak działają kluczowe elementy
 
-**Header.astro:** pasek `h-15`, linki z `nav.ts`, aktywny link dostaje `aria-current="page"`. Paralaksa `scrollY * 0.25` (maks. 10 px) przez `requestAnimationFrame`. Hamburger przełącza klasę `hidden` na menu mobilnym, a klasa `md:hidden` zostaje na stałe. Menu zamyka kliknięcie w link, Escape albo poszerzenie okna. Menu ma focus trap.
+**Header.astro:** jeden nagłówek, dwa układy.
+- Telefon i tablet (do `lg`): pasek u góry. Na samej górze strony ma 96 px i logo 80 px; po przewinięciu (`scrollY > 8`) skrypt ustawia na `<header>` atrybut `data-zwiniety` i pasek zwija się do 60 px z logo 44 px (klasy `max-lg:group-data-zwiniety:*`, animacja tylko `motion-safe:`). W układzie strony `<header>` zajmuje zawsze 60 px + `mb-9`, a duży pasek (`absolute`) tylko nachodzi na ten odstęp — zwijanie nie przesuwa treści. Nie zamieniaj tego na zmianę wysokości samego `<header>`: przeglądarka koryguje wtedy przewinięcie i pasek zaczyna migać na granicy.
+- Komputer (od `lg` = 1024 px): pasek boczny `lg:fixed` o szerokości `w-64`, z logo 160 px i menu w pionie. Miejsce robi mu `lg:pl-64` na `<body>` w `Layout.astro` — zmieniasz szerokość paska, zmień w obu miejscach.
+- Linki z `nav.ts`, aktywny link dostaje `aria-current="page"`. Hamburger (do `md`) przełącza klasę `hidden` na menu mobilnym, a klasa `md:hidden` zostaje na stałe. Menu leży w pasku, więc otwiera się tuż pod nim przy każdej jego wysokości. Menu zamyka kliknięcie w link, Escape albo poszerzenie okna. Menu ma focus trap. Zachowanie obu układów sprawdza `tests/naglowek.spec.ts`.
 
 **Galeria.astro**
 - Siatka to kolumny CSS (`columns-2` … `2xl:columns-6`), bez JS.

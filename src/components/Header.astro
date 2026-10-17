@@ -6,92 +6,102 @@ import { navLinks } from "../data/nav.ts";
 const currentPath = Astro.url.pathname;
 ---
 
+<!-- Jeden nagłówek, dwa układy:
+     - telefon i tablet (do 1023 px): pasek u góry. Na samej górze strony ma 96 px
+       i duże logo, po przewinięciu zwija się do 60 px (skrypt niżej ustawia
+       data-zwiniety). W układzie strony <header> zajmuje zawsze 60 px + 36 px odstępu
+       (mb-9), a duży pasek tylko nachodzi na ten odstęp — dlatego zwijanie nie
+       przesuwa treści i pasek nie miga na granicy.
+     - komputer (od lg = 1024 px): pasek boczny przyklejony do lewej krawędzi okna,
+       z dużym logo i menu w pionie. Miejsce robi mu lg:pl-64 na <body> w Layout.astro
+       (zmieniasz szerokość paska — zmień w obu miejscach). -->
 <header
-	class="sticky top-0 z-40 bg-paper text-ink text-xl font-semibold"
+	id="naglowek"
+	class="group sticky top-0 z-40 mb-9 h-15 bg-paper text-ink text-xl font-semibold lg:fixed lg:inset-y-0 lg:left-0 lg:mb-0 lg:h-auto lg:w-64 lg:overflow-y-auto lg:border-r lg:border-line"
 >
-	<!-- Pasek 60px — overflow-hidden i obcięcie siedzi tutaj (nie na całym
-	     <header>), żeby rozwijane menu mobilne poniżej mogło się swobodnie
-	     pokazać, zamiast zostać przycięte razem z paskiem. -->
 	<div
 		id="pasek-naglowka"
-		class="h-15 overflow-hidden border-b border-line flex items-center transition-shadow duration-300"
+		class="absolute inset-x-0 top-0 flex h-24 items-center border-b border-line bg-paper motion-safe:transition-[height,box-shadow] motion-safe:duration-300 max-lg:group-data-zwiniety:h-15 max-lg:group-data-zwiniety:shadow-md lg:static lg:block lg:h-auto lg:border-b-0"
 	>
-		<div id="tresc-naglowka" class="w-full">
-			<Container>
-				<div class="flex flex-row items-center justify-between w-full">
-					<!-- Logo wstawiane jako SVG prosto w HTML — kolor bierze z tekstu nagłówka
-					     (text-ink), więc po zmianie tokenu w global.css zmienia się samo.
-					     Ten sam plik rysuje znak wodny na zdjęciach (scripts/sync-images.mjs). -->
-					<a
-						href="/"
-						aria-label="balansbieli.pl — strona główna"
-						class="block rounded-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-					>
-						<Logo class="h-11 w-auto" aria-hidden="true" focusable="false" />
-					</a>
+		<Container>
+			<div class="flex flex-row items-center justify-between lg:flex-col lg:items-start lg:justify-start lg:gap-10 lg:px-4 lg:py-10">
+				<!-- Logo wstawiane jako SVG prosto w HTML — kolor bierze z tekstu nagłówka
+				     (text-ink), więc po zmianie tokenu w global.css zmienia się samo.
+				     Ten sam plik rysuje znak wodny na zdjęciach (scripts/sync-images.mjs). -->
+				<a
+					href="/"
+					aria-label="balansbieli.pl — strona główna"
+					class="block rounded-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+				>
+					<Logo
+						class="h-20 w-auto motion-safe:transition-[height] motion-safe:duration-300 max-lg:group-data-zwiniety:h-11 lg:h-40"
+						aria-hidden="true"
+						focusable="false"
+					/>
+				</a>
 
-					<nav aria-label="Główna nawigacja" class="hidden md:block">
-						<ul class="flex flex-row gap-4">
-							{navLinks.map((link) => {
-								const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
-								return (
-									<li>
-										<a
-											href={link.href}
-											class={isActive
-												? "text-accent pointer-events-none"
-												: "hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
-											aria-current={isActive ? "page" : undefined}
-										>
-											{link.label}
-										</a>
-									</li>
-								);
-							})}
-						</ul>
-					</nav>
+				<nav aria-label="Główna nawigacja" class="hidden md:block">
+					<ul class="flex flex-row gap-4 lg:flex-col lg:gap-5">
+						{navLinks.map((link) => {
+							const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
+							return (
+								<li>
+									<a
+										href={link.href}
+										class={isActive
+											? "text-accent pointer-events-none"
+											: "hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
+										aria-current={isActive ? "page" : undefined}
+									>
+										{link.label}
+									</a>
+								</li>
+							);
+						})}
+					</ul>
+				</nav>
 
-					<button
-						type="button"
-						id="przycisk-menu"
-						class="relative h-8 w-8 md:hidden focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-						aria-expanded="false"
-						aria-controls="menu-mobilne"
-						aria-label="Menu"
-					>
-						<span aria-hidden="true"></span>
-						<span aria-hidden="true"></span>
-						<span aria-hidden="true"></span>
-					</button>
-				</div>
-			</Container>
+				<button
+					type="button"
+					id="przycisk-menu"
+					class="relative h-8 w-8 md:hidden focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+					aria-expanded="false"
+					aria-controls="menu-mobilne"
+					aria-label="Menu"
+				>
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+				</button>
+			</div>
+		</Container>
+
+		<!-- Rozwijane menu mobilne. Leży w pasku, więc otwiera się tuż pod nim
+		     przy każdej wysokości paska (96 i 60 px). "md:hidden" zostaje na stałe
+		     w klasach — nawet gdyby JS nie zdążył zamknąć menu przy zmianie szerokości
+		     okna, na większym ekranie i tak się nie pokaże. -->
+		<div id="menu-mobilne" class="hidden md:hidden border-b border-line bg-paper">
+			<nav aria-label="Nawigacja mobilna">
+				<Container>
+					<ul class="flex flex-col py-2">
+						{navLinks.map((link) => {
+							const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
+							return (
+								<li>
+									<a
+										href={link.href}
+										class={`block py-3 hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent" : ""}`}
+										aria-current={isActive ? "page" : undefined}
+									>
+										{link.label}
+									</a>
+								</li>
+							);
+						})}
+					</ul>
+				</Container>
+			</nav>
 		</div>
-	</div>
-
-	<!-- Rozwijane menu mobilne. "md:hidden" zostaje na stałe w klasach —
-	     nawet gdyby JS nie zdążył zamknąć menu przy zmianie szerokości
-	     okna, na desktopie i tak się nie pokaże. -->
-	<div id="menu-mobilne" class="hidden md:hidden border-b border-line bg-paper">
-		<nav aria-label="Nawigacja mobilna">
-			<Container>
-				<ul class="flex flex-col py-2">
-					{navLinks.map((link) => {
-						const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
-						return (
-							<li>
-								<a
-									href={link.href}
-									class={`block py-3 hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent" : ""}`}
-									aria-current={isActive ? "page" : undefined}
-								>
-									{link.label}
-								</a>
-							</li>
-						);
-					})}
-				</ul>
-			</Container>
-		</nav>
 	</div>
 </header>
 
@@ -132,10 +142,12 @@ const currentPath = Astro.url.pathname;
 		}
 	}
 
-	/* Mobile menu as overlay - absolute positioning so it doesn't push content/footer */
+	/* Menu mobilne nad treścią (nie przesuwa strony), tuż pod paskiem.
+	   +1px: 100% to wysokość paska bez jego dolnej kreski (border-b) — bez tego
+	   menu zasłoniłoby kreskę oddzielającą je od paska. */
 	#menu-mobilne {
 		position: absolute;
-		top: 100%;
+		top: calc(100% + 1px);
 		left: 0;
 		right: 0;
 		z-index: 50;
@@ -143,35 +155,34 @@ const currentPath = Astro.url.pathname;
 </style>
 
 <script>
-	// --- Parallax paska nagłówka (logika 1:1 jak wcześniej — zmienił się
-	// tylko element z overflow-hidden/cieniem: pasek zamiast całego <header>). ---
-	const pasek = document.getElementById("pasek-naglowka");
-	const tresc = document.getElementById("tresc-naglowka");
+	// --- Zwijanie paska przy przewijaniu (telefon i tablet) ---
+	// Na samej górze strony pasek ma 96 px i duże logo, po przewinięciu o kilka pikseli
+	// zwija się do 60 px (klasy max-lg:group-data-zwiniety:* w znacznikach wyżej).
+	// Na komputerze atrybut też się ustawia, ale niczego nie zmienia — tam jest pasek boczny.
+	// Przy ograniczonym ruchu (prefers-reduced-motion) rozmiar zmienia się bez animacji (motion-safe:).
+	const naglowek = document.getElementById("naglowek");
 
-	const preferujeMniejRuchu = window.matchMedia(
-		"(prefers-reduced-motion: reduce)"
-	).matches;
-
-	if (pasek && tresc && !preferujeMniejRuchu) {
-		let animujeSie = false;
+	if (naglowek) {
+		let czekaNaKlatke = false;
 
 		const aktualizujNaglowek = () => {
-			const offset = Math.min(window.scrollY * 0.25, 10);
-			tresc.style.transform = `translateY(-${offset}px)`;
-			pasek.classList.toggle("shadow-md", window.scrollY > 12);
-			animujeSie = false;
-		}
+			naglowek.toggleAttribute("data-zwiniety", window.scrollY > 8);
+			czekaNaKlatke = false;
+		};
 
 		window.addEventListener(
 			"scroll",
 			() => {
-				if (!animujeSie) {
+				if (!czekaNaKlatke) {
+					czekaNaKlatke = true;
 					requestAnimationFrame(aktualizujNaglowek);
-					animujeSie = true;
 				}
 			},
 			{ passive: true }
 		);
+
+		// Strona otwarta w połowie (odświeżenie, powrót „wstecz”) — od razu właściwy rozmiar.
+		aktualizujNaglowek();
 	}
 
 	// --- Menu mobilne (hamburger) ---

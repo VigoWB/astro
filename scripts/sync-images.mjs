@@ -8,8 +8,8 @@
  * odczytuje wymiary z samego pliku i dane z aparatu (EXIF), pyta o opis i kategorie,
  * wgrywa pliki (po + opcjonalnie przed) do Cloudflare R2 — każdy w dwóch wersjach:
  * czystej (klucz "zdjecia/...", z niej strona robi miniatury) i ze znakiem wodnym
- * (klucz "znak/...", z niej strona robi powiększenia do lightboksa — na razie sam
- * tekst "balansbieli.pl" w rogu, funkcja nalozZnak() niżej)
+ * (klucz "znak/...", z niej strona robi powiększenia do lightboksa — logo
+ * z src/assets/logo.svg w rogu, funkcja nalozZnak() niżej)
  * i zapisuje metadane w lokalnej bazie SQLite (data/galeria.db).
  *
  * Po każdej zmianie zapisuje plik src/data/galeria.json — to właśnie z niego
@@ -564,28 +564,87 @@ function wyczyscExifDoR2(bufor, kluczR2) {
   }
 }
 
-// Szkielet znaku wodnego: na razie dokłada półprzezroczysty napis "balansbieli.pl"
-// w rogu zdjęcia. Logo podmienisz tu później (composite() z PNG zamiast SVG z tekstem)
-// — wywołania niżej i klucz w R2 zostają bez zmian.
+// Znak wodny: logo z src/assets/logo.svg (ten sam plik co w nagłówku strony) w prawym
+// dolnym rogu — jasne logo z miękkim ciemnym cieniem, więc czyta się i na jasnym,
+// i na ciemnym zdjęciu. Z pliku bierzemy tylko kształt logo (kanał przezroczystości),
+// jego kolor nie ma tu znaczenia. Znak jest "wypalony" w kopii w R2 — po zmianie logo
+// albo liczb niżej każde zdjęcie trzeba wgrać ponownie przez --podmien.
+const LOGO_PATH = 'src/assets/logo.svg';
+const ZNAK_SZEROKOSC = 0.11;  // szerokość logo jako część krótszego boku zdjęcia
+const ZNAK_MARGINES = 0.03;   // odstęp od krawędzi, też jako część krótszego boku
+const ZNAK_KRYCIE_LOGO = 0.7; // 0 = niewidoczne, 1 = pełne
+const ZNAK_KRYCIE_CIENIA = 0.5;
+const ZNAK_KOLOR_LOGO = '#f6f6f3';  // token paper z global.css
+const ZNAK_KOLOR_CIENIA = '#171512'; // token cien z global.css
+
+let logoSvg = null; // wczytywane z dysku raz na uruchomienie
+
+// Jednokolorowa warstwa PNG w kształcie maski (1 kanał, 0–255) z podanym kryciem.
+// extractChannel(0): sharp zapisuje obraz jednokanałowy jako trzykanałowy, a maska
+// musi zostać jednym kanałem.
+async function warstwaZMaski(maska, szerokosc, wysokosc, kolor, krycie) {
+  const raw = { raw: { width: szerokosc, height: wysokosc, channels: 1 } };
+  const alfa = await sharp(maska, raw).linear(krycie, 0).extractChannel(0).raw().toBuffer();
+  return sharp({ create: { width: szerokosc, height: wysokosc, channels: 3, background: kolor } })
+    .joinChannel(alfa, raw)
+    .png()
+    .toBuffer();
+}
+
 async function nalozZnak(bufor, format) {
   const meta = await sharp(bufor).metadata();
   // Orientacja EXIF 5–8 = zdjęcie obrócone o 90°. Wersja ze znakiem wychodzi z sharp
   // bez EXIF-u, więc obrót "wypalamy" w piksele (autoOrient() niżej) — inaczej zdjęcie
-  // leżałoby na boku — a napis liczymy już dla wymiarów po obrocie.
+  // leżałoby na boku — a położenie logo liczymy już dla wymiarów po obrocie.
   const [width, height] = (meta.orientation ?? 1) >= 5 ? [meta.height, meta.width] : [meta.width, meta.height];
-  const rozmiarTekstu = Math.max(18, Math.round(width * 0.022));
-  const margines = Math.round(width * 0.025);
-  const grubyObrys = Math.max(1, Math.round(rozmiarTekstu * 0.035));
-  const svg = `
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <text
-        x="${width - margines}" y="${height - margines}" text-anchor="end"
-        font-family="Arial, Helvetica, sans-serif" font-size="${rozmiarTekstu}" font-weight="600"
-        fill="#eaf4f4" fill-opacity="0.65"
-        style="paint-order: stroke; stroke: #171512; stroke-opacity: 0.5; stroke-width: ${grubyObrys}px;"
-      >balansbieli.pl</text>
-    </svg>`;
-  const zeZnakiem = sharp(bufor).autoOrient().composite([{ input: Buffer.from(svg), top: 0, left: 0 }]);
+
+  if (!logoSvg) {
+    try {
+      logoSvg = await readFile(LOGO_PATH);
+    } catch (err) {
+      throw new Error(`nie mogę wczytać logo do znaku wodnego (${LOGO_PATH}: ${err.message}). Uruchamiaj skrypt z folderu projektu.`);
+    }
+  }
+
+  // Wielkość od krótszego boku — na zdjęciu poziomym i pionowym znak wygląda tak samo.
+  const krotszyBok = Math.min(width, height);
+  const szerokoscLogo = Math.max(48, Math.round(krotszyBok * ZNAK_SZEROKOSC));
+  const margines = Math.round(krotszyBok * ZNAK_MARGINES);
+  const rozmycie = Math.max(1, szerokoscLogo * 0.02); // jak bardzo rozlany jest cień
+  const zapas = Math.ceil(rozmycie * 3); // pusty pas dookoła logo, żeby cień się nie uciął
+
+  // SVG nie ma wymiarów w pikselach: sharp rysuje go w wielkości z viewBox (to logo:
+  // ok. 35 px), a powiększenie takiego obrazka dałoby rozmazane logo. Dlatego gęstość
+  // dobieramy tak, żeby logo od razu wyszło 2× szersze niż potrzeba — potem tylko
+  // zmniejszamy, co daje gładkie krawędzie.
+  const { width: naturalnaSzerokosc } = await sharp(logoSvg).metadata();
+  const gestosc = Math.min(100000, (72 * 2 * szerokoscLogo) / naturalnaSzerokosc);
+
+  // Kształt logo z zapasem dookoła: kanał przezroczystości jako maska 0–255.
+  const { data: maska, info } = await sharp(logoSvg, { density: gestosc })
+    .resize({ width: szerokoscLogo })
+    .extend({ top: zapas, bottom: zapas, left: zapas, right: zapas, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .ensureAlpha()
+    .extractChannel('alpha')
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const maskaCienia = await sharp(maska, { raw: { width: info.width, height: info.height, channels: 1 } })
+    .blur(rozmycie)
+    .extractChannel(0)
+    .raw()
+    .toBuffer();
+
+  const cien = await warstwaZMaski(maskaCienia, info.width, info.height, ZNAK_KOLOR_CIENIA, ZNAK_KRYCIE_CIENIA);
+  const logo = await warstwaZMaski(maska, info.width, info.height, ZNAK_KOLOR_LOGO, ZNAK_KRYCIE_LOGO);
+
+  // Prawa i dolna krawędź samego logo (bez zapasu) w odległości "margines" od brzegu zdjęcia.
+  const left = Math.max(0, width - margines - info.width + zapas);
+  const top = Math.max(0, height - margines - info.height + zapas);
+
+  const zeZnakiem = sharp(bufor).autoOrient().composite([
+    { input: cien, left, top },
+    { input: logo, left, top },
+  ]);
   return format === 'png' ? zeZnakiem.png().toBuffer() : zeZnakiem.jpeg({ quality: 88 }).toBuffer();
 }
 

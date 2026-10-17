@@ -1,5 +1,6 @@
 ---
 import Container from "../components/ui/Container.astro";
+import Logo from "../assets/logo.svg";
 import { navLinks } from "../data/nav.ts";
 
 const currentPath = Astro.url.pathname;
@@ -18,7 +19,16 @@ const currentPath = Astro.url.pathname;
 		<div id="tresc-naglowka" class="w-full">
 			<Container>
 				<div class="flex flex-row items-center justify-between w-full">
-					<div>WB</div>
+					<!-- Logo wstawiane jako SVG prosto w HTML — kolor bierze z tekstu nagłówka
+					     (text-ink), więc po zmianie tokenu w global.css zmienia się samo.
+					     Ten sam plik rysuje znak wodny na zdjęciach (scripts/sync-images.mjs). -->
+					<a
+						href="/"
+						aria-label="balansbieli.pl — strona główna"
+						class="block rounded-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+					>
+						<Logo class="h-11 w-auto" aria-hidden="true" focusable="false" />
+					</a>
 
 					<nav aria-label="Główna nawigacja" class="hidden md:block">
 						<ul class="flex flex-row gap-4">

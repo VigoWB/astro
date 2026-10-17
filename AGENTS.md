@@ -122,6 +122,7 @@ scripts/
   start-preview-if-needed.mjs  uruchamia podgląd dla testów (Node, dziala tez na Windows)
 src/
   assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.md i Schema.astro)
+  assets/logo.svg          logo: nagłówek (Header.astro) i znak wodny na zdjęciach (sync-images.mjs)
   components/
     Header.astro           menu, hamburger na mobile, paralaksa
     Footer.astro

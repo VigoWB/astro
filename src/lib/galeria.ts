@@ -114,23 +114,38 @@ async function wersjaPrzed(adres: string, nazwaPliku: string): Promise<WersjaLig
 	return wersjaDoLightboxa(adres, wymiary.width, wymiary.height);
 }
 
-// Czy pod danym adresem w R2 faktycznie jest plik? Potrzebne do siatki bezpieczeństwa
-// niżej — getImage() z astro:assets NIE rzuca błędu, który dałoby się złapać przy
-// generowaniu zdjęcia: prawdziwe pobranie dzieje się w późniejszej, osobnej fazie
-// builda (poza zasięgiem await/try-catch tutaj), więc musimy sprawdzić PRZED jego
-// wywołaniem, a nie łapać wyjątek po.
-// false TYLKO przy 404 (pliku naprawdę nie ma). Inna odpowiedź (5xx, 403, 429) albo brak połączenia
+// Adres pliku w R2 z jego wersją na końcu („…?v=<skrót ETag>”) albo null, gdy pliku nie ma (404).
+//
+// Po co wersja: nazwy plików w /_astro/ Astro liczy z adresu źródła, a nie z treści pliku.
+// Po `sync-images -- --podmien` w R2 leży nowa treść pod tym samym kluczem — bez wersji
+// w adresie nowe zdjęcie dostałoby starą nazwę, a pliki z /_astro/ przeglądarka trzyma
+// przez rok (public/_headers), sw.js też. Nowa treść = nowy ETag = nowa nazwa pliku.
+// R2 przy pobieraniu pliku pomija część adresu po „?”.
+//
+// Samo sprawdzenie idzie z jednorazowym dopiskiem (?sprawdz=…), żeby ominąć pamięć podręczną
+// Cloudflare przed R2 — tuż po podmianie mogłaby jeszcze oddać stary ETag.
+//
+// Sprawdzamy PRZED getImage(), bo getImage() z astro:assets NIE rzuca błędu, który dałoby się
+// złapać — prawdziwe pobranie dzieje się w późniejszej, osobnej fazie builda.
+// null TYLKO przy 404 (pliku naprawdę nie ma). Inna odpowiedź (5xx, 403, 429) albo brak połączenia
 // przerywa build — inaczej chwilowa awaria R2 po cichu wypuściłaby zdjęcia bez znaku wodnego.
-async function istniejeWR2(adres: string): Promise<boolean> {
+async function adresZWersjaWR2(adres: string): Promise<string | null> {
 	let odpowiedz: Response;
 	try {
-		odpowiedz = await fetch(adres, { method: "HEAD" });
+		odpowiedz = await fetch(`${adres}?sprawdz=${Date.now()}`, { method: "HEAD" });
 	} catch (blad) {
 		throw new Error(`galeria: R2 nie odpowiada (${adres}) — przerywam build, żeby nie wypuścić zdjęć bez znaku wodnego.`, { cause: blad });
 	}
-	if (odpowiedz.ok) return true;
-	if (odpowiedz.status === 404) return false;
-	throw new Error(`galeria: R2 zwróciło ${odpowiedz.status} dla ${adres} — przerywam build, żeby nie wypuścić zdjęć bez znaku wodnego.`);
+	if (odpowiedz.status === 404) return null;
+	if (!odpowiedz.ok) {
+		throw new Error(`galeria: R2 zwróciło ${odpowiedz.status} dla ${adres} — przerywam build, żeby nie wypuścić zdjęć bez znaku wodnego.`);
+	}
+	// ETag z R2 to skrót MD5 treści w cudzysłowie — zostawiamy same litery i cyfry.
+	// Bez ETag-u wystarczy data ostatniej zmiany pliku.
+	const etag = (odpowiedz.headers.get("etag") ?? "").replace(/[^0-9a-z]/gi, "").slice(0, 12);
+	const zmiana = Date.parse(odpowiedz.headers.get("last-modified") ?? "");
+	const wersja = etag || (Number.isNaN(zmiana) ? "" : String(zmiana / 1000));
+	return wersja ? `${adres}?v=${wersja}` : adres;
 }
 
 // Siatka bezpieczeństwa na czas wdrażania znaku wodnego: zdjęcia
@@ -145,8 +160,9 @@ async function wersjaDoLightboxaZFallbackiem(
 	wysokosc: number,
 	nazwaPliku: string
 ): Promise<WersjaLightboxa> {
-	if (await istniejeWR2(adresZnak)) {
-		return wersjaDoLightboxa(adresZnak, szerokosc, wysokosc);
+	const znak = await adresZWersjaWR2(adresZnak);
+	if (znak) {
+		return wersjaDoLightboxa(znak, szerokosc, wysokosc);
 	}
 	console.warn(
 		`galeria: brak wersji ze znakiem wodnym dla ${nazwaPliku} (${adresZnak}) — pokazuję bez znaku. Uzupełnij: npm run sync-images -- --podmien ${nazwaPliku}.`
@@ -155,15 +171,16 @@ async function wersjaDoLightboxaZFallbackiem(
 }
 
 async function wersjaPrzedZFallbackiem(adresZnak: string, adresCzysty: string, nazwaPliku: string): Promise<WersjaLightboxa> {
-	if (await istniejeWR2(adresZnak)) {
-		return wersjaPrzed(adresZnak, nazwaPliku);
+	const znak = await adresZWersjaWR2(adresZnak);
+	if (znak) {
+		return wersjaPrzed(znak, nazwaPliku);
 	}
 	console.warn(
 		`galeria: brak wersji "przed" ze znakiem wodnym dla ${nazwaPliku} (${adresZnak}) — próbuję bez znaku. Uzupełnij: npm run sync-images -- --podmien ${nazwaPliku}.`
 	);
-	// Jeśli i czysta wersja zawiedzie, to już prawdziwy brak pliku "przed" — wersjaPrzed()
+	// Jeśli i czystej wersji nie ma, to już prawdziwy brak pliku "przed" — wersjaPrzed()
 	// rzuci swój zwykły, jasny komunikat.
-	return wersjaPrzed(adresCzysty, nazwaPliku);
+	return wersjaPrzed((await adresZWersjaWR2(adresCzysty)) ?? adresCzysty, nazwaPliku);
 }
 
 export interface Zdjecie {
@@ -202,13 +219,16 @@ async function zbudujListeZdjec(): Promise<Zdjecie[]> {
 
 	return Promise.all(
 		kompletne.map(async (z) => {
+			// Czysty oryginał "po": z niego miniatura (Karta.astro) i zapasowa wersja do lightboxa.
+			// Gdyby go nie było (404), zostaje adres bez wersji — build i tak przerwie się na miniaturze.
 			const adresPo = adresZKlucza(z.klucz!);
+			const adresPoZWersja = (await adresZWersjaWR2(adresPo)) ?? adresPo;
 			return {
-				po: { src: adresPo, width: z.szerokosc!, height: z.wysokosc! },
+				po: { src: adresPoZWersja, width: z.szerokosc!, height: z.wysokosc! },
 				lightbox: {
 					po: await wersjaDoLightboxaZFallbackiem(
 						adresZKlucza(kluczZnak(z.klucz!)),
-						adresPo,
+						adresPoZWersja,
 						z.szerokosc!,
 						z.wysokosc!,
 						z.nazwaPliku

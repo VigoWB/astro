@@ -167,6 +167,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 
 - Na stronie nie ma żadnego adresu z R2: miniatury, lightbox i dane dla Google (Schema.org) wskazują pliki w `/_astro/`. Oryginały z R2 pobiera tylko build.
 - Wymiary pliku „przed” build odczytuje z R2 (`inferRemoteSize`). Brak pliku „przed” w R2 = build przerywa się z komunikatem, którego pliku brakuje.
+- Adresy z R2 przekazywane do `getImage()` i `<Image>` mają na końcu wersję pliku (`?v=` + skrót ETag z zapytania `HEAD`, funkcja `adresZWersjaWR2()` w `src/lib/galeria.ts`). Astro liczy nazwy plików w `/_astro/` z adresu, a nie z treści, a te pliki przeglądarka i `sw.js` trzymają długo — bez wersji zdjęcie podmienione przez `--podmien` dostałoby starą nazwę i odwiedzający widzieliby starą wersję. Nie usuwaj tej wersji z adresów.
 
 - Komponenty zawsze opierają się na `galeria.json`, nigdy na bazie SQLite.
 - `astro.config.mjs` buduje `image.remotePatterns` z `PUBLIC_R2_URL`. Przy zmianie domeny zdjęć zmienia się tylko zmienną.

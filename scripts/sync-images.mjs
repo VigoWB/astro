@@ -565,17 +565,19 @@ function wyczyscExifDoR2(bufor, kluczR2) {
 }
 
 // Znak wodny: logo z src/assets/logo.svg (ten sam plik co w nagłówku strony) w prawym
-// dolnym rogu — jasne logo z miękkim ciemnym cieniem, więc czyta się i na jasnym,
-// i na ciemnym zdjęciu. Z pliku bierzemy tylko kształt logo (kanał przezroczystości),
-// jego kolor nie ma tu znaczenia. Znak jest "wypalony" w kopii w R2 — po zmianie logo
-// albo liczb niżej każde zdjęcie trzeba wgrać ponownie przez --podmien.
+// dolnym rogu. Kolor dobiera się do tła pod logo: na jasnym (np. białe tło zdjęć produktów)
+// logo jest ciemne i półprzezroczyste, na ciemnym — jasne; cienka obwódka w przeciwnym
+// kolorze odcina je od tła, więc listki i korzenie widać i na bieli, i na czerni.
+// Z pliku bierzemy tylko kształt logo (kanał przezroczystości), jego kolor nie ma tu znaczenia.
+// Znak jest "wypalony" w kopii w R2 — po zmianie logo albo liczb niżej każde zdjęcie
+// trzeba wgrać ponownie przez --podmien.
 const LOGO_PATH = 'src/assets/logo.svg';
-const ZNAK_SZEROKOSC = 0.11;  // szerokość logo jako część krótszego boku zdjęcia
+const ZNAK_SZEROKOSC = 0.22;  // szerokość logo jako część krótszego boku zdjęcia
 const ZNAK_MARGINES = 0.03;   // odstęp od krawędzi, też jako część krótszego boku
-const ZNAK_KRYCIE_LOGO = 0.7; // 0 = niewidoczne, 1 = pełne
-const ZNAK_KRYCIE_CIENIA = 0.5;
-const ZNAK_KOLOR_LOGO = '#f6f6f3';  // token paper z global.css
-const ZNAK_KOLOR_CIENIA = '#171512'; // token cien z global.css
+const ZNAK_PROG_JASNOSCI = 0.55; // średnia jasność tła pod logo (0 = czarne, 1 = białe), od której logo jest ciemne
+// Kolory z tokenów global.css: paper (#f6f6f3) i cien (#171512). Krycie: 0 = niewidoczne, 1 = pełne.
+const ZNAK_NA_JASNYM = { logo: '#171512', kryLogo: 0.4, obwodka: '#f6f6f3', kryObwodki: 0.6 };
+const ZNAK_NA_CIEMNYM = { logo: '#f6f6f3', kryLogo: 0.75, obwodka: '#171512', kryObwodki: 0.65 };
 
 let logoSvg = null; // wczytywane z dysku raz na uruchomienie
 
@@ -610,8 +612,8 @@ async function nalozZnak(bufor, format) {
   const krotszyBok = Math.min(width, height);
   const szerokoscLogo = Math.max(48, Math.round(krotszyBok * ZNAK_SZEROKOSC));
   const margines = Math.round(krotszyBok * ZNAK_MARGINES);
-  const rozmycie = Math.max(1, szerokoscLogo * 0.02); // jak bardzo rozlany jest cień
-  const zapas = Math.ceil(rozmycie * 3); // pusty pas dookoła logo, żeby cień się nie uciął
+  const rozmycie = Math.max(0.6, szerokoscLogo * 0.006); // grubość obwódki — mała, żeby szczegóły się nie zlewały
+  const zapas = Math.ceil(rozmycie * 3); // pusty pas dookoła logo, żeby obwódka się nie ucięła
 
   // SVG nie ma wymiarów w pikselach: sharp rysuje go w wielkości z viewBox (to logo:
   // ok. 35 px), a powiększenie takiego obrazka dałoby rozmazane logo. Dlatego gęstość
@@ -628,21 +630,34 @@ async function nalozZnak(bufor, format) {
     .extractChannel('alpha')
     .raw()
     .toBuffer({ resolveWithObject: true });
-  const maskaCienia = await sharp(maska, { raw: { width: info.width, height: info.height, channels: 1 } })
+  const maskaObwodki = await sharp(maska, { raw: { width: info.width, height: info.height, channels: 1 } })
     .blur(rozmycie)
     .extractChannel(0)
     .raw()
     .toBuffer();
 
-  const cien = await warstwaZMaski(maskaCienia, info.width, info.height, ZNAK_KOLOR_CIENIA, ZNAK_KRYCIE_CIENIA);
-  const logo = await warstwaZMaski(maska, info.width, info.height, ZNAK_KOLOR_LOGO, ZNAK_KRYCIE_LOGO);
-
   // Prawa i dolna krawędź samego logo (bez zapasu) w odległości "margines" od brzegu zdjęcia.
   const left = Math.max(0, width - margines - info.width + zapas);
   const top = Math.max(0, height - margines - info.height + zapas);
 
+  // Jasność tła dokładnie pod logo (po obrocie, jak w gotowym pliku) decyduje o kolorach.
+  // Średnią liczymy sami z wyciętych pikseli — stats() z sharp liczy całe zdjęcie, nie wycinek.
+  const tloPodLogo = await sharp(bufor)
+    .autoOrient()
+    .extract({ left, top, width: Math.min(info.width, width - left), height: Math.min(info.height, height - top) })
+    .greyscale()
+    .raw()
+    .toBuffer();
+  let suma = 0;
+  for (const bajt of tloPodLogo) suma += bajt;
+  const jasnoscTla = suma / tloPodLogo.length / 255;
+  const kolory = jasnoscTla > ZNAK_PROG_JASNOSCI ? ZNAK_NA_JASNYM : ZNAK_NA_CIEMNYM;
+
+  const obwodka = await warstwaZMaski(maskaObwodki, info.width, info.height, kolory.obwodka, kolory.kryObwodki);
+  const logo = await warstwaZMaski(maska, info.width, info.height, kolory.logo, kolory.kryLogo);
+
   const zeZnakiem = sharp(bufor).autoOrient().composite([
-    { input: cien, left, top },
+    { input: obwodka, left, top },
     { input: logo, left, top },
   ]);
   return format === 'png' ? zeZnakiem.png().toBuffer() : zeZnakiem.jpeg({ quality: 88 }).toBuffer();

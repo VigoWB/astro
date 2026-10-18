@@ -24,8 +24,8 @@ const klasyLinkuPrawnego =
     <div class="footer-grid">
       <div class="footer-brand">
         <!-- Logo ozdobne (czytnik ekranu je pomija): mniejsze niż w nagłówku, w jasnym
-             kolorze na ciemnym tle. Na telefonie wyśrodkowane, od 640 px po lewej (jak podpis). -->
-        <Logo class="mx-auto mb-3 h-16 w-auto text-blok-tekst sm:mx-0" aria-hidden="true" focusable="false" />
+             kolorze na ciemnym tle. Logo po lewej, podpis obok, po prawej — w jednym rzędzie. -->
+        <Logo class="h-16 w-auto shrink-0 text-blok-tekst" aria-hidden="true" focusable="false" />
         <p class="copyright text-paper">© {rok} Wiktor</p>
       </div>
 
@@ -62,6 +62,15 @@ const klasyLinkuPrawnego =
     grid-template-columns: 1fr;
   }
 
+  /* Logo i podpis w jednym rzędzie: logo po lewej, „© … Wiktor” po prawej, na środku wysokości logo.
+     Na telefonie cały rząd stoi na środku stopki, od 640 px po lewej (niżej). */
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
   .footer-brand .copyright {
     margin: 0;
     font-size: 1rem;
@@ -89,6 +98,10 @@ const klasyLinkuPrawnego =
       grid-template-columns: auto 1fr;
       align-items: center;
       text-align: left;
+    }
+
+    .footer-brand {
+      justify-content: flex-start;
     }
 
     .footer-nav-list {

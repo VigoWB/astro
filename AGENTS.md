@@ -219,7 +219,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 - Linki z `nav.ts`, aktywny link dostaje `aria-current="page"`. Hamburger (do `md`) przełącza klasę `hidden` na menu mobilnym, a klasa `md:hidden` zostaje na stałe. Menu leży w pasku, więc otwiera się tuż pod nim przy każdej jego wysokości. Menu zamyka kliknięcie w link, Escape albo poszerzenie okna. Menu ma focus trap. Zachowanie obu układów sprawdza `tests/naglowek.spec.ts`.
 
 **Galeria.astro**
-- Siatka to kolumny CSS (`columns-2` … `2xl:columns-6`), bez JS.
+- Siatka to kolumny CSS (`columns-2 md:columns-3`), bez JS. Więcej kolumn nie dokładaj: kolumna treści ma maks. 960 px, a od `lg` obok stoi pasek boczny — przy 4–6 kolumnach miniatury na komputerze były mniejsze niż na tablecie.
 - Na start widać `NA_STRONE` (8) zdjęć, reszta ma `hidden`. O tym, co jest widoczne, decyduje jedna funkcja (filtr + „Załaduj więcej”).
 - Filtry porównują `data-kategoria` karty (lista kategorii jako JSON — nazwa może mieć spację) z przyciskami z `kategorie.ts`.
 - Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.

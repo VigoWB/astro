@@ -42,8 +42,10 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 )}
 
 <!-- Wszystkie zdjęcia są w HTML od razu; te poza pierwszą porcją mają klasę "hidden"
-     (miniatury i tak ładują się dopiero po pokazaniu — loading="lazy"). -->
-<div class="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-3" id="galeria-grid" data-na-strone={NA_STRONE}>
+     (miniatury i tak ładują się dopiero po pokazaniu — loading="lazy").
+     Najwyżej 3 kolumny: treść ma maks. 960 px (Container), a od 1024 px obok stoi pasek boczny.
+     Przy 4–6 kolumnach miniatura na komputerze miała 145–175 px — mniej niż na tablecie. -->
+<div class="columns-2 md:columns-3 gap-3" id="galeria-grid" data-na-strone={NA_STRONE}>
 	{zdjecia.map((z, index) => (
 		<Karta
 			po={z.po}

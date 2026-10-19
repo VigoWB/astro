@@ -98,7 +98,7 @@ test.describe('Formularz kontaktowy', () => {
 
 		// Komunikaty błędów dla wszystkich trzech pól
 		await expect(page.locator('#kontakt-name-blad')).toHaveText('Podaj imię i nazwisko.');
-		await expect(page.locator('#kontakt-email-blad')).toHaveText('Podaj adres email.');
+		await expect(page.locator('#kontakt-email-blad')).toHaveText('Podaj adres e-mail.');
 		await expect(page.locator('#kontakt-message-blad')).toHaveText('Napisz treść wiadomości.');
 		for (const pole of ['contact-name', 'contact-email', 'contact-message']) {
 			await expect(page.getByTestId(pole)).toHaveAttribute('aria-invalid', 'true');
@@ -124,7 +124,7 @@ test.describe('Formularz kontaktowy', () => {
 		await email.fill('nie-email');
 		await expect(blad).toBeEmpty(); // w trakcie pisania jeszcze bez błędu
 		await email.press('Tab'); // wyjście z pola pokazuje błąd
-		await expect(blad).toHaveText('Ten adres email wygląda na niepoprawny.');
+		await expect(blad).toHaveText('Ten adres e-mail wygląda na niepoprawny.');
 		await expect(email).toHaveAttribute('aria-invalid', 'true');
 		await page.getByTestId('contact-message').fill('To jest testowa wiadomość o wystarczającej długości.');
 

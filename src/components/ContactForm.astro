@@ -58,7 +58,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 	</div>
 
 	<div class="flex flex-col gap-1.5">
-		<label for="kontakt-email" class="text-sm font-medium text-ink">Email</label>
+		<label for="kontakt-email" class="text-sm font-medium text-ink">E-mail</label>
 		<input
 			type="email"
 			id="kontakt-email"
@@ -262,8 +262,8 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 		}
 
 		if (klucz === "email") {
-			if (!wartosc) return { ok: false, komunikat: "Podaj adres email." };
-			if (!regexEmail.test(wartosc)) return { ok: false, komunikat: "Ten adres email wygląda na niepoprawny." };
+			if (!wartosc) return { ok: false, komunikat: "Podaj adres e-mail." };
+			if (!regexEmail.test(wartosc)) return { ok: false, komunikat: "Ten adres e-mail wygląda na niepoprawny." };
 		}
 
 		// Link jest nieobowiązkowy — sprawdzamy go tylko wtedy, gdy coś wpisano.

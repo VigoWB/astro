@@ -44,6 +44,23 @@ test.describe('nagłówek na telefonie', () => {
 		await expect(menu).toBeVisible();
 		await expect.poll(gornaKrawedzMenu).toBe(60);
 	});
+
+	test('stuknięcie obok menu zamyka je, a przyciemnione tło znika', async ({ page }) => {
+		const przycisk = page.getByRole('button', { name: 'Menu', exact: true });
+		const menu = page.locator('#menu-mobilne');
+		const tlo = page.locator('#tlo-menu');
+
+		await expect(tlo).toBeHidden();
+		await przycisk.click();
+		await expect(menu).toBeVisible();
+		await expect(tlo).toBeVisible();
+
+		// Dół ekranu — pod menu, w przyciemnione tło.
+		await tlo.click({ position: { x: 187, y: 600 } });
+		await expect(menu).toBeHidden();
+		await expect(tlo).toBeHidden();
+		await expect(przycisk).toHaveAttribute('aria-expanded', 'false');
+	});
 });
 
 test.describe('nagłówek na komputerze', () => {

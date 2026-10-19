@@ -105,6 +105,10 @@ const currentPath = Astro.url.pathname;
 	</div>
 </header>
 
+<!-- Przyciemnione tło pod otwartym menu mobilnym — stuknięcie w nie zamyka menu.
+     Leży pod nagłówkiem (z-30, nagłówek ma z-40), więc pasek i menu zostają jasne. -->
+<div id="tlo-menu" class="fixed inset-0 z-30 hidden bg-cien/40 md:hidden" aria-hidden="true"></div>
+
 <style>
 	#przycisk-menu span {
 		position: absolute;
@@ -188,11 +192,13 @@ const currentPath = Astro.url.pathname;
 	// --- Menu mobilne (hamburger) ---
 	const przyciskMenu = document.getElementById("przycisk-menu");
 	const menuMobilne = document.getElementById("menu-mobilne");
+	const tloMenu = document.getElementById("tlo-menu");
 
 	if (przyciskMenu && menuMobilne) {
 		const otworzMenu = () => {
 			przyciskMenu.setAttribute("aria-expanded", "true");
 			menuMobilne.classList.remove("hidden");
+			tloMenu?.classList.remove("hidden");
 
 			// Focus na pierwszym linku w menu
 			menuMobilne.querySelector("a")?.focus();
@@ -209,6 +215,7 @@ const currentPath = Astro.url.pathname;
 
 			przyciskMenu.setAttribute("aria-expanded", "false");
 			menuMobilne.classList.add("hidden");
+			tloMenu?.classList.add("hidden");
 
 			// Usuń focus trap
 			document.removeEventListener("keydown", handleMenuFocusTrap);
@@ -230,6 +237,9 @@ const currentPath = Astro.url.pathname;
 		menuMobilne.querySelectorAll("a").forEach((link) => {
 			link.addEventListener("click", zamknijMenu);
 		});
+
+		// Stuknięcie obok menu (w przyciemnione tło) zamyka menu.
+		tloMenu?.addEventListener("click", zamknijMenu);
 
 		document.addEventListener("keydown", (e) => {
 			if (e.key === "Escape") zamknijMenu();

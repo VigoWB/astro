@@ -77,8 +77,11 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 )}
 
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-cien/90 p-4" role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia">
-	<button type="button" id="lightbox-close" class="absolute top-4 right-4 text-paper text-3xl leading-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien" aria-label="Zamknij podgląd">
-		&times;
+	<!-- Zamykanie: koło 44 px jak strzałki niżej (sam znak × miał 17×30 px — za mały do trafienia palcem). -->
+	<button type="button" id="lightbox-close" class="absolute top-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-cien/70 text-paper transition-colors hover:bg-cien/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:top-4 sm:right-4" aria-label="Zamknij podgląd">
+		<svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+			<path d="M18 6 6 18M6 6l12 12" />
+		</svg>
 	</button>
 
 	<!-- Przeglądanie zdjęć bez zamykania podglądu. Ukryte całkiem,

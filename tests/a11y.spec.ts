@@ -2,6 +2,11 @@ import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { STRONY } from './pomocnicze';
 
+// Testy dostępności sprawdzają stan końcowy strony: przy ograniczonym ruchu kafelki galerii są widoczne
+// od razu, bez półprzezroczystej animacji wejścia (w jej trakcie axe liczył za słaby kontrast podpisów).
+// Samą animację sprawdza galeria.spec.ts.
+test.use({ reducedMotion: 'reduce' });
+
 // Pełny zestaw reguł WCAG 2.0, 2.1 i 2.2 na poziomach A i AA + dobre praktyki axe.
 // Uwaga: sam tag "wcag2aa" NIE obejmuje reguł poziomu A (tekst alternatywny obrazka,
 // nazwa przycisku i linku, etykieta pola, język strony…) — każdy poziom trzeba wymienić.
@@ -10,12 +15,14 @@ const TAGI_WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best
 // Uruchamia axe i zwraca naruszenia jako krótkie opisy (reguła, opis, elementy) —
 // w raporcie od razu widać, co i gdzie poprawić. Wyłączenie reguły tylko jawnie, z powodem.
 // Pomijamy okienko Turnstile: to ramka z kodem Cloudflare, na który nie mamy wpływu.
-async function naruszeniaAxe(page: Page, wylaczoneReguly: string[] = []): Promise<string[]> {
-	const wynik = await new AxeBuilder({ page })
+// "pominiete" — dodatkowe fragmenty strony do pominięcia (selektory CSS), też tylko jawnie, z powodem.
+async function naruszeniaAxe(page: Page, wylaczoneReguly: string[] = [], pominiete: string[] = []): Promise<string[]> {
+	const axe = new AxeBuilder({ page })
 		.withTags(TAGI_WCAG)
 		.exclude('.cf-turnstile')
-		.disableRules(wylaczoneReguly)
-		.analyze();
+		.disableRules(wylaczoneReguly);
+	for (const selektor of pominiete) axe.exclude(selektor);
+	const wynik = await axe.analyze();
 	return wynik.violations.map((v) => `${v.id}: ${v.help} → ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
 }
 
@@ -135,7 +142,10 @@ test('a11y: Lightbox otwarty – brak naruszeń WCAG A/AA', async ({ page }) => 
 	await page.getByTestId('gallery-item').first().click();
 	await expect(page.getByRole('dialog', { name: 'Podgląd zdjęcia' })).toBeVisible();
 
-	expect(await naruszeniaAxe(page)).toEqual([]);
+	// Kafelki galerii leżą pod ciemnym tłem podglądu. Chromium z Playwrighta liczy wtedy kontrast
+	// ich podpisów (widocznych na ekranach dotykowych) na tym ciemnym tle i zgłasza błąd, choć pod
+	// otwartym podglądem nikt ich nie czyta. Same kafelki sprawdza test strony /galeria/ wyżej.
+	expect(await naruszeniaAxe(page, [], ['#galeria-grid'])).toEqual([]);
 });
 
 test('a11y: Menu mobilne – otwiera się klawiaturą, Tab krąży po menu, Escape zamyka', async ({ page }) => {

@@ -224,6 +224,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 - Filtry porównują `data-kategoria` karty (lista kategorii jako JSON — nazwa może mieć spację) z przyciskami z `kategorie.ts`.
 - Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.
 - Efekt „wyostrzenia” miniatury: klasy startowe są w `Karta.astro`, a zdejmuje je skrypt w `Galeria.astro` (nie `onload` w HTML).
+- Podpis miniatury: z myszką — nakładka po najechaniu; na ekranach dotykowych (`pointer-coarse:`) stały podpis pod zdjęciem, bo najechania tam nie ma. Oba `aria-hidden` — opis czyta czytnik z `alt`.
 - Lightbox jest jeden, wspólny, i podmienia `sizes`, `srcset` i `src` (funkcja `ustawZdjecie`) — dane bierze z atrybutów karty `data-po*` / `data-przed*`. Wersję „przed” pokazuje przycisk „Pokaż przed” (`id="lightbox-przelacznik"`, `aria-pressed`) — działa z klawiatury, myszki i dotyku, resetuje się przy zamknięciu lightboxa i zmianie zdjęcia. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
 - Propy `pokazFiltry`, `pokazZaladujWiecej` i `priorytetPierwszego` (domyślnie `true`) wyłączają pasek filtrów, przycisk „Załaduj więcej” i wysoki priorytet pierwszego zdjęcia — używa tego `index.astro` (sekcja „Wybrane prace” pokazuje przekazane zdjęcia od razu, bez filtrowania).
 

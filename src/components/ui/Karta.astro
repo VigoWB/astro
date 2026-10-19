@@ -84,4 +84,10 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 			</div>
 		</div>
 	</div>
+	<!-- Podpis na stałe pod miniaturą — tylko na ekranach dotykowych (telefon, tablet), gdzie nie ma
+	     najechania myszką, więc podpis z nakładki wyżej nigdy by się nie pokazał. Z myszką bez zmian.
+	     aria-hidden z tego samego powodu co nakładka: czytnik ekranu ma już opis z alt obrazka. -->
+	{opis && (
+		<span class="hidden px-2 py-1.5 text-sm leading-snug text-ink pointer-coarse:block" aria-hidden="true">{opis}</span>
+	)}
 </button>

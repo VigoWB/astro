@@ -110,7 +110,12 @@ const KROKI_ZAMOWIENIA = [
 	<div class="space-y-16 py-12">
 		<!-- (1) Pierwszy ekran -->
 		<section class="space-y-6">
-			<h1 class="max-w-prose text-3xl font-bold text-ink">Fotografia i retusz produktowy · Poznań</h1>
+			<div class="space-y-3">
+				<h1 class="max-w-prose text-3xl font-bold text-ink">Fotografia i retusz produktowy · Poznań</h1>
+				<p class="max-w-prose text-lg text-muted">
+					Retuszuję zdjęcia produktów do sklepów internetowych i reklam: równe tło, czyste krawędzie i kolor taki, jaki produkt ma naprawdę. Wycena jest bezpłatna.
+				</p>
+			</div>
 
 			{bohater ? (
 				<>
@@ -122,18 +127,20 @@ const KROKI_ZAMOWIENIA = [
 						wysokoscOryginalu={bohater.zdjecie.po.height}
 						trybSuwaka={bohater.trybSuwaka}
 					/>
-					<div class="flex flex-wrap gap-4">
-						<a
-							href="/galeria/"
-							class="rounded-full bg-przycisk px-6 py-3 font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-						>
-							Zobacz galerię
-						</a>
+					{/* Jeden główny przycisk (wypełniony) — zapytanie o wycenę; galeria jako drugi (obwódka).
+					    Na telefonie oba na całą szerokość, jeden pod drugim — obok siebie się nie mieszczą. */}
+					<div class="grid gap-3 sm:flex sm:flex-wrap sm:gap-4">
 						<a
 							href="/kontakt/"
-							class="rounded-full border-2 border-ink/30 px-6 py-3 font-semibold text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+							class="rounded-full bg-przycisk px-6 py-3 text-center font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 						>
-							Napisz do mnie
+							Zapytaj o wycenę
+						</a>
+						<a
+							href="/galeria/"
+							class="rounded-full border-2 border-ink/30 px-6 py-3 text-center font-semibold text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+						>
+							Zobacz galerię
 						</a>
 					</div>
 				</>

@@ -1,0 +1,91 @@
+---
+import { Image } from "astro:assets";
+import Layout from "../layouts/Layout.astro";
+import zdjecieProfilowe from "../assets/moje-zdjecie.jpg";
+
+// Strona „O mnie”: krótkie przedstawienie z okrągłym zdjęciem, „Na czym mi zależy” (kafelki),
+// pasek „W skrócie” i zaproszenie do kontaktu.
+// Zdjęcie to src/assets/moje-zdjecie.jpg — ten sam plik bierze Schema.astro (zdjęcie osoby dla Google).
+// Na stronie jest wycinane w koło, więc to, co ważne, musi być na środku kadru.
+
+const ZASADY = [
+	{ tytul: "Wierny kolor", opis: "Kolor dokładnie taki, jaki ma produkt naprawdę." },
+	{ tytul: "Czyste krawędzie i tło", opis: "Bez kurzu i rys, z równym białym tłem pod sklep internetowy." },
+	{
+		tytul: "Przed i po przy każdym zdjęciu",
+		opis: "W galerii każde zdjęcie ma wersję „przed”. Retusz to nie oszustwo, tylko druga połowa roboty.",
+	},
+	{ tytul: "Pokazuję tylko za zgodą", opis: "Zdjęcia klientów trafiają do galerii tylko wtedy, gdy się na to zgodzą." },
+];
+
+// Te same warunki są w najczęstszych pytaniach (NajczestszePytania.astro) i w krokach „Jak zamówić retusz”
+// (KROKI_ZAMOWIENIA w index.astro) — zmieniasz jedno miejsce, zmień wszystkie w tym samym commicie.
+const FAKTY = [
+	{ nazwa: "Gdzie", wartosc: "Poznań" },
+	{ nazwa: "Wycena", wartosc: "bezpłatna" },
+	{ nazwa: "Pliki", wartosc: "JPG w pełnej rozdzielczości" },
+	{ nazwa: "Poprawki", wartosc: "do 25% zdjęć w cenie" },
+];
+---
+
+<Layout
+	title="O mnie — Wiktor"
+	description="Wiktor Brzeziński — fotografia i retusz zdjęć produktowych w Poznaniu. Poznaj moje podejście: równe tło, czyste krawędzie, wierne kolory."
+	breadcrumbs={[{ name: "Strona główna", url: "/" }, { name: "O mnie", url: "/o-mnie/" }]}
+>
+	<div class="space-y-14 py-12">
+		<section class="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+			<Image
+				src={zdjecieProfilowe}
+				alt="Wiktor"
+				widths={[160, 320]}
+				sizes="10rem"
+				loading="eager"
+				class="size-32 shrink-0 rounded-full object-cover sm:size-40"
+			/>
+			<div class="space-y-3">
+				<h1 class="text-3xl font-bold text-ink">O mnie</h1>
+				<p class="max-w-prose text-lg text-ink">
+					Cześć, mam na imię Wiktor. Zajmuję się fotografią produktową i retuszem — głównie zdjęcia do sklepów
+					internetowych i materiałów reklamowych.
+				</p>
+			</div>
+		</section>
+
+		<section aria-labelledby="zasady-naglowek" class="space-y-6">
+			<h2 id="zasady-naglowek" class="text-2xl font-bold text-ink">Na czym mi zależy</h2>
+			<ul class="grid gap-4 sm:grid-cols-2">
+				{ZASADY.map((zasada) => (
+					<li class="space-y-2 rounded-xl bg-card/60 p-6">
+						<span class="block h-1 w-10 rounded-full bg-accent" aria-hidden="true"></span>
+						<h3 class="pt-2 font-semibold text-ink">{zasada.tytul}</h3>
+						<p class="text-ink">{zasada.opis}</p>
+					</li>
+				))}
+			</ul>
+		</section>
+
+		<section aria-labelledby="fakty-naglowek" class="space-y-4">
+			<h2 id="fakty-naglowek" class="text-2xl font-bold text-ink">W skrócie</h2>
+			<dl class="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-line py-6 sm:grid-cols-4">
+				{FAKTY.map((fakt) => (
+					<div>
+						<dt class="text-sm text-muted">{fakt.nazwa}</dt>
+						<dd class="font-semibold text-ink">{fakt.wartosc}</dd>
+					</div>
+				))}
+			</dl>
+		</section>
+
+		<section aria-labelledby="kontakt-naglowek" class="space-y-4 rounded-xl bg-blok p-6 text-center sm:p-8">
+			<h2 id="kontakt-naglowek" class="text-2xl font-bold text-paper">Masz zdjęcia do obrobienia?</h2>
+			<p class="mx-auto max-w-prose text-blok-tekst">Jeśli chcesz pogadać o zleceniu albo po prostu o zdjęciach, napisz do mnie.</p>
+			<a
+				href="/kontakt/"
+				class="inline-block rounded-full bg-przycisk px-6 py-3 font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
+			>
+				Zapytaj o wycenę
+			</a>
+		</section>
+	</div>
+</Layout>

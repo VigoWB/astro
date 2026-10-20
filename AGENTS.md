@@ -121,7 +121,7 @@ scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
   start-preview-if-needed.mjs  uruchamia podgląd dla testów (Node, dziala tez na Windows)
 src/
-  assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.md i Schema.astro)
+  assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.astro i Schema.astro)
   assets/logo.svg          logo: nagłówek (Header.astro), stopka (Footer.astro) i znak wodny (sync-images.mjs)
   components/
     Header.astro           logo i menu: pasek u góry (telefon, tablet) albo pasek boczny (od lg)
@@ -143,7 +143,7 @@ src/
   lib/galeria.ts           wczytywanie zdjęć (adresy R2, wersje do lightboxa) — wspólne dla / i /galeria
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
-  pages/index.astro, galeria.astro, kontakt.astro, o-mnie.md, 404.astro
+  pages/index.astro, galeria.astro, kontakt.astro, o-mnie.astro, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
 tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
@@ -232,7 +232,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 - Dane bierze z `wczytajZdjecia()` (`src/lib/galeria.ts`), tak jak `/galeria`.
 - Para do suwaka: `wybierzBohatera()` szuka zdjęcia z `paraSuwaka: true`. Jeśli go nie ma, albo jego „przed”/„po” mają różne proporcje (tolerancja 2%, `proporcjeZgodne()`), build **nie przerywa się** — loguje ostrzeżenie (`console.warn`, widoczne przy `npm run build`) i pokazuje zastępcze zdjęcie z przełącznikiem „Pokaż przed” zamiast suwaka. Realny suwak wymaga pary w identycznym kadrze.
 - Sekcja „Wybrane prace”: `wybierzWyroznione()` bierze zdjęcia z `wyroznione: true` (max 6, bez zdjęcia użytego jako bohater). Gdy żadne nie jest oznaczone, tymczasowo pokazuje pierwsze zdjęcia z `galeria.json` (z ostrzeżeniem w logu) — żeby strona nie była pusta, zanim ktoś uruchomi `npm run sync-images -- --wyroznij`.
-- Sekcja „Jak zamówić retusz” (`KROKI_ZAMOWIENIA`): 4 kroki w `<ol>`. Te same warunki (przesyłanie plików, bezpłatna wycena, termin 5–7 dni, poprawki: uwagi w 7 dni, do 25% zdjęć) są w FAQ na `/kontakt/` (`NajczestszePytania.astro`). Zmieniasz jedno miejsce — zmień oba w tym samym commicie.
+- Sekcja „Jak zamówić retusz” (`KROKI_ZAMOWIENIA`): 4 kroki w `<ol>`. Te same warunki (przesyłanie plików, bezpłatna wycena, termin 5–7 dni, poprawki: uwagi w 7 dni, do 25% zdjęć) są w FAQ na `/kontakt/` (`NajczestszePytania.astro`), a część z nich (bezpłatna wycena, JPG w pełnej rozdzielczości, poprawki do 25% zdjęć) także w pasku „W skrócie” na `/o-mnie/` (`FAKTY` w `o-mnie.astro`). Zmieniasz jedno miejsce — zmień wszystkie w tym samym commicie.
 - Treść sekcji „Co poprawiam przy retuszu” (`PUNKTY_RETUSZU`) i zaproszenia do kontaktu to na razie tekst tymczasowy — do potwierdzenia.
 
 **PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` (tryb suwaka; połowa odsłonięta już w CSS, zanim zadziała skrypt) albo pokazywane w całości (`object-contain`) zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. W trybie suwaka widać tylko pionową linię z okrągłym uchwytem, etykiety „Przed” / „Po” w górnych rogach i podpowiedź „Przesuń linię, żeby porównać” na dole (`data-porownanie-podpowiedz`) — skrypt chowa ją (`opacity-0`) przy pierwszym ruchu linii myszą, palcem albo klawiaturą. Linię przeciąga się w dowolnym miejscu zdjęcia: zdarzenia `pointerdown` / `pointermove` / `pointerup` / `pointercancel` na kontenerze z `touch-pan-y touch-pinch-zoom`. Przeciąga jeden wskaźnik naraz (mysz albo pierwszy palec). Palcem linia rusza dopiero przy ruchu w poziomie (próg 8 px) albo po stuknięciu — ruch w pionie przewija stronę i linii nie przesuwa (zanim przeglądarka wyśle `pointercancel`, przychodzą jeszcze 1–2 `pointermove`, stąd sprawdzanie kierunku), a dwoma palcami można powiększyć zdjęcie. Przeciąganie myszą i palcem sprawdza `tests/suwak.spec.ts`. Pod spodem zostaje `<input type="range">` z klasą `sr-only` (`data-porownanie-suwak`): obsługuje klawiaturę (strzałki) i czytniki ekranu, a jego wartość steruje linią (skrypt dopisuje `aria-valuetext`, np. „50% zdjęcia przed retuszem, 50% po retuszu”, żeby czytnik nie czytał samej liczby); fokus z klawiatury widać jako obwódkę na uchwycie (`group-has-[input:focus-visible]:ring-2`). Nie usuwaj tego suwaka i nie rób go widocznym — opiera się na nim test dostępności w `tests/a11y.spec.ts`. Pozycję linii i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.

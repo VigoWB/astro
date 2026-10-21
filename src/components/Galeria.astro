@@ -32,7 +32,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 				type="button"
 				data-filter={kat}
 				data-testid={`filter-${kat.toLowerCase()}`}
-				class={`px-4 py-2 rounded-full border-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-przycisk text-przycisk-tekst border-przycisk" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
+				class={`px-4 py-2 rounded-md border-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-przycisk text-przycisk-tekst border-przycisk" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
 				aria-pressed={kat === "Wszystkie"}
 			>
 				{kat}
@@ -68,7 +68,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		<button
 			id="load-more-btn"
 			type="button"
-			class="px-8 py-3 bg-przycisk text-przycisk-tekst font-semibold rounded-full hover:bg-przycisk-hover transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+			class="px-8 py-3 bg-przycisk text-przycisk-tekst font-semibold rounded-md hover:bg-przycisk-hover transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 			data-testid="load-more-btn"
 		>
 			Załaduj więcej (<span id="load-more-count" data-testid="load-more-count">{poczatkowoPozostalo}</span>)
@@ -78,7 +78,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-cien/90 p-4" role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia">
 	<!-- Zamykanie: koło 44 px jak strzałki niżej (sam znak × miał 17×30 px — za mały do trafienia palcem). -->
-	<button type="button" id="lightbox-close" class="absolute top-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-cien/70 text-paper transition-colors hover:bg-cien/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:top-4 sm:right-4" aria-label="Zamknij podgląd">
+	<button type="button" id="lightbox-close" class="absolute top-2 right-2 flex h-11 w-11 items-center justify-center rounded-md bg-cien/70 text-paper transition-colors hover:bg-cien/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:top-4 sm:right-4" aria-label="Zamknij podgląd">
 		<svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
 			<path d="M18 6 6 18M6 6l12 12" />
 		</svg>
@@ -92,7 +92,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		type="button"
 		id="lightbox-poprzednie"
 		data-testid="lightbox-poprzednie"
-		class="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cien/70 text-paper transition-colors hover:bg-cien/90 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:left-4"
+		class="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md bg-cien/70 text-paper transition-colors hover:bg-cien/90 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:left-4"
 		aria-label="Poprzednie zdjęcie"
 	>
 		<!-- Strzałki jako SVG, nie znaki ‹ › z czcionki: znak z czcionki siedział
@@ -105,7 +105,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		type="button"
 		id="lightbox-nastepne"
 		data-testid="lightbox-nastepne"
-		class="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-cien/70 text-paper transition-colors hover:bg-cien/90 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:right-4"
+		class="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md bg-cien/70 text-paper transition-colors hover:bg-cien/90 disabled:pointer-events-none disabled:opacity-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien sm:right-4"
 		aria-label="Następne zdjęcie"
 	>
 		<svg viewBox="0 0 24 24" class="size-7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -130,7 +130,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 				id="lightbox-przelacznik"
 				aria-pressed="false"
 				data-testid="lightbox-przelacznik"
-				class="hidden rounded-full border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
+				class="hidden rounded-md border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
 			>
 				Pokaż przed
 			</button>

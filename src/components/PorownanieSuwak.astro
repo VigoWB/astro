@@ -44,7 +44,7 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 
 <div
 	class:list={[
-		"group relative overflow-hidden rounded-sm bg-cien/5",
+		"group relative overflow-hidden rounded-lg bg-cien/5",
 		// touch-pan-y touch-pinch-zoom: palcem w poziomie przesuwa się linię, w pionie dalej przewija się strona,
 		// a dwoma palcami można powiększyć zdjęcie.
 		{ "cursor-ew-resize touch-pan-y touch-pinch-zoom select-none": pokazSuwak },
@@ -105,20 +105,20 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 				data-porownanie-suwak
 			/>
 			<span
-				class="pointer-events-none absolute left-3 top-3 rounded-full bg-cien/70 px-2.5 py-1 text-xs font-semibold text-paper"
+				class="pointer-events-none absolute left-3 top-3 rounded-sm bg-cien/70 px-2.5 py-1 text-xs font-semibold text-paper"
 				aria-hidden="true"
 			>
 				Przed
 			</span>
 			<span
-				class="pointer-events-none absolute right-3 top-3 rounded-full bg-cien/70 px-2.5 py-1 text-xs font-semibold text-paper"
+				class="pointer-events-none absolute right-3 top-3 rounded-sm bg-cien/70 px-2.5 py-1 text-xs font-semibold text-paper"
 				aria-hidden="true"
 			>
 				Po
 			</span>
 			{/* Podpowiedź na dole zdjęcia — znika (opacity-0) przy pierwszym ruchu linii: myszą, palcem albo klawiaturą. */}
 			<span
-				class="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-cien/70 px-3 py-1 text-xs font-semibold text-paper motion-safe:transition-opacity motion-safe:duration-300"
+				class="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-sm bg-cien/70 px-3 py-1 text-xs font-semibold text-paper motion-safe:transition-opacity motion-safe:duration-300"
 				aria-hidden="true"
 				data-porownanie-podpowiedz
 			>
@@ -144,7 +144,7 @@ const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
 			type="button"
 			aria-pressed="false"
 			data-porownanie-przelacznik
-			class="absolute bottom-3 right-3 rounded-full border-2 border-paper/50 bg-cien/70 px-4 py-1.5 text-sm font-semibold text-paper backdrop-blur-sm transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
+			class="absolute bottom-3 right-3 rounded-md border-2 border-paper/50 bg-cien/70 px-4 py-1.5 text-sm font-semibold text-paper backdrop-blur-sm transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
 		>
 			Pokaż przed
 		</button>

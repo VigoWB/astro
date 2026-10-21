@@ -128,17 +128,20 @@ const KROKI_ZAMOWIENIA = [
 						trybSuwaka={bohater.trybSuwaka}
 					/>
 					{/* Jeden główny przycisk (wypełniony) — zapytanie o wycenę; galeria jako drugi (obwódka).
-					    Na telefonie oba na całą szerokość, jeden pod drugim — obok siebie się nie mieszczą. */}
-					<div class="grid gap-3 sm:flex sm:flex-wrap sm:gap-4">
+					    Na telefonie oba na całą szerokość, jeden pod drugim — obok siebie się nie mieszczą.
+					    Od 640 px obok siebie i równej szerokości (dwie kolumny po szerokości dłuższego napisu).
+					    Oba mają obwódkę 2 px (główny w kolorze swojego tła), więc są tej samej wysokości
+					    co reszta przycisków (48 px), a napis stoi na środku. */}
+					<div class="grid gap-3 sm:w-fit sm:grid-cols-2 sm:gap-4">
 						<a
 							href="/kontakt/"
-							class="rounded-full bg-przycisk px-6 py-3 text-center font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+							class="rounded-md border-2 border-przycisk bg-przycisk px-6 py-2.5 text-center font-semibold text-przycisk-tekst transition-colors hover:border-przycisk-hover hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 						>
 							Zapytaj o wycenę
 						</a>
 						<a
 							href="/galeria/"
-							class="rounded-full border-2 border-ink/30 px-6 py-3 text-center font-semibold text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+							class="rounded-md border-2 border-ink/30 px-6 py-2.5 text-center font-semibold text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 						>
 							Zobacz galerię
 						</a>
@@ -150,7 +153,7 @@ const KROKI_ZAMOWIENIA = [
 		</section>
 
 		<!-- (2) Co poprawiam przy retuszu -->
-		<section aria-labelledby="retusz-naglowek" class="space-y-4 rounded-xl bg-blok p-6 sm:p-8">
+		<section aria-labelledby="retusz-naglowek" class="space-y-4 rounded-lg bg-blok p-6 sm:p-8">
 			<h2 id="retusz-naglowek" class="text-2xl font-bold text-paper">Co poprawiam przy retuszu</h2>
 			<ul class="grid gap-3 sm:grid-cols-2">
 				{PUNKTY_RETUSZU.map((punkt) => (
@@ -189,14 +192,14 @@ const KROKI_ZAMOWIENIA = [
 		</section>
 
 		<!-- (5) Zaproszenie do kontaktu -->
-		<section class="space-y-4 rounded-xl bg-blok p-6 text-center sm:p-8">
+		<section class="space-y-4 rounded-lg bg-blok p-6 text-center sm:p-8">
 			<h2 class="text-2xl font-bold text-paper">Masz zdjęcia do obrobienia?</h2>
 			<p class="mx-auto max-w-prose text-blok-tekst">
 				Napisz, jakie zdjęcia potrzebujesz obrobić — odpiszę z wyceną i terminem.
 			</p>
 			<a
 				href="/kontakt/"
-				class="inline-block rounded-full bg-przycisk px-6 py-3 font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
+				class="inline-block rounded-md bg-przycisk px-6 py-3 font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
 			>
 				Napisz do mnie
 			</a>

@@ -41,7 +41,7 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 <button
 	type="button"
 	class:list={[
-		"group mb-6 block w-full break-inside-avoid text-left rounded-sm cursor-zoom-in motion-safe:transition-[opacity,translate] motion-safe:duration-500 motion-safe:ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper border border-cien/10",
+		"group mb-6 block w-full break-inside-avoid overflow-hidden text-left rounded-md cursor-zoom-in motion-safe:transition-[opacity,translate] motion-safe:duration-500 motion-safe:ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper border border-cien/10",
 		// Pierwsza karta (priority = LCP) bez animacji wejścia — widoczna od razu, bez czekania na skrypt.
 		{ hidden: ukryta, "opacity-0 translate-y-6": !priority },
 	]}

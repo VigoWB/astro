@@ -14,7 +14,7 @@
 // Obsługujemy tylko zapytania do naszej domeny. Zdjęcia galerii Astro robi przy
 // buildzie do /_astro/, więc strona nie pobiera niczego z R2.
 
-const CACHE_NAME = 'foto-v13';
+const CACHE_NAME = 'foto-v14';
 const LIMIT_SIECI_MS = 4000;
 
 const OFFLINE_URL = '/offline.html';

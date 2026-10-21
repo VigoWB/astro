@@ -15,7 +15,7 @@ body {
 }
 .container { max-width: 400px; }
 h1 { font-size: 2rem; margin-bottom: 1rem; color: #072918; }
-p { color: #5a645c; margin-bottom: 1.5rem; line-height: 1.6; }
+p { color: #4a534c; margin-bottom: 1.5rem; line-height: 1.6; }
 .icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.7; }
 a { color: #2e6d43; text-decoration: none; font-weight: 600; }
 a:hover { text-decoration: underline; }

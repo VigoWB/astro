@@ -23,13 +23,15 @@
 	unicode-range: U+0104, U+0105, U+0106, U+0107, U+0118, U+0119, U+0141, U+0142, U+0143, U+0144, U+015A, U+015B, U+0179, U+017A, U+017B, U+017C;
 }
 
-/* Kontrast w komentarzach: tekst do tła, na którym stoi (WCAG AA wymaga min. 4,5:1).
+/* Kontrast w komentarzach: tekst do tła, na którym stoi (WCAG AA wymaga min. 4,5:1;
+   zwykły tekst trzymamy co najmniej 7:1 — na matowych i źle skalibrowanych ekranach
+   oraz przy cieńszym renderowaniu czcionek na Macu 5,7:1 wyglądało blado).
    Przy zmianie koloru: te same wartości są też w public/offline.css,
    public/manifest.webmanifest i SEO.astro (theme-color) — patrz AGENTS.md, sekcja 10. */
 @theme {
   --color-paper: #f6f6f3;          /* tło strony */
   --color-ink: #072918;            /* tekst — ciemna zieleń (14,48:1 na paper) */
-  --color-muted: #5a645c;          /* tekst drugoplanowy (5,68:1) */
+  --color-muted: #4a534c;          /* tekst drugoplanowy (7,37:1; na kafelku bg-card 6,74:1) */
   --color-card: #ddf1e1;           /* jasna szałwia — tło filtra po najechaniu */
   --color-accent: #2e6d43;         /* linki, aktywny link w menu, obwódka fokusu (5,73:1) */
   --color-line: #d4dbd5;           /* linia pod menu */

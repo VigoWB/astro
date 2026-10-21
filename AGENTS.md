@@ -203,7 +203,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 - Widoczny fokus przez `focus-visible:ring-2 focus-visible:ring-accent`; w ciemnym bloku `focus-visible:ring-przycisk focus-visible:ring-offset-blok`, a w lightboksie i na przyciskach leżących na zdjęciu `focus-visible:ring-przycisk focus-visible:ring-offset-cien` — `ring-accent` ma na ciemnym tle poniżej 3:1.
 - Szanuj `prefers-reduced-motion`: animacje przez `motion-safe:` albo sprawdzenie w skrypcie.
 - Semantyczny HTML: `<nav>`, `<main>`, `<article>`, `<footer>`, `<button type="button">`.
-- Kontrast tekstu do tła co najmniej 4.5:1.
+- Kontrast tekstu do tła co najmniej 4.5:1 (wymóg WCAG AA); zwykły tekst — także drugoplanowy `muted` — trzymamy co najmniej 7:1.
 
 **Obrazy**
 - `<Image>` / `<Picture>` z `astro:assets` z `width`, `height`, `loading="lazy"`, `decoding="async"`.

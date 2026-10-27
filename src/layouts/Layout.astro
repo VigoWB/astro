@@ -24,9 +24,11 @@ interface Props {
 	breadcrumbs?: SchemaProps["breadcrumbs"];
 	/** Załaduj skrypt Cloudflare Turnstile (tylko strona z formularzem). */
 	turnstile?: boolean;
+	/** Strona-szkic: noindex dla Google (patrz AGENTS.md, sekcja 10, „Ukryta podstrona”). */
+	bezIndeksowania?: boolean;
 }
 
-const { title, description, image, canonicalURL, zdjecia, breadcrumbs, turnstile } = Astro.props;
+const { title, description, image, canonicalURL, zdjecia, breadcrumbs, turnstile, bezIndeksowania } = Astro.props;
 const pageTitle = title ?? "Wiktor — Fotografia";
 const pageDescription = description ?? "Portfolio fotograficzne Wiktora.";
 
@@ -44,7 +46,7 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 		    przy podmianie na docelowy font. */}
 		<link rel="preload" href="/fonts/noto-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href="/fonts/noto-sans-polskie-znaki.woff2" as="font" type="font/woff2" crossorigin />
-		<SEO title={pageTitle} description={pageDescription} image={image} canonicalURL={canonicalURL} />
+		<SEO title={pageTitle} description={pageDescription} image={image} canonicalURL={canonicalURL} bezIndeksowania={bezIndeksowania} />
 		<Schema zdjecia={zdjecia} breadcrumbs={breadcrumbs} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="manifest" href="/manifest.webmanifest" />

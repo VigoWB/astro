@@ -13,6 +13,8 @@ interface Props {
   imageAlt?: string;
   /** Pełny URL kanoniczny. Jeśli nie podany, wyliczany z Astro.url + Astro.site. */
   canonicalURL?: string;
+  /** Strona-szkic, której Google ma nie indeksować (meta robots "noindex"). */
+  bezIndeksowania?: boolean;
 }
 
 const {
@@ -21,6 +23,7 @@ const {
   image = "/og-default.jpg",
   imageAlt = "Zdjęcia produktowe — retusz i obróbka",
   canonicalURL,
+  bezIndeksowania = false,
 } = Astro.props;
 
 // Wyliczenie kanonicznego URL-a na podstawie aktualnego adresu, jeśli nie podano ręcznie.
@@ -36,6 +39,7 @@ const obrazekOG = new URL(image, Astro.site);
 <title>{title}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={kanoniczny} />
+{bezIndeksowania && <meta name="robots" content="noindex" />}
 <meta name="theme-color" content="#f6f6f3" />
 
 <!-- Open Graph -->

@@ -1,0 +1,69 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// Strona „Oferta” (/oferta/) — SZKIC. Dopóki nie ma cen, jest ukryta: Google jej nie indeksuje
+// (`bezIndeksowania`), nie ma jej w sitemapie (STRONY_POZA_SITEMAPA w astro.config.mjs) ani w menu
+// (src/data/nav.ts). Pilnuje tego tests/oferta.spec.ts. Jak ją pokazać: AGENTS.md, sekcja 10
+// („Ukryta podstrona”).
+
+// Kwoty do uzupełnienia. Przedziały to te same, co w polu „Ile mniej więcej zdjęć” w formularzu
+// (PRZEDZIALY_ZDJEC w ContactForm.astro).
+const CENNIK = [
+	{ liczbaZdjec: "1–5 zdjęć", cena: "od … zł" },
+	{ liczbaZdjec: "6–20 zdjęć", cena: "od … zł" },
+	{ liczbaZdjec: "21–50 zdjęć", cena: "od … zł" },
+	{ liczbaZdjec: "Ponad 50 zdjęć", cena: "od … zł" },
+];
+---
+
+<Layout
+	title="Oferta i cennik — Wiktor"
+	description="Retusz zdjęć produktowych do sklepów internetowych i reklam: równe tło, czyste krawędzie, wierny kolor. Wycena jest bezpłatna i do niczego nie zobowiązuje."
+	breadcrumbs={[{ name: "Strona główna", url: "/" }, { name: "Oferta", url: "/oferta/" }]}
+	bezIndeksowania
+>
+	<div class="space-y-14 py-12">
+		<section class="space-y-3">
+			<h1 class="text-3xl font-bold text-ink">Oferta</h1>
+			<p class="max-w-prose text-lg text-muted">
+				Retuszuję zdjęcia produktów do sklepów internetowych i reklam: równe tło, czyste krawędzie i kolor taki, jaki produkt ma naprawdę.
+			</p>
+		</section>
+
+		<section aria-labelledby="cennik-naglowek" class="space-y-6">
+			<div class="space-y-2">
+				<h2 id="cennik-naglowek" class="text-2xl font-bold text-ink">Cennik</h2>
+				<p class="max-w-prose text-muted">
+					Cena zależy od liczby zdjęć i od tego, ile jest do poprawienia. Wycena jest bezpłatna i do niczego nie zobowiązuje.
+				</p>
+			</div>
+			<ul class="grid gap-4 sm:grid-cols-2">
+				{CENNIK.map((pozycja) => (
+					<li class="space-y-2 rounded-lg border border-line p-6">
+						<span class="block h-1 w-10 rounded-sm bg-przycisk" aria-hidden="true"></span>
+						<h3 class="pt-2 font-semibold text-ink">{pozycja.liczbaZdjec}</h3>
+						<p class="text-muted">
+							<span class="text-2xl font-bold text-ink">{pozycja.cena}</span> za zdjęcie
+						</p>
+					</li>
+				))}
+			</ul>
+			<p class="max-w-prose text-muted">
+				O tym, jak przesłać pliki, ile trwa retusz i ile poprawek jest w cenie, przeczytasz w <a href="/faq/" class="text-ink underline underline-offset-2 hover:decoration-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink">najczęstszych pytaniach</a>.
+			</p>
+		</section>
+
+		<section aria-labelledby="kontakt-naglowek" class="space-y-4 rounded-lg bg-blok p-6 text-center sm:p-8">
+			<h2 id="kontakt-naglowek" class="text-2xl font-bold text-paper">Masz zdjęcia do obrobienia?</h2>
+			<p class="mx-auto max-w-prose text-blok-tekst">
+				Napisz, co to za produkty i ile mniej więcej masz zdjęć, a odpiszę z wyceną i terminem.
+			</p>
+			<a
+				href="/kontakt/"
+				class="inline-block rounded-md bg-przycisk px-6 py-3 font-semibold text-ink transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
+			>
+				Zapytaj o wycenę
+			</a>
+		</section>
+	</div>
+</Layout>

@@ -144,8 +144,9 @@ src/
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, faq.astro, o-mnie.astro, 404.astro
+  pages/oferta.astro       szkic oferty — UKRYTY do czasu cen (sekcja 10, „Ukryta podstrona”)
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
+tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
@@ -243,7 +244,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 
 **Schema.astro:** zawsze `Person` i `ProfessionalService`. `ImageGallery` pojawia się, gdy strona przekaże `zdjecia`, a `BreadcrumbList`, gdy przekaże `breadcrumbs`. Dane pochodzą z `siteConfig.json`, a adresy są absolutne przez `Astro.site`.
 
-**SEO.astro:** canonical z propa albo z `Astro.url.pathname` + `Astro.site`. Obraz OG domyślnie `/og-default.jpg`. Locale `pl_PL`.
+**SEO.astro:** canonical z propa albo z `Astro.url.pathname` + `Astro.site`. Obraz OG domyślnie `/og-default.jpg`. Locale `pl_PL`. Prop `bezIndeksowania` (podawany przez `Layout`) dodaje `<meta name="robots" content="noindex">` — tylko dla stron-szkiców.
 
 ---
 
@@ -256,6 +257,13 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 2. Dodaj link w `src/data/nav.ts`: `navLinks` (menu i stopka) albo `linkiStopki` (tylko stopka).
 3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v4` → `foto-v5`).
 4. Dopisz adres do `STRONY` w `tests/pomocnicze.ts` (z tej listy korzystają testy dostępności i CSP) i do `url` w `lighthouserc.json`.
+
+**Ukryta podstrona (szkic, np. `/oferta/` przed podaniem cen):**
+1. Utwórz stronę jak wyżej, ale przekaż do `Layout` prop `bezIndeksowania` (Google jej nie indeksuje).
+2. Dopisz adres do `STRONY_POZA_SITEMAPA` w `astro.config.mjs` i do `STRONY` w `tests/pomocnicze.ts` (szkic też przechodzi testy dostępności i CSP).
+3. Bez linku w `nav.ts` ani z innych stron, bez wpisu w `public/sw.js` i w `lighthouserc.json` (Lighthouse obniża ocenę SEO za noindex). Pilnuje tego `tests/oferta.spec.ts`.
+
+Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA`, dodaj link w `nav.ts`, stronę w `public/sw.js` (i podbij `CACHE_NAME`) oraz w `lighthouserc.json`, a `tests/oferta.spec.ts` zmień tak, żeby sprawdzał link w menu i obecność w sitemapie.
 
 **Nowa zmienna środowiskowa:**
 1. Dodaj ją do `src/env.d.ts` (z opisem po polsku) i do `.env.example`.

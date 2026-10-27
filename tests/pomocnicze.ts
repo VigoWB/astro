@@ -13,6 +13,7 @@ export const STRONY = [
 	'/o-mnie/',
 	'/kontakt/',
 	'/faq/',
+	'/oferta/', // szkic, ukryty — patrz tests/oferta.spec.ts
 	'/polityka-prywatnosci/',
 	'/offline.html',
 	'/ta-strona-na-pewno-nie-istnieje', // strona 404

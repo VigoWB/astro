@@ -56,8 +56,8 @@ const FAKTY = [
 			<h2 id="zasady-naglowek" class="text-2xl font-bold text-ink">Na czym mi zależy</h2>
 			<ul class="grid gap-4 sm:grid-cols-2">
 				{ZASADY.map((zasada) => (
-					<li class="space-y-2 rounded-lg bg-card/60 p-6">
-						<span class="block h-1 w-10 rounded-sm bg-accent" aria-hidden="true"></span>
+					<li class="space-y-2 rounded-lg border border-line p-6">
+						<span class="block h-1 w-10 rounded-sm bg-przycisk" aria-hidden="true"></span>
 						<h3 class="pt-2 font-semibold text-ink">{zasada.tytul}</h3>
 						<p class="text-ink">{zasada.opis}</p>
 					</li>
@@ -82,7 +82,7 @@ const FAKTY = [
 			<p class="mx-auto max-w-prose text-blok-tekst">Jeśli chcesz pogadać o zleceniu albo po prostu o zdjęciach, napisz do mnie.</p>
 			<a
 				href="/kontakt/"
-				class="inline-block rounded-md bg-przycisk px-6 py-3 font-semibold text-przycisk-tekst transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
+				class="inline-block rounded-md bg-przycisk px-6 py-3 font-semibold text-ink transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
 			>
 				Zapytaj o wycenę
 			</a>

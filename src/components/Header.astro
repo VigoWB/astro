@@ -31,7 +31,7 @@ const currentPath = Astro.url.pathname;
 				<a
 					href="/"
 					aria-label="balansbieli.pl — strona główna"
-					class="block rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+					class="block rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 				>
 					<Logo
 						class="h-20 w-auto motion-safe:transition-[height] motion-safe:duration-300 max-lg:group-data-zwiniety:h-11 lg:h-40"
@@ -49,8 +49,8 @@ const currentPath = Astro.url.pathname;
 									<a
 										href={link.href}
 										class={isActive
-											? "text-accent pointer-events-none"
-											: "hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
+											? "underline decoration-2 underline-offset-8 pointer-events-none"
+											: "underline-offset-8 decoration-ink/40 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
 										aria-current={isActive ? "page" : undefined}
 									>
 										{link.label}
@@ -64,7 +64,7 @@ const currentPath = Astro.url.pathname;
 				<button
 					type="button"
 					id="przycisk-menu"
-					class="relative -mr-1.5 h-11 w-11 md:hidden focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+					class="relative -mr-1.5 h-11 w-11 md:hidden focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 					aria-expanded="false"
 					aria-controls="menu-mobilne"
 					aria-label="Menu"
@@ -90,7 +90,7 @@ const currentPath = Astro.url.pathname;
 								<li>
 									<a
 										href={link.href}
-										class={`block py-3 hover:text-accent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "text-accent" : ""}`}
+										class={`block py-3 underline-offset-8 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${isActive ? "underline decoration-2" : "decoration-ink/40 hover:underline"}`}
 										aria-current={isActive ? "page" : undefined}
 									>
 										{link.label}

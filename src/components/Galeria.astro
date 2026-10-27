@@ -32,7 +32,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 				type="button"
 				data-filter={kat}
 				data-testid={`filter-${kat.toLowerCase()}`}
-				class={`px-4 py-2 rounded-md border-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-przycisk text-przycisk-tekst border-przycisk" : "bg-paper text-ink border-ink/30 hover:bg-card hover:border-accent"}`}
+				class={`px-4 py-2 rounded-md border-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${kat === "Wszystkie" ? "bg-przycisk text-ink border-przycisk" : "bg-paper text-ink border-ink/30 hover:border-ink"}`}
 				aria-pressed={kat === "Wszystkie"}
 			>
 				{kat}
@@ -68,7 +68,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		<button
 			id="load-more-btn"
 			type="button"
-			class="px-8 py-3 bg-przycisk text-przycisk-tekst font-semibold rounded-md hover:bg-przycisk-hover transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+			class="px-8 py-3 bg-przycisk text-ink font-semibold rounded-md hover:bg-przycisk-hover transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 			data-testid="load-more-btn"
 		>
 			Załaduj więcej (<span id="load-more-count" data-testid="load-more-count">{poczatkowoPozostalo}</span>)
@@ -130,7 +130,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 				id="lightbox-przelacznik"
 				aria-pressed="false"
 				data-testid="lightbox-przelacznik"
-				class="hidden rounded-md border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-przycisk-tekst"
+				class="hidden rounded-md border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-ink"
 			>
 				Pokaż przed
 			</button>
@@ -258,8 +258,8 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		}
 	});
 
-	const KLASY_AKTYWNY = ["bg-przycisk", "text-przycisk-tekst", "border-przycisk"];
-	const KLASY_NIEAKTYWNY = ["bg-paper", "text-ink", "border-ink/30", "hover:bg-card", "hover:border-accent"];
+	const KLASY_AKTYWNY = ["bg-przycisk", "text-ink", "border-przycisk"];
+	const KLASY_NIEAKTYWNY = ["bg-paper", "text-ink", "border-ink/30", "hover:border-ink"];
 
 	przyciskiFiltrow.forEach((btn) => {
 		btn.addEventListener("click", () => {

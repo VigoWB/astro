@@ -17,5 +17,5 @@ body {
 h1 { font-size: 2rem; margin-bottom: 1rem; color: #072918; }
 p { color: #4a534c; margin-bottom: 1.5rem; line-height: 1.6; }
 .icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.7; }
-a { color: #2e6d43; text-decoration: none; font-weight: 600; }
-a:hover { text-decoration: underline; }
+a { color: #072918; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+a:hover { text-decoration-thickness: 2px; }

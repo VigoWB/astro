@@ -1,7 +1,7 @@
 ---
 import Container from "../components/ui/Container.astro";
 import Logo from "../assets/logo.svg";
-import { navLinks } from "../data/nav.ts";
+import { navLinks, linkiStopki } from "../data/nav.ts";
 
 const rok = new Date().getFullYear();
 
@@ -31,7 +31,7 @@ const klasyLinkuPrawnego =
 
       <nav aria-label="Nawigacja">
         <ul class="footer-nav-list">
-          {navLinks.map((link) => (
+          {[...navLinks, ...linkiStopki].map((link) => (
             <li>
               <a href={link.href} class={klasyLinku}>
                 {link.label}

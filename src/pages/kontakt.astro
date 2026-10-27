@@ -1,7 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import ContactForm from "../components/ContactForm.astro";
-import NajczestszePytania from "../components/NajczestszePytania.astro";
 
 // Skrypt Turnstile ładujemy tylko wtedy, gdy jest klucz — bez niego ContactForm i tak
 // nie pokazuje widżetu, więc skrypt byłby tylko zbędnym połączeniem z Cloudflare.
@@ -18,9 +17,8 @@ const turnstileWlaczony = Boolean(import.meta.env.PUBLIC_TURNSTILE_SITE_KEY);
         <h1 class="text-3xl font-bold text-ink">Kontakt</h1>
         <p class="mt-4 mb-8 max-w-prose text-muted">
             Masz zdjęcia do obrobienia albo pytanie o współpracę? Napisz kilka słów poniżej — odpiszę z wyceną i terminem.
-            Odpowiedzi na <a href="#pytania" class="text-ink underline underline-offset-2 hover:decoration-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink" data-testid="link-do-pytan">najczęstsze pytania</a> znajdziesz pod formularzem.
+            Odpowiedzi na <a href="/faq/" class="text-ink underline underline-offset-2 hover:decoration-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink" data-testid="link-do-pytan">najczęstsze pytania</a> znajdziesz na osobnej stronie.
         </p>
         <ContactForm />
-        <NajczestszePytania />
     </div>
 </Layout>

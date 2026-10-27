@@ -131,19 +131,19 @@ src/
     Galeria.astro          siatka, filtry, "Załaduj więcej", lightbox (używana też na / bez filtrów/"Załaduj więcej")
     PorownanieSuwak.astro  suwak przed/po (albo zastępczy przełącznik) na pierwszym ekranie /
     ContactForm.astro      formularz Formspree + walidacja + Turnstile
-    NajczestszePytania.astro  „Najczęstsze pytania” na /kontakt/, pod formularzem (treść pytań jest tutaj)
+    NajczestszePytania.astro  lista najczęstszych pytań na /faq/ (treść pytań jest tutaj)
     ui/Container.astro     tylko max-w-240 mx-auto px-4
     ui/Karta.astro         kafelek zdjęcia w galerii
     ui/Pytanie.astro       jedno rozwijane pytanie (<details>, bez JS), odpowiedź w slocie
   data/
     galeria.json           GENEROWANY, nie edytuj ręcznie
     kategorie.ts           lista kategorii LICZONA przy buildzie z galeria.json
-    nav.ts                 linki w menu
+    nav.ts                 linki w menu i w stopce (`navLinks`) oraz tylko w stopce (`linkiStopki`)
     siteConfig.json        dane osoby i firmy dla Schema/SEO, lista usług do formularza (`uslugi`)
   lib/galeria.ts           wczytywanie zdjęć (adresy R2, wersje do lightboxa) — wspólne dla / i /galeria
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
-  pages/index.astro, galeria.astro, kontakt.astro, o-mnie.astro, 404.astro
+  pages/index.astro, galeria.astro, kontakt.astro, faq.astro, o-mnie.astro, 404.astro
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
 tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
@@ -234,7 +234,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 - Dane bierze z `wczytajZdjecia()` (`src/lib/galeria.ts`), tak jak `/galeria`.
 - Para do suwaka: `wybierzBohatera()` szuka zdjęcia z `paraSuwaka: true`. Jeśli go nie ma, albo jego „przed”/„po” mają różne proporcje (tolerancja 2%, `proporcjeZgodne()`), build **nie przerywa się** — loguje ostrzeżenie (`console.warn`, widoczne przy `npm run build`) i pokazuje zastępcze zdjęcie z przełącznikiem „Pokaż przed” zamiast suwaka. Realny suwak wymaga pary w identycznym kadrze.
 - Sekcja „Wybrane prace”: `wybierzWyroznione()` bierze zdjęcia z `wyroznione: true` (max 6, bez zdjęcia użytego jako bohater). Gdy żadne nie jest oznaczone, tymczasowo pokazuje pierwsze zdjęcia z `galeria.json` (z ostrzeżeniem w logu) — żeby strona nie była pusta, zanim ktoś uruchomi `npm run sync-images -- --wyroznij`.
-- Sekcja „Jak zamówić retusz” (`KROKI_ZAMOWIENIA`): 4 kroki w `<ol>`. Te same warunki (przesyłanie plików, bezpłatna wycena, termin 5–7 dni, poprawki: uwagi w 7 dni, do 25% zdjęć) są w FAQ na `/kontakt/` (`NajczestszePytania.astro`), a część z nich (bezpłatna wycena, JPG w pełnej rozdzielczości, poprawki do 25% zdjęć) także w pasku „W skrócie” na `/o-mnie/` (`FAKTY` w `o-mnie.astro`). Zmieniasz jedno miejsce — zmień wszystkie w tym samym commicie.
+- Sekcja „Jak zamówić retusz” (`KROKI_ZAMOWIENIA`): 4 kroki w `<ol>`. Te same warunki (przesyłanie plików, bezpłatna wycena, termin 5–7 dni, poprawki: uwagi w 7 dni, do 25% zdjęć) są w najczęstszych pytaniach na `/faq/` (`NajczestszePytania.astro`), a część z nich (bezpłatna wycena, JPG w pełnej rozdzielczości, poprawki do 25% zdjęć) także w pasku „W skrócie” na `/o-mnie/` (`FAKTY` w `o-mnie.astro`). Zmieniasz jedno miejsce — zmień wszystkie w tym samym commicie.
 - Treść sekcji „Co poprawiam przy retuszu” (`PUNKTY_RETUSZU`) i zaproszenia do kontaktu to na razie tekst tymczasowy — do potwierdzenia.
 
 **PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` (tryb suwaka; połowa odsłonięta już w CSS, zanim zadziała skrypt) albo pokazywane w całości (`object-contain`) zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. W trybie suwaka widać tylko pionową linię z okrągłym uchwytem, etykiety „Przed” / „Po” w górnych rogach i podpowiedź „Przesuń linię, żeby porównać” na dole (`data-porownanie-podpowiedz`) — skrypt chowa ją (`opacity-0`) przy pierwszym ruchu linii myszą, palcem albo klawiaturą. Linię przeciąga się w dowolnym miejscu zdjęcia: zdarzenia `pointerdown` / `pointermove` / `pointerup` / `pointercancel` na kontenerze z `touch-pan-y touch-pinch-zoom`. Przeciąga jeden wskaźnik naraz (mysz albo pierwszy palec). Palcem linia rusza dopiero przy ruchu w poziomie (próg 8 px) albo po stuknięciu — ruch w pionie przewija stronę i linii nie przesuwa (zanim przeglądarka wyśle `pointercancel`, przychodzą jeszcze 1–2 `pointermove`, stąd sprawdzanie kierunku), a dwoma palcami można powiększyć zdjęcie. Przeciąganie myszą i palcem sprawdza `tests/suwak.spec.ts`. Pod spodem zostaje `<input type="range">` z klasą `sr-only` (`data-porownanie-suwak`): obsługuje klawiaturę (strzałki) i czytniki ekranu, a jego wartość steruje linią (skrypt dopisuje `aria-valuetext`, np. „50% zdjęcia przed retuszem, 50% po retuszu”, żeby czytnik nie czytał samej liczby); fokus z klawiatury widać jako obwódkę na uchwycie (`group-has-[input:focus-visible]:ring-2`). Nie usuwaj tego suwaka i nie rób go widocznym — opiera się na nim test dostępności w `tests/a11y.spec.ts`. Pozycję linii i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.
@@ -253,7 +253,7 @@ images/DSC_1234.jpg (+ opcjonalnie przed_DSC_1234.jpg; ta sama zasada dla nazw z
 
 **Nowa podstrona:**
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
-2. Dodaj link w `src/data/nav.ts`.
+2. Dodaj link w `src/data/nav.ts`: `navLinks` (menu i stopka) albo `linkiStopki` (tylko stopka).
 3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v4` → `foto-v5`).
 4. Dopisz adres do `STRONY` w `tests/pomocnicze.ts` (z tej listy korzystają testy dostępności i CSP) i do `url` w `lighthouserc.json`.
 

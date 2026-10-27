@@ -1,17 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { podstawAtrapeTurnstile } from './pomocnicze';
 
-// Najczęstsze pytania na /kontakt/ (src/components/NajczestszePytania.astro): rozwijane
-// <details>/<summary>, bez JavaScriptu. Dostępność i CSP tej strony sprawdzają a11y.spec.ts
-// i csp.spec.ts; tu sprawdzamy, że pytania faktycznie się rozwijają i że link do nich działa.
+// Najczęstsze pytania na /faq/ (src/pages/faq.astro, treść w src/components/NajczestszePytania.astro):
+// rozwijane <details>/<summary>, bez JavaScriptu. Dostępność i CSP tej strony sprawdzają a11y.spec.ts
+// i csp.spec.ts; tu sprawdzamy, że pytania się rozwijają i że prowadzą do nich linki ze strony kontaktu i ze stopki.
 
 test.describe('Najczęstsze pytania', () => {
-	test.beforeEach(async ({ page }) => {
-		await podstawAtrapeTurnstile(page);
-		await page.goto('/kontakt/');
-	});
-
 	test('pytania są zwinięte i rozwijają się z klawiatury', async ({ page }) => {
+		await page.goto('/faq/');
 		const pytania = page.getByTestId('pytanie');
 		await expect(pytania).not.toHaveCount(0);
 
@@ -29,10 +25,19 @@ test.describe('Najczęstsze pytania', () => {
 		await expect(odpowiedz).toBeHidden();
 	});
 
-	test('link „najczęstsze pytania” pod nagłówkiem przewija do sekcji z pytaniami', async ({ page }) => {
-		const naglowek = page.getByRole('heading', { name: 'Najczęstsze pytania' });
+	test('link „najczęstsze pytania” na stronie kontaktu prowadzi na /faq/', async ({ page }) => {
+		await podstawAtrapeTurnstile(page);
+		await page.goto('/kontakt/');
 		await page.getByTestId('link-do-pytan').click();
-		await expect(page).toHaveURL(/#pytania$/);
-		await expect(naglowek).toBeInViewport();
+		await expect(page).toHaveURL(/\/faq\/$/);
+		await expect(page.getByRole('heading', { level: 1, name: 'Najczęstsze pytania' })).toBeVisible();
+	});
+
+	test('stopka ma link do najczęstszych pytań', async ({ page }) => {
+		await page.goto('/');
+		await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Najczęstsze pytania' })).toHaveAttribute(
+			'href',
+			'/faq/'
+		);
 	});
 });

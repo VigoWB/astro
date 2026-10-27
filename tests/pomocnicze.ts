@@ -12,6 +12,7 @@ export const STRONY = [
 	'/galeria/',
 	'/o-mnie/',
 	'/kontakt/',
+	'/faq/',
 	'/polityka-prywatnosci/',
 	'/offline.html',
 	'/ta-strona-na-pewno-nie-istnieje', // strona 404

@@ -1,67 +1,63 @@
 ---
-// NajczestszePytania.astro — sekcja „Najczęstsze pytania” na stronie /kontakt/, pod formularzem.
+// NajczestszePytania.astro — lista najczęstszych pytań na stronie /faq/ (src/pages/faq.astro).
 // Każde pytanie to komponent ui/Pytanie.astro (rozwijany <details>, bez JavaScriptu).
-// Zmiana treści = edycja tekstu poniżej. Link „najczęstsze pytania” w kontakt.astro
-// prowadzi tu przez id="pytania".
+// Zmiana treści = edycja tekstu poniżej. Nagłówek strony i zaproszenie do kontaktu są w faq.astro.
 import Pytanie from "./ui/Pytanie.astro";
 
 const klasaLinku =
 	"text-ink underline underline-offset-2 hover:decoration-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink";
 ---
 
-<section id="pytania" aria-labelledby="pytania-naglowek" class="mt-16 max-w-prose scroll-mt-20">
-	<h2 id="pytania-naglowek" class="text-2xl font-bold text-ink">Najczęstsze pytania</h2>
-	<div class="mt-4 border-t border-ink/10">
-		<Pytanie pytanie="Ile kosztuje retusz?">
-			<p>
-				Cena zależy od liczby zdjęć i od tego, ile jest do poprawienia. Napisz, co to za produkty i ile mniej więcej
-				masz zdjęć, a odpiszę z wyceną i terminem. Wycena jest bezpłatna i do niczego nie zobowiązuje.
-			</p>
-		</Pytanie>
+<div class="max-w-prose border-t border-ink/10">
+	<Pytanie pytanie="Ile kosztuje retusz?">
+		<p>
+			Cena zależy od liczby zdjęć i od tego, ile jest do poprawienia. Napisz, co to za produkty i ile mniej więcej
+			masz zdjęć, a odpiszę z wyceną i terminem. Wycena jest bezpłatna i do niczego nie zobowiązuje.
+		</p>
+	</Pytanie>
 
-		<Pytanie pytanie="Jakie pliki mam przesłać?">
-			<p>
-				Najlepiej RAW prosto z aparatu, bo z niego najwięcej wyciągnę przy kolorze i świetle. Przyjmę też TIFF albo
-				JPG, ale JPG jest już skompresowany. Część szczegółów przepadła przy zapisie, więc trudniej coś z niego
-				wyciągnąć.
-			</p>
-		</Pytanie>
+	<Pytanie pytanie="Jakie pliki mam przesłać?">
+		<p>
+			Najlepiej RAW prosto z aparatu, bo z niego najwięcej wyciągnę przy kolorze i świetle. Przyjmę też TIFF albo
+			JPG, ale JPG jest już skompresowany. Część szczegółów przepadła przy zapisie, więc trudniej coś z niego
+			wyciągnąć.
+		</p>
+	</Pytanie>
 
-		<Pytanie pytanie="Jak przesłać duże pliki?">
-			<p>
-				Formularz na stronie nie przyjmuje załączników.
-				Pliki wyślij przez <a href="https://www.swisstransfer.com/" class={klasaLinku}>SwissTransfer</a>: jest darmowy,
-				nie trzeba zakładać konta, a jedna paczka może mieć do 50 GB. Ustaw dostępność na kilka dni, żebym zdążył je pobrać,
-				a link wklej w formularzu, w pole „Link do plików”.
-			</p>
-			<p>Może to być też link z Dysku Google. Wtedy ustaw dostęp „Każda osoba mająca link”.</p>
-		</Pytanie>
+	<Pytanie pytanie="Jak przesłać duże pliki?">
+		<p>
+			Formularz na stronie nie przyjmuje załączników.
+			Pliki wyślij przez <a href="https://www.swisstransfer.com/" class={klasaLinku}>SwissTransfer</a>: jest darmowy,
+			nie trzeba zakładać konta, a jedna paczka może mieć do 50 GB. Ustaw dostępność na kilka dni, żebym zdążył je pobrać,
+			a link wklej w formularzu, w pole „Link do plików”.
+		</p>
+		<p>Może to być też link z Dysku Google. Wtedy ustaw dostęp „Każda osoba mająca link”.</p>
+	</Pytanie>
 
-		<Pytanie pytanie="Ile trwa retusz?">
-			<p>
-				Zwykle 5–7 dni roboczych od zaakceptowania wyceny. Dokładny termin podam w wycenie, bo zależy od liczby zdjęć
-				i zakresu poprawek. Jeśli potrzebujesz zdjęć na konkretny dzień, napisz o tym od razu.
-			</p>
-		</Pytanie>
+	<Pytanie pytanie="Ile trwa retusz?">
+		<p>
+			Zwykle 5–7 dni roboczych od zaakceptowania wyceny. Dokładny termin podam w wycenie, bo zależy od liczby zdjęć
+			i zakresu poprawek. Jeśli potrzebujesz zdjęć na konkretny dzień, napisz o tym od razu.
+		</p>
+	</Pytanie>
 
-		<Pytanie pytanie="W jakiej formie dostanę gotowe zdjęcia?">
-			<p>
-				Jako JPG w pełnej rozdzielczości, odesłane linkiem przez SwissTransfer. Jeśli potrzebujesz innego formatu
-				albo konkretnych wymiarów, na przykład pod sklep internetowy, napisz o tym przy zamówieniu.
-			</p>
-		</Pytanie>
+	<Pytanie pytanie="W jakiej formie dostanę gotowe zdjęcia?">
+		<p>
+			Jako JPG w pełnej rozdzielczości, odesłane linkiem przez SwissTransfer. Jeśli potrzebujesz innego formatu
+			albo konkretnych wymiarów, na przykład pod sklep internetowy, napisz o tym przy zamówieniu.
+		</p>
+	</Pytanie>
 
-		<Pytanie pytanie="Ile poprawek jest w cenie?">
-			<p>
-				Jedna runda poprawek. Jeśli po odbiorze coś Ci nie pasuje, w ciągu 7 dni wypisz wszystkie uwagi do zdjęć
-				w jednej wiadomości. Bez dopłaty poprawię do 25% zdjęć z zamówienia (zawsze co najmniej jedno). Kolejne
-				poprawki, uwagi przysłane po 7 dniach i zmiany spoza tego, co ustaliliśmy w wycenie, na przykład inne tło,
-				wycenię osobno.
-			</p>
-		</Pytanie>
+	<Pytanie pytanie="Ile poprawek jest w cenie?">
+		<p>
+			Jedna runda poprawek. Jeśli po odbiorze coś Ci nie pasuje, w ciągu 7 dni wypisz wszystkie uwagi do zdjęć
+			w jednej wiadomości. Bez dopłaty poprawię do 25% zdjęć z zamówienia (zawsze co najmniej jedno). Kolejne
+			poprawki, uwagi przysłane po 7 dniach i zmiany spoza tego, co ustaliliśmy w wycenie, na przykład inne tło,
+			wycenię osobno.
+		</p>
+	</Pytanie>
 
-		<Pytanie pytanie="Czy pokażesz moje zdjęcia w galerii?">
-			<p>Tylko jeśli się zgodzisz.</p>
-		</Pytanie>
-	</div>
-</section>
+	<Pytanie pytanie="Czy pokażesz moje zdjęcia w galerii?">
+		<p>Tylko jeśli się zgodzisz.</p>
+	</Pytanie>
+</div>

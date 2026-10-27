@@ -1,0 +1,34 @@
+---
+import Layout from "../layouts/Layout.astro";
+import NajczestszePytania from "../components/NajczestszePytania.astro";
+
+// Strona „Najczęstsze pytania” (/faq/). Treść pytań jest w NajczestszePytania.astro.
+// Linki do tej strony: w stopce (linkiStopki w src/data/nav.ts) i pod nagłówkiem na /kontakt/.
+---
+
+<Layout
+	title="Najczęstsze pytania — Wiktor"
+	description="Ile kosztuje retusz zdjęć produktowych, jakie pliki przesłać, ile to trwa i ile poprawek jest w cenie. Odpowiedzi na pytania przed zamówieniem."
+	breadcrumbs={[{ name: "Strona główna", url: "/" }, { name: "Najczęstsze pytania", url: "/faq/" }]}
+>
+	<div class="space-y-14 py-12">
+		<section class="space-y-6">
+			<div class="space-y-3">
+				<h1 class="text-3xl font-bold text-ink">Najczęstsze pytania</h1>
+				<p class="max-w-prose text-lg text-muted">Tu znajdziesz odpowiedzi na pytania o cenę, pliki, termin i poprawki.</p>
+			</div>
+			<NajczestszePytania />
+		</section>
+
+		<section aria-labelledby="kontakt-naglowek" class="space-y-4 rounded-lg bg-blok p-6 text-center sm:p-8">
+			<h2 id="kontakt-naglowek" class="text-2xl font-bold text-paper">Nie ma tu Twojego pytania?</h2>
+			<p class="mx-auto max-w-prose text-blok-tekst">Zadaj je przez formularz kontaktowy, odpiszę.</p>
+			<a
+				href="/kontakt/"
+				class="inline-block rounded-md bg-przycisk px-6 py-3 font-semibold text-ink transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
+			>
+				Napisz do mnie
+			</a>
+		</section>
+	</div>
+</Layout>

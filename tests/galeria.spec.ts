@@ -160,6 +160,44 @@ test.describe('Galeria', () => {
 		}
 	});
 
+	// Odstęp (w px) między najniżej położoną widoczną kartą a stopką.
+	async function odstepOdStopki(page: Page): Promise<number> {
+		return page.evaluate(() => {
+			const dolKart = Math.max(
+				...Array.from(document.querySelectorAll<HTMLElement>('[data-gallery-item]'))
+					.filter((karta) => karta.getClientRects().length > 0)
+					.map((karta) => karta.getBoundingClientRect().bottom)
+			);
+			return document.querySelector('footer')!.getBoundingClientRect().top - dolKart;
+		});
+	}
+
+	// Odstęp nad stopką dawał kiedyś tylko margines przycisku "Załaduj więcej" — znikał razem z nim.
+	// Ograniczony ruch: karty stoją od razu na swoim miejscu (bez wjeżdżania z dołu), więc pomiar jest dokładny.
+	test('odstęp nad stopką zostaje, gdy po "Załaduj więcej" znika przycisk', async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: 'reduce' });
+		await page.reload();
+		const zaladujWiecej = page.getByTestId('load-more-btn');
+		test.skip(!(await zaladujWiecej.isVisible()), 'Za mało zdjęć, żeby przycisk "Załaduj więcej" się pojawił');
+
+		while (await zaladujWiecej.isVisible()) {
+			await zaladujWiecej.click();
+		}
+		expect(await odstepOdStopki(page)).toBeGreaterThanOrEqual(40);
+	});
+
+	test('odstęp nad stopką zostaje po wybraniu filtra, w którym zdjęcia mieszczą się w jednej porcji', async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: 'reduce' });
+		await page.reload();
+		const porcja = await naStrone(page);
+		const kategoria = await kategoriaGdzie(page, (ile) => ile <= porcja);
+		test.skip(!kategoria, `Każda kategoria ma więcej niż ${porcja} zdjęć`);
+
+		await przyciskFiltra(page, kategoria).click();
+		await expect(page.getByTestId('load-more-container')).toBeHidden();
+		expect(await odstepOdStopki(page)).toBeGreaterThanOrEqual(40);
+	});
+
 	test('karty i miniatury naprawdę się pokazują po przewinięciu (animacja wejścia i wczytanie)', async ({ page }) => {
 		for (const karta of await widoczneKarty(page).all()) {
 			await karta.evaluate((el) => el.scrollIntoView({ block: 'center' }));

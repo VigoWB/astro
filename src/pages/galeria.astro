@@ -19,6 +19,10 @@ const zdjecia = await wczytajZdjecia();
 	zdjecia={zdjeciaDlaGoogle(zdjecia)}
 	breadcrumbs={[{ name: "Strona główna", url: "/" }, { name: "Galeria", url: "/galeria/" }]}
 >
-	<h1 class="text-3xl font-bold text-ink py-8">Galeria</h1>
-	<Galeria zdjecia={zdjecia} kategorie={kategorie} />
+	<!-- Odstęp nad stopką daje cała strona (pb-12, jak py-12 na innych stronach), a nie przycisk
+	     „Załaduj więcej” — ten znika po wczytaniu wszystkich zdjęć albo po wybraniu filtra z jedną porcją. -->
+	<div class="pb-12">
+		<h1 class="text-3xl font-bold text-ink py-8">Galeria</h1>
+		<Galeria zdjecia={zdjecia} kategorie={kategorie} />
+	</div>
 </Layout>

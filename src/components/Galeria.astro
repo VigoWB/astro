@@ -261,21 +261,71 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	const KLASY_AKTYWNY = ["bg-przycisk", "text-ink", "border-przycisk"];
 	const KLASY_NIEAKTYWNY = ["bg-paper", "text-ink", "border-ink/30", "hover:border-ink"];
 
-	przyciskiFiltrow.forEach((btn) => {
-		btn.addEventListener("click", () => {
-			aktywnyFiltr = btn.dataset.filter || "Wszystkie";
-			limit = NA_STRONE; // po zmianie filtra zaczynamy od pierwszej porcji
+	// Zmiana filtra: stan przycisków i to, które zdjęcia widać.
+	function ustawFiltr(nowyFiltr: string) {
+		aktywnyFiltr = nowyFiltr;
+		limit = NA_STRONE; // po zmianie filtra zaczynamy od pierwszej porcji
 
-			przyciskiFiltrow.forEach((b) => {
-				const aktywny = b.dataset.filter === aktywnyFiltr;
-				b.setAttribute("aria-pressed", String(aktywny));
-				// Zmieniamy też wygląd przycisku, żeby było widać, który filtr jest włączony.
-				b.classList.remove(...(aktywny ? KLASY_NIEAKTYWNY : KLASY_AKTYWNY));
-				b.classList.add(...(aktywny ? KLASY_AKTYWNY : KLASY_NIEAKTYWNY));
-			});
-
-			odswiez();
+		przyciskiFiltrow.forEach((b) => {
+			const aktywny = b.dataset.filter === aktywnyFiltr;
+			b.setAttribute("aria-pressed", String(aktywny));
+			// Zmieniamy też wygląd przycisku, żeby było widać, który filtr jest włączony.
+			b.classList.remove(...(aktywny ? KLASY_NIEAKTYWNY : KLASY_AKTYWNY));
+			b.classList.add(...(aktywny ? KLASY_AKTYWNY : KLASY_NIEAKTYWNY));
 		});
+
+		odswiez();
+	}
+
+	// --- Płynna zmiana filtra (View Transitions, wbudowane w przeglądarkę) ---
+	// Zdjęcia, które zostają, przesuwają się na nowe miejsca, reszta płynnie znika albo się pojawia,
+	// a przyciski filtrów płynnie zmieniają kolor. Przy prefers-reduced-motion i w przeglądarkach
+	// bez tej funkcji zmiana jest natychmiastowa, jak dawniej.
+	// Każdy element, który ma się przesuwać osobno, potrzebuje własnej nazwy (view-transition-name).
+	// Nadajemy ją tylko na czas przejścia, przez element.style — CSP blokuje tylko style= w HTML.
+	// Uwaga: przeglądarka zmienia stronę dopiero chwilę po kliknięciu (najpierw zapamiętuje stary
+	// widok), więc to, co zależy od nowego stanu, musi na niego poczekać (testy czekają na aria-pressed).
+	const stopka = document.querySelector<HTMLElement>("footer");
+	let ostatniePrzejscie: ViewTransition | null = null;
+
+	function nazwijDoPrzejscia(nazwij: boolean) {
+		[...wszystkieKarty, loadMoreContainer, stopka].forEach((el, i) => {
+			if (!el) return;
+			if (nazwij) el.style.setProperty("view-transition-name", `galeria-${i}`);
+			else el.style.removeProperty("view-transition-name");
+		});
+	}
+
+	function zmienFiltr(nowyFiltr: string) {
+		if (preferujeMniejRuchu || !("startViewTransition" in document)) {
+			ustawFiltr(nowyFiltr);
+			return;
+		}
+		nazwijDoPrzejscia(true);
+		const przejscie = document.startViewTransition(() => {
+			ustawFiltr(nowyFiltr);
+			// Karty, które dopiero się pokazują, od razu w pełni widoczne: pojawienie się załatwia
+			// przejście, a wjeżdżanie przy przewijaniu nałożyłoby się na nie.
+			nieodkryteWidoczne().forEach((el) => {
+				obserwator?.unobserve(el);
+				el.style.transitionProperty = "none";
+				el.classList.remove("opacity-0", "translate-y-6");
+			});
+		});
+		ostatniePrzejscie = przejscie;
+		const posprzataj = () => {
+			// Kliknięcie w trakcie przejścia zaczyna nowe — jego nazwy muszą zostać.
+			if (ostatniePrzejscie !== przejscie) return;
+			nazwijDoPrzejscia(false);
+			wszystkieKarty.forEach((el) => {
+				el.style.removeProperty("transition-property");
+			});
+		};
+		przejscie.finished.then(posprzataj, posprzataj);
+	}
+
+	przyciskiFiltrow.forEach((btn) => {
+		btn.addEventListener("click", () => zmienFiltr(btn.dataset.filter || "Wszystkie"));
 	});
 
 	// --- Płynne pojawienie się miniatury po wczytaniu (rozmycie → ostre) ---

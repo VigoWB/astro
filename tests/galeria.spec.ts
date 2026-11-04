@@ -90,6 +90,53 @@ test.describe('Galeria', () => {
 		await expect(page.getByTestId('load-more-count')).toHaveText(String(Math.max(wszystkie - porcja, 0)));
 	});
 
+	// Liczy wywołania document.startViewTransition w atrybucie data-przejscia na <html>.
+	async function liczPrzejscia(page: Page) {
+		await page.evaluate(() => {
+			if (!('startViewTransition' in document)) return;
+			const oryginal = document.startViewTransition.bind(document);
+			document.startViewTransition = (...argumenty: Parameters<Document['startViewTransition']>) => {
+				const html = document.documentElement;
+				html.dataset.przejscia = String(Number(html.dataset.przejscia ?? '0') + 1);
+				return oryginal(...argumenty);
+			};
+		});
+	}
+
+	test('zmiana filtra idzie płynnym przejściem (View Transitions), a po nim nic nie ma nazwy przejścia', async ({ page }) => {
+		const [kategoria] = await nazwyKategorii(page);
+		test.skip(!kategoria, 'W galerii nie ma jeszcze żadnej kategorii');
+		test.skip(!(await page.evaluate(() => 'startViewTransition' in document)), 'Przeglądarka bez View Transitions');
+		await liczPrzejscia(page);
+
+		await przyciskFiltra(page, kategoria).click();
+		await expect(przyciskFiltra(page, kategoria)).toHaveAttribute('aria-pressed', 'true');
+		await expect(page.locator('html')).toHaveAttribute('data-przejscia', '1');
+		// Nazwy (view-transition-name) są potrzebne tylko w trakcie przejścia — potem znikają.
+		await expect
+			.poll(() =>
+				page.evaluate(
+					() =>
+						Array.from(document.querySelectorAll<HTMLElement>('[style]')).filter((el) =>
+							el.style.getPropertyValue('view-transition-name')
+						).length
+				)
+			)
+			.toBe(0);
+	});
+
+	test('przy ograniczonym ruchu filtr zmienia się od razu, bez przejścia', async ({ page }) => {
+		const [kategoria] = await nazwyKategorii(page);
+		test.skip(!kategoria, 'W galerii nie ma jeszcze żadnej kategorii');
+		await page.emulateMedia({ reducedMotion: 'reduce' });
+		await page.reload();
+		await liczPrzejscia(page);
+
+		await przyciskFiltra(page, kategoria).click();
+		await expect(przyciskFiltra(page, kategoria)).toHaveAttribute('aria-pressed', 'true');
+		expect(await page.locator('html').getAttribute('data-przejscia')).toBeNull();
+	});
+
 	test('"Załaduj więcej": pokazuje kolejną porcję zdjęć, a licznik zgadza się z rzeczywistością', async ({ page }) => {
 		const porcja = await naStrone(page);
 		const wszystkie = await karty(page).count();

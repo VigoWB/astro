@@ -136,6 +136,8 @@ test('CSP: galeria – filtr, "Załaduj więcej", lightbox z "Pokaż przed" i pr
 	if ((await kategoria.count()) > 0) {
 		await kategoria.click();
 		await page.locator('[data-filter="Wszystkie"]').click();
+		// Zmiana filtra idzie płynnym przejściem — nowy stan (i przycisk niżej) jest chwilę po kliknięciu.
+		await expect(page.locator('[data-filter="Wszystkie"]')).toHaveAttribute('aria-pressed', 'true');
 	}
 	const zaladujWiecej = page.getByTestId('load-more-btn');
 	if (await zaladujWiecej.isVisible()) {

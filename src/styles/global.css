@@ -26,7 +26,7 @@
 /* Paleta z czterech ról (wybór Wiktora 27.10, wariant A):
      tło — paper, tekst — ink, akcent — przycisk (szałwia), tekst na akcencie — ink.
    Reszta to odcienie pomocnicze, nie nowe kolory: muted i line (szarozielone, do drugiego planu
-   i linii), blok i blok-tekst (ciemna sekcja = kolor tekstu jako tło), cien (neutralna ciemność
+   i linii), blok i blok-tekst (ciemna stopka = kolor tekstu jako tło), cien (neutralna ciemność
    na zdjęciach), error i success (komunikaty formularza). Linki, aktywne menu i obwódka fokusu
    są w kolorze tekstu (ink) — wyróżnia je podkreślenie, a nie osobna zieleń.
    Kontrast w komentarzach: tekst do tła, na którym stoi (WCAG AA wymaga min. 4,5:1;
@@ -41,8 +41,8 @@
   --color-przycisk-hover: #97c9a3; /* akcent po najechaniu (napis ink 8,36:1) */
   --color-muted: #4a534c;          /* tekst drugoplanowy (7,37:1) */
   --color-line: #d4dbd5;           /* linie i obwódki kafelków (ozdobne) */
-  --color-blok: #072918;           /* ciemna sekcja: „Co poprawiam”, zaproszenie, stopka (ten sam kolor co ink) */
-  --color-blok-tekst: #bfcdc4;     /* zwykły tekst w ciemnej sekcji (9,52:1) */
+  --color-blok: #072918;           /* ciemna sekcja: tylko stopka (ten sam kolor co ink) */
+  --color-blok-tekst: #bfcdc4;     /* zwykły tekst w stopce (9,52:1) */
   --color-cien: #171512;           /* neutralna ciemność na zdjęciach i za lightboxem */
   --color-error: #c10007;          /* komunikaty błędów (5,93:1) */
   --color-success: #016630;        /* komunikat sukcesu (6,59:1) */
@@ -53,7 +53,7 @@
   --radius-*: initial;
   --radius-sm: 4px;   /* małe: etykiety na zdjęciach, obwódka fokusu wokół logo */
   --radius-md: 8px;   /* przyciski, pola formularza, filtry, miniatury */
-  --radius-lg: 12px;  /* duże powierzchnie: ciemne bloki, kafelki, suwak przed/po */
+  --radius-lg: 12px;  /* duże powierzchnie: kafelki i sekcje z obwódką, suwak przed/po */
 }
 
 html,body {

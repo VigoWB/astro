@@ -153,11 +153,11 @@ const KROKI_ZAMOWIENIA = [
 		</section>
 
 		<!-- (2) Co poprawiam przy retuszu -->
-		<section aria-labelledby="retusz-naglowek" class="space-y-4 rounded-lg bg-blok p-6 sm:p-8">
-			<h2 id="retusz-naglowek" class="text-2xl font-bold text-paper">Co poprawiam przy retuszu</h2>
+		<section aria-labelledby="retusz-naglowek" class="space-y-4 rounded-lg border border-line p-6 sm:p-8">
+			<h2 id="retusz-naglowek" class="text-2xl font-bold text-ink">Co poprawiam przy retuszu</h2>
 			<ul class="grid gap-3 sm:grid-cols-2">
 				{PUNKTY_RETUSZU.map((punkt) => (
-					<li class="flex items-start gap-2 text-blok-tekst">
+					<li class="flex items-start gap-2 text-ink">
 						<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-przycisk" aria-hidden="true"></span>
 						{punkt}
 					</li>
@@ -192,14 +192,14 @@ const KROKI_ZAMOWIENIA = [
 		</section>
 
 		<!-- (5) Zaproszenie do kontaktu -->
-		<section class="space-y-4 rounded-lg bg-blok p-6 text-center sm:p-8">
-			<h2 class="text-2xl font-bold text-paper">Masz zdjęcia do obrobienia?</h2>
-			<p class="mx-auto max-w-prose text-blok-tekst">
+		<section class="space-y-4 rounded-lg border border-line p-6 text-center sm:p-8">
+			<h2 class="text-2xl font-bold text-ink">Masz zdjęcia do obrobienia?</h2>
+			<p class="mx-auto max-w-prose text-muted">
 				Napisz, jakie zdjęcia potrzebujesz obrobić — odpiszę z wyceną i terminem.
 			</p>
 			<a
 				href="/kontakt/"
-				class="inline-block rounded-md bg-przycisk px-6 py-3 font-semibold text-ink transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-blok"
+				class="inline-block rounded-md bg-przycisk px-6 py-3 font-semibold text-ink transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 			>
 				Napisz do mnie
 			</a>

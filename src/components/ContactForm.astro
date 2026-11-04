@@ -79,34 +79,43 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 		<legend class="px-1 text-sm font-medium text-ink">
 			Szczegóły zlecenia <span class="font-normal text-muted">(nieobowiązkowe)</span>
 		</legend>
+		<!-- Listy wyboru mają własną strzałkę (SVG), a nie systemową: przeglądarki rysują ją różnie
+		     i przy samej krawędzi, bliżej niż napis „Wybierz” z lewej. appearance-none chowa systemową,
+		     pr-10 robi miejsce, żeby dłuższa opcja nie wchodziła pod strzałkę. -->
 		<div class="grid gap-4 sm:grid-cols-2">
 			{uslugi.length > 0 && (
 				<div class="flex flex-col gap-1.5">
 					<label for="kontakt-usluga" class="text-sm font-medium text-ink">Rodzaj usługi</label>
-					<select
-						id="kontakt-usluga"
-						name="usluga"
-						class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink"
-						data-testid="contact-usluga"
-					>
-						<option value="">Wybierz</option>
-						{uslugi.map((usluga) => <option value={usluga}>{usluga}</option>)}
-						<option value="Inne / jeszcze nie wiem">Inne / jeszcze nie wiem</option>
-					</select>
+					<div class="relative">
+						<select
+							id="kontakt-usluga"
+							name="usluga"
+							class="w-full appearance-none rounded-md border border-muted bg-paper py-2.5 pl-3 pr-10 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink"
+							data-testid="contact-usluga"
+						>
+							<option value="">Wybierz</option>
+							{uslugi.map((usluga) => <option value={usluga}>{usluga}</option>)}
+							<option value="Inne / jeszcze nie wiem">Inne / jeszcze nie wiem</option>
+						</select>
+						<svg class="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+					</div>
 				</div>
 			)}
 
 			<div class="flex flex-col gap-1.5">
 				<label for="kontakt-liczba-zdjec" class="text-sm font-medium text-ink">Ile mniej więcej zdjęć</label>
-				<select
-					id="kontakt-liczba-zdjec"
-					name="liczba_zdjec"
-					class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink"
-					data-testid="contact-liczba-zdjec"
-				>
-					<option value="">Wybierz</option>
-					{PRZEDZIALY_ZDJEC.map((przedzial) => <option value={przedzial}>{przedzial}</option>)}
-				</select>
+				<div class="relative">
+					<select
+						id="kontakt-liczba-zdjec"
+						name="liczba_zdjec"
+						class="w-full appearance-none rounded-md border border-muted bg-paper py-2.5 pl-3 pr-10 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink"
+						data-testid="contact-liczba-zdjec"
+					>
+						<option value="">Wybierz</option>
+						{PRZEDZIALY_ZDJEC.map((przedzial) => <option value={przedzial}>{przedzial}</option>)}
+					</select>
+					<svg class="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+				</div>
 			</div>
 
 			<div class="flex flex-col gap-1.5 sm:col-span-2">

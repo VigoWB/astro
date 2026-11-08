@@ -1,97 +1,5 @@
 [
   {
-    "nazwaPliku": "DSC_1111.jpg",
-    "opis": "Portret w zielonej tonacji",
-    "kategorie": [
-      "Portrety"
-    ],
-    "szerokosc": 2560,
-    "wysokosc": 1440,
-    "klucz": "zdjecia/DSC_1111.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_1111.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
-    "nazwaPliku": "DSC_1114.jpg",
-    "opis": "Kwadratowy kadr z pracowni w zieleni",
-    "kategorie": [
-      "Pracownia"
-    ],
-    "szerokosc": 1440,
-    "wysokosc": 1440,
-    "klucz": "zdjecia/DSC_1114.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_1114.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
-    "nazwaPliku": "DSC_1115.jpg",
-    "opis": "Kwadratowy kadr z pracowni, druga wersja w zieleni",
-    "kategorie": [
-      "Pracownia"
-    ],
-    "szerokosc": 1440,
-    "wysokosc": 1440,
-    "klucz": "zdjecia/DSC_1115.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_1115.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
-    "nazwaPliku": "DSC_1116.jpg",
-    "opis": "Kwadratowy kadr z pracowni w fiolecie",
-    "kategorie": [
-      "Pracownia"
-    ],
-    "szerokosc": 1440,
-    "wysokosc": 1440,
-    "klucz": "zdjecia/DSC_1116.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_1116.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
     "nazwaPliku": "DSC_4968-Edytuj.jpg",
     "opis": "Autoportret z kotem",
     "kategorie": [
@@ -182,6 +90,27 @@
       "make": "NIKON CORPORATION",
       "model": "NIKON D7500",
       "lensModel": "50.0 mm f/1.4"
+    }
+  },
+  {
+    "nazwaPliku": "październik_26_EDYCJA_DSC7102.jpg",
+    "opis": "",
+    "kategorie": [],
+    "szerokosc": 2000,
+    "wysokosc": 1327,
+    "klucz": "zdjecia/październik_26_EDYCJA_DSC7102.jpg",
+    "kluczPrzed": "zdjecia/październik_26_PRZED_DSC7102.jpg",
+    "wyroznione": false,
+    "paraSuwaka": false,
+    "exif": {
+      "iso": null,
+      "przyslona": null,
+      "ogniskowa": null,
+      "czasNaswietlania": null,
+      "dataWykonania": null,
+      "make": null,
+      "model": null,
+      "lensModel": null
     }
   },
   {

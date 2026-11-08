@@ -38,7 +38,7 @@ import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
 import piexif from 'piexifjs';
 import { readFile, readdir, mkdir, open, rename, rm } from 'node:fs/promises';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import readline from 'node:readline';
 
@@ -106,13 +106,33 @@ function kluczZnak(kluczR2) {
   return kluczR2.replace(/^zdjecia\//, 'znak/');
 }
 
-// Nazwa pliku "przed" dla danego pliku "po": "przed_" wchodzi tuż przed numerem "DSC",
-// więc DSC_1234.jpg → przed_DSC_1234.jpg, DSC_4968-Edytuj.jpg → przed_DSC_4968-Edytuj.jpg,
-// a wrzesien_26_EDYCJA_DSC7062.jpg → wrzesien_26_EDYCJA_przed_DSC7062.jpg.
-// Nazwa bez numeru "DSC" dostaje "przed_" na początku (jak dawniej).
-function nazwaWersjiPrzed(nazwaPliku) {
+// Możliwe nazwy pliku "przed" dla pliku "po". Działają dwa sposoby nazywania:
+// - obecny (od listopada 2026): "PRZED_" w miejscu "EDYCJA_", np.
+//   październik_26_EDYCJA_DSC7102.jpg → październik_26_PRZED_DSC7102.jpg;
+// - dawny: "przed_" tuż przed numerem "DSC", np. DSC_1234.jpg → przed_DSC_1234.jpg,
+//   DSC_4968-Edytuj.jpg → przed_DSC_4968-Edytuj.jpg,
+//   wrzesień_26_EDYCJA_DSC7062.jpg → wrzesień_26_EDYCJA_przed_DSC7062.jpg
+//   (nazwa bez numeru "DSC" dostaje "przed_" na początku).
+// Dawny sposób zostaje dla zdjęć już wgranych — --podmien znajdzie ich "przed" pod starą nazwą.
+function nazwyWersjiPrzed(nazwaPliku) {
+  const nazwy = [];
+  if (/EDYCJA_/i.test(nazwaPliku)) nazwy.push(nazwaPliku.replace(/EDYCJA_/i, 'PRZED_'));
   const zPrzed = nazwaPliku.replace(/(DSC_?\d)/i, 'przed_$1');
-  return zPrzed === nazwaPliku ? `przed_${nazwaPliku}` : zPrzed;
+  nazwy.push(zPrzed === nazwaPliku ? `przed_${nazwaPliku}` : zPrzed);
+  return nazwy;
+}
+
+// Plik "przed" dla pliku "po": nazwa pliku, który naprawdę leży w images/ (wielkość liter
+// bez znaczenia; klucz w R2 dostaje nazwę dokładnie taką jak na dysku). Gdy takiego pliku
+// nie ma — pierwsza nazwa z nazwyWersjiPrzed(), do komunikatu „nie ma pliku …”.
+function nazwaWersjiPrzed(nazwaPliku) {
+  const kandydaci = nazwyWersjiPrzed(nazwaPliku);
+  const pliki = existsSync(IMAGES_DIR) ? readdirSync(IMAGES_DIR) : [];
+  for (const kandydat of kandydaci) {
+    const plik = pliki.find((f) => f.toLowerCase() === kandydat.toLowerCase());
+    if (plik) return plik;
+  }
+  return kandydaci[0];
 }
 
 // --- Baza SQLite (wbudowana w Node; bez dodatkowej flagi działa od wersji 22.13) ---
@@ -236,7 +256,7 @@ async function odtworzZJson(db) {
       try {
         wstaw.run(
           z.nazwaPliku,
-          z.kluczPrzed ? nazwaWersjiPrzed(z.nazwaPliku) : null,
+          z.kluczPrzed ? z.kluczPrzed.replace(/^zdjecia\//, '') : null, // nazwa "przed" = klucz bez folderu (pasuje do każdego sposobu nazywania)
           z.opis ?? '',
           JSON.stringify(z.kategorie ?? []),
           z.szerokosc ?? null,
@@ -701,11 +721,14 @@ async function usunZR2(kluczR2) {
 // Pliki "przed", których skrypt nie sparuje z żadnym "po" — np. "po" ma dopisek "-Edytuj",
 // a "przed" nie. Bez tego ostrzeżenia zdjęcie trafiłoby na stronę po cichu bez wersji "przed".
 function ostrzezOPlikachPrzedBezPary(zdjecia, nazwyPo) {
-  const oczekiwane = new Set(nazwyPo.map((n) => nazwaWersjiPrzed(n).toLowerCase()));
+  const oczekiwane = new Set(nazwyPo.flatMap((n) => nazwyWersjiPrzed(n)).map((n) => n.toLowerCase()));
   for (const plik of zdjecia) {
     if (/przed_/i.test(plik) && !oczekiwane.has(plik.toLowerCase())) {
+      // Podpowiedź: dawny sposób ("przed_" na początku albo obok "EDYCJA_") — "po" to nazwa
+      // bez "przed_"; obecny — "EDYCJA_" w miejscu "PRZED_".
+      const pasujacePo = /^przed_|EDYCJA_/i.test(plik) ? plik.replace(/przed_/i, '') : plik.replace(/przed_/i, 'EDYCJA_');
       console.warn(
-        `⚠️  "${plik}" nie ma pary — pasowałoby do niego "po" o nazwie "${plik.replace(/przed_/i, '')}". ` +
+        `⚠️  "${plik}" nie ma pary — pasowałoby do niego "po" o nazwie "${pasujacePo}". ` +
         'Popraw nazwę jednego z plików (np. dopisek "-Edytuj"), inaczej zdjęcie trafi na stronę bez "przed".'
       );
     }

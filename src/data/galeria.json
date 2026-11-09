@@ -94,8 +94,10 @@
   },
   {
     "nazwaPliku": "październik_26_EDYCJA_DSC7102.jpg",
-    "opis": "",
-    "kategorie": [],
+    "opis": "Spinki.",
+    "kategorie": [
+      "Spinki"
+    ],
     "szerokosc": 2000,
     "wysokosc": 1327,
     "klucz": "zdjecia/październik_26_EDYCJA_DSC7102.jpg",

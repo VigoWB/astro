@@ -37,14 +37,39 @@ const { po, przed, opis, szerokoscOryginalu, wysokoscOryginalu, trybSuwaka } = A
 const pokazSuwak = trybSuwaka && Boolean(przed);
 const pokazPrzelacznik = !trybSuwaka && Boolean(przed);
 
+// Na komputerze (od lg = 1024 px) zdjęcie nie może być wyższe niż ekran minus to, co stoi nad nim
+// i pod nim (odstęp strony, nagłówek, zdanie, przyciski — razem ok. 18rem). Inaczej na laptopie
+// 1366×768 przycisk „Zapytaj o wycenę” wypada pod ekran. Wysokość ograniczamy przez szerokość:
+// szerokość ≤ wolna wysokość ekranu × proporcje zdjęcia (min. 24rem, żeby przy bardzo niskim oknie
+// zdjęcie nie zniknęło). Proporcje są znane dopiero przy buildzie, a CSP nie pozwala na style=
+// w HTML, więc wybieramy gotową klasę dla najbliższych typowych proporcji — nie szerszych niż
+// zdjęcie, dzięki czemu wysokość nigdy nie przekroczy wolnego miejsca. Tailwind musi widzieć
+// pełne nazwy klas w pliku, dlatego są wypisane, a nie składane. Na telefonie i tablecie bez zmian.
+const LIMITY_SZEROKOSCI: { proporcja: number; klasa: string }[] = [
+	{ proporcja: 16 / 9, klasa: "lg:max-w-[max(24rem,calc((100dvh-18rem)*1.778))]" },
+	{ proporcja: 3 / 2, klasa: "lg:max-w-[max(24rem,calc((100dvh-18rem)*1.5))]" },
+	{ proporcja: 4 / 3, klasa: "lg:max-w-[max(24rem,calc((100dvh-18rem)*1.333))]" },
+	{ proporcja: 5 / 4, klasa: "lg:max-w-[max(24rem,calc((100dvh-18rem)*1.25))]" },
+	{ proporcja: 1, klasa: "lg:max-w-[max(24rem,calc(100dvh-18rem))]" },
+	{ proporcja: 4 / 5, klasa: "lg:max-w-[max(20rem,calc((100dvh-18rem)*0.8))]" },
+	{ proporcja: 2 / 3, klasa: "lg:max-w-[max(18rem,calc((100dvh-18rem)*0.667))]" },
+	{ proporcja: 1 / 2, klasa: "lg:max-w-[max(16rem,calc((100dvh-18rem)*0.5))]" },
+];
+const proporcjaZdjecia = szerokoscOryginalu / wysokoscOryginalu;
+// Pierwsza (najszersza) pozycja, której proporcje nie przekraczają proporcji zdjęcia (2% luzu na zaokrąglenia).
+const limitSzerokosci =
+	LIMITY_SZEROKOSCI.find((l) => proporcjaZdjecia >= l.proporcja * 0.98) ?? LIMITY_SZEROKOSCI[LIMITY_SZEROKOSCI.length - 1];
+
 // Szerokość porównania NA STRONIE: kolumna Container (max-w-240 = 60rem minus px-4 z obu
-// stron = 58rem), węziej 100vw - 2rem. Nie "sizes" z lightboxa — tam limitem jest wysokość ekranu.
-const ROZMIAR_NA_STRONIE = "(min-width: 60rem) 58rem, calc(100vw - 2rem)";
+// stron = 58rem), węziej 100vw - 2rem. Od lg dodatkowo limit z wysokości ekranu (ten sam co
+// w klasie wyżej) — bez niego Chrome na laptopie ze skalowaniem 150% pobierał webp 1920 px zamiast 1280 px.
+const ROZMIAR_NA_STRONIE = `(min-width: 64rem) min(58rem, max(24rem, calc((100dvh - 18rem) * ${limitSzerokosci.proporcja.toFixed(3)}))), (min-width: 60rem) 58rem, calc(100vw - 2rem)`;
 ---
 
 <div
 	class:list={[
 		"group relative overflow-hidden rounded-lg bg-cien/5",
+		limitSzerokosci.klasa,
 		// touch-pan-y touch-pinch-zoom: palcem w poziomie przesuwa się linię, w pionie dalej przewija się strona,
 		// a dwoma palcami można powiększyć zdjęcie.
 		{ "cursor-ew-resize touch-pan-y touch-pinch-zoom select-none": pokazSuwak },

@@ -70,6 +70,42 @@ test('suwak: palcem — stuknięcie i ruch w poziomie przesuwają linię, przewi
 	expect(await pozycjaLinii(page)).toBeCloseTo(30, 0);
 });
 
+// Pierwszy ekran na komputerze (PorownanieSuwak.astro, klasa lg:max-w-…): zdjęcie dopasowuje się do wysokości
+// okna, żeby na laptopach (1366×768, 1536×864) cały suwak i przycisk „Zapytaj o wycenę” były widoczne bez
+// przewijania. Na dużym monitorze zdjęcie ma dalej pełną szerokość kolumny. Działa też z przełącznikiem
+// „Pokaż przed” (ten sam kontener); bez zdjęcia na pierwszym ekranie (pusta galeria) testy się pomijają.
+async function otworzPierwszyEkran(page: Page, szerokosc: number, wysokosc: number) {
+	await page.setViewportSize({ width: szerokosc, height: wysokosc });
+	await page.goto('/');
+	test.skip((await page.locator('[data-porownanie]').count()) === 0, 'Brak zdjęcia na pierwszym ekranie — galeria jest pusta');
+}
+
+test('pierwszy ekran: na laptopie całe zdjęcie i przycisk „Zapytaj o wycenę” mieszczą się w oknie', async ({ page }, testInfo) => {
+	test.skip(Boolean(testInfo.project.use.hasTouch), 'Rozmiary okna komputera sprawdzamy w projekcie chromium');
+	for (const [szerokosc, wysokosc] of [
+		[1366, 768],
+		[1536, 864],
+		[1024, 768],
+	]) {
+		await otworzPierwszyEkran(page, szerokosc, wysokosc);
+		const zdjecie = (await page.locator('[data-porownanie]').boundingBox())!;
+		const przycisk = (await page.getByRole('link', { name: 'Zapytaj o wycenę' }).boundingBox())!;
+		expect(zdjecie.y + zdjecie.height, `${szerokosc}×${wysokosc}: dół zdjęcia`).toBeLessThanOrEqual(wysokosc);
+		expect(przycisk.y, `${szerokosc}×${wysokosc}: przycisk pod zdjęciem`).toBeGreaterThan(zdjecie.y + zdjecie.height);
+		expect(przycisk.y + przycisk.height, `${szerokosc}×${wysokosc}: dół przycisku`).toBeLessThanOrEqual(wysokosc);
+	}
+});
+
+test('pierwszy ekran: na dużym monitorze zdjęcie ma pełną szerokość kolumny', async ({ page }, testInfo) => {
+	test.skip(Boolean(testInfo.project.use.hasTouch), 'Rozmiary okna komputera sprawdzamy w projekcie chromium');
+	await otworzPierwszyEkran(page, 1920, 1080);
+	const szerokosci = await page.evaluate(() => {
+		const zdjecie = document.querySelector('[data-porownanie]')!;
+		return { zdjecie: zdjecie.getBoundingClientRect().width, kolumna: zdjecie.closest('section')!.getBoundingClientRect().width };
+	});
+	expect(szerokosci.zdjecie).toBeCloseTo(szerokosci.kolumna, 0);
+});
+
 test('suwak: czytnik ekranu dostaje opis wartości, a nie samą liczbę', async ({ page }) => {
 	await otworzSuwak(page);
 	const suwak = page.locator('[data-porownanie-suwak]');

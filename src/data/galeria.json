@@ -9,7 +9,7 @@
     "wysokosc": 3553,
     "klucz": "zdjecia/DSC_6910.jpg",
     "kluczPrzed": "zdjecia/przed_DSC_6910.jpg",
-    "wyroznione": true,
+    "wyroznione": false,
     "paraSuwaka": false,
     "exif": {
       "iso": 100,
@@ -32,7 +32,7 @@
     "wysokosc": 1327,
     "klucz": "zdjecia/październik_26_EDYCJA_DSC7102.jpg",
     "kluczPrzed": "zdjecia/październik_26_PRZED_DSC7102.jpg",
-    "wyroznione": false,
+    "wyroznione": true,
     "paraSuwaka": false,
     "exif": {
       "iso": null,
@@ -55,7 +55,7 @@
     "wysokosc": 3315,
     "klucz": "zdjecia/wrzesień_26_EDYCJA_DSC7060.jpg",
     "kluczPrzed": "zdjecia/wrzesień_26_EDYCJA_przed_DSC7060.jpg",
-    "wyroznione": true,
+    "wyroznione": false,
     "paraSuwaka": false,
     "exif": {
       "iso": 100,
@@ -78,7 +78,7 @@
     "wysokosc": 2905,
     "klucz": "zdjecia/wrzesień_26_EDYCJA_DSC7062.jpg",
     "kluczPrzed": "zdjecia/wrzesień_26_EDYCJA_przed_DSC7062.jpg",
-    "wyroznione": true,
+    "wyroznione": false,
     "paraSuwaka": true,
     "exif": {
       "iso": 100,

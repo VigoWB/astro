@@ -1,79 +1,9 @@
 [
   {
-    "nazwaPliku": "DSC_4968-Edytuj.jpg",
-    "opis": "Autoportret z kotem",
-    "kategorie": [
-      "Portrety",
-      "Przyroda"
-    ],
-    "szerokosc": 4980,
-    "wysokosc": 3412,
-    "klucz": "zdjecia/DSC_4968-Edytuj.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_4968-Edytuj.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
-    "nazwaPliku": "DSC_4971-Edytuj.jpg",
-    "opis": "Portret w stylizacji filmowej",
-    "kategorie": [
-      "Portrety"
-    ],
-    "szerokosc": 4553,
-    "wysokosc": 3193,
-    "klucz": "zdjecia/DSC_4971-Edytuj.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_4971-Edytuj.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
-    "nazwaPliku": "DSC_4975-Edytuj.jpg",
-    "opis": "Kadr z pracowni w stylizacji filmowej",
-    "kategorie": [
-      "Pracownia"
-    ],
-    "szerokosc": 4394,
-    "wysokosc": 2928,
-    "klucz": "zdjecia/DSC_4975-Edytuj.jpg",
-    "kluczPrzed": "zdjecia/przed_DSC_4975-Edytuj.jpg",
-    "wyroznione": false,
-    "paraSuwaka": false,
-    "exif": {
-      "iso": null,
-      "przyslona": null,
-      "ogniskowa": null,
-      "czasNaswietlania": null,
-      "dataWykonania": null,
-      "make": null,
-      "model": null,
-      "lensModel": null
-    }
-  },
-  {
     "nazwaPliku": "DSC_6910.jpg",
     "opis": "Złoty zegarek",
     "kategorie": [
-      "Pracownia"
+      "Zegarki"
     ],
     "szerokosc": 3553,
     "wysokosc": 3553,

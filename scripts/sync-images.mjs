@@ -929,9 +929,12 @@ async function zarzadzajWyroznieniami(db) {
     console.log(`   ${String(i + 1).padStart(2)}. ${w.nazwa_pliku}${opis}${status}`);
   });
 
+  const numeryWyroznionych = wszystkie.flatMap((w, i) => (w.wyroznione ? [i + 1] : []));
   console.log('\n   Sekcja "Wybrane prace" na stronie głównej pokazuje zdjęcia oznaczone jako wyróżnione (3–6 par).');
+  console.log(`   Wyróżnione teraz: ${numeryWyroznionych.length > 0 ? numeryWyroznionych.join(', ') : 'żadne'}.`);
+  console.log('   Wpisz numery WSZYSTKICH zdjęć, które mają być wyróżnione — nowa lista zastąpi obecną.');
   const wejscieWyroznione = await zapytaj(
-    '   Numery zdjęć do wyróżnienia (oddziel przecinkiem lub spacją; Enter = bez zmian, "brak" = wyczyść wszystkie): '
+    '   Numery (oddziel przecinkiem lub spacją; Enter = bez zmian, "brak" = wyczyść wszystkie): '
   );
 
   if (wejscieWyroznione) {
@@ -940,12 +943,33 @@ async function zarzadzajWyroznieniami(db) {
       console.warn('   Wyróżnienia bez zmian.');
     } else {
       const noweId = new Set(numery.map((n) => wszystkie[n - 1].id));
-      const ustawWyroznione = db.prepare('UPDATE zdjecia SET wyroznione = ? WHERE id = ?');
-      for (const w of wszystkie) {
-        ustawWyroznione.run(noweId.has(w.id) ? 1 : 0, w.id);
+      // Nowa lista zastępuje obecną, więc zdjęcie, którego numeru nie wpisano, traci wyróżnienie.
+      // Wpisany sam numer nowego zdjęcia zdjął je kiedyś z pozostałych — dlatego przed
+      // zdjęciem wyróżnienia pytamy jeszcze raz (jak przy --podmien), a "nie" niczego nie zmienia.
+      const tracaWyroznienie = wszystkie
+        .map((w, i) => ({ ...w, numer: i + 1 }))
+        .filter((w) => w.wyroznione && !noweId.has(w.id));
+      let zapisac = true;
+      if (tracaWyroznienie.length > 0) {
+        console.log('   ⚠️  Te zdjęcia stracą wyróżnienie (znikną z "Wybrane prace"):');
+        for (const w of tracaWyroznienie) {
+          console.log(`      ${String(w.numer).padStart(2)}. ${w.nazwa_pliku}${w.opis ? ` — ${w.opis}` : ''}`);
+        }
+        const potwierdzenie = await zapytaj('   Zdjąć z nich wyróżnienie? (tak/nie): ');
+        zapisac = potwierdzenie.toLowerCase() === 'tak';
       }
-      await eksportujJson(db); // zapis od razu — przerwanie przy następnym pytaniu tego nie cofnie
-      console.log(`   ✅ Wyróżnionych zdjęć: ${noweId.size}.`);
+
+      if (!zapisac) {
+        console.log('   Wyróżnienia bez zmian.');
+      } else {
+        const ustawWyroznione = db.prepare('UPDATE zdjecia SET wyroznione = ? WHERE id = ?');
+        for (const w of wszystkie) {
+          ustawWyroznione.run(noweId.has(w.id) ? 1 : 0, w.id);
+        }
+        await eksportujJson(db); // zapis od razu — przerwanie przy następnym pytaniu tego nie cofnie
+        const numeryPo = wszystkie.flatMap((w, i) => (noweId.has(w.id) ? [i + 1] : []));
+        console.log(`   ✅ Wyróżnionych zdjęć: ${noweId.size}${noweId.size > 0 ? ` (numery: ${numeryPo.join(', ')})` : ''}.`);
+      }
     }
   }
 

@@ -13,7 +13,7 @@ Zasady pracy nad projektem, stos technologiczny i konwencje kodu opisuje [`AGENT
 | `npm run check` | sprawdzanie typów TypeScript |
 | `npm run build` | build produkcyjny do `dist/` |
 | `npm run preview` | podgląd builda (`localhost:4322`) |
-| `npm run test` | build + testy Playwright |
+| `npm run test` | build na danych testowych (`dist-testy/`) + testy Playwright |
 | `npm run sync-images` | dodanie nowych zdjęć z `images/` do R2 i `galeria.json` |
 
 ## Testy lokalnie
@@ -26,10 +26,6 @@ npx playwright install chromium
 
 Bez tego wszystkie testy padają od razu z komunikatem `Executable doesn't exist … Please run: npx playwright install`.
 
-Testy formularza kontaktowego podmieniają widżet Turnstile atrapą, więc działają bez sieci i bez klucza. Prawdziwy widżet sprawdza jeden test („Turnstile (prawdziwy widżet Cloudflare)”): bez dostępu do Cloudflare jest pomijany, a z kluczem z `.env` może paść (klucz produkcyjny najpewniej nie działa na `localhost`). Żeby go uruchomić lokalnie, w PowerShellu:
+Testy nie używają prawdziwych zdjęć. `npm test` najpierw buduje stronę na danych testowych (`npm run build:testy`, wynik w `dist-testy/`): galeria z `tests/dane/galeria.json`, szare zdjęcia z atrapy R2 uruchamianej na chwilę na tym komputerze, wartości testowe Formspree i Turnstile. Dlatego testy działają bez sieci i bez pliku `.env`, a nowe zdjęcia w galerii ich nie zmieniają. Prawdziwy build (`npm run build`, `dist/`) zostaje nietknięty. Szczegóły: `AGENTS.md`, sekcja 7, „Dane testowe”.
 
-```
-$env:PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"; npm test
-```
-
-Klucz obowiązuje tylko w tym oknie terminala i nie trafia do repo. Test „Załaduj więcej przy włączonym filtrze” jest pomijany, dopóki żadna kategoria nie ma więcej niż 8 zdjęć.
+Testy formularza kontaktowego podmieniają widżet Turnstile atrapą i przechwytują wysyłkę do Formspree. Prawdziwy widżet Cloudflare sprawdza jeden test („Turnstile (prawdziwy widżet Cloudflare)”) — bez dostępu do Cloudflare jest pomijany, w CI musi przejść.

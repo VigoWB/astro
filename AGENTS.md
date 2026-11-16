@@ -52,7 +52,7 @@ Zasady:
 
 ## 3. Po każdej zmianie: sprawdź, potem commit
 
-1. Uruchom `npm run check` (na końcu musi być `0 errors`, to samo sprawdza CI na GitHubie). Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build i odpali testy Playwright).
+1. Uruchom `npm run check` (na końcu musi być `0 errors`, to samo sprawdza CI na GitHubie). Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build na danych testowych i odpali testy Playwright).
 2. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
 3. `git status`, żeby zobaczyć, co się zmieniło.
 4. `git add <konkretne pliki>`.
@@ -100,7 +100,7 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 - `npm run dev`: serwer deweloperski (localhost:4321)
 - `npm run build`: build do `dist/` (wcześniej warto `npm run check`: sprawdzanie typów TypeScript, także w plikach `.astro`; to samo robi CI)
 - `npm run preview`: podgląd buildu (localhost:4322)
-- `npm run test`: build, potem testy Playwright (Chrome desktop i mobile, testy dostępności axe)
+- `npm run test`: build na danych testowych do `dist-testy/` (`npm run build:testy`), potem testy Playwright (Chrome desktop i mobile, testy dostępności axe). Testy nigdy nie widzą prawdziwych zdjęć — sekcja 7, „Dane testowe”
 - `npm run sync-images`: dodaje nowe zdjęcia z `images/` (uruchamiam ja, nie Ty)
 - `npm run sync-images -- --uzupelnij`: dopytuje o brakujące opisy i kategorie
 - `npm run sync-images -- --wyroznij`: wybór zdjęć na stronę główną — które pokazują się w sekcji "Wybrane prace" i która jedna para trafia do suwaka przed/po
@@ -119,7 +119,8 @@ public/
   manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
-  start-preview-if-needed.mjs  uruchamia podgląd dla testów (Node, dziala tez na Windows)
+  build-testowy.mjs        build na danych testowych do dist-testy/ (atrapa R2, tests/dane/galeria.json) — dla npm test
+  start-preview-if-needed.mjs  uruchamia podgląd builda testowego dla testów, port 4323 (Node, dziala tez na Windows)
 src/
   assets/moje-zdjecie.jpg  zdjęcie profilowe (o-mnie.astro i Schema.astro)
   assets/logo.svg          logo: nagłówek (Header.astro), stopka (Footer.astro) i znak wodny (sync-images.mjs)
@@ -146,7 +147,8 @@ src/
   pages/index.astro, galeria.astro, kontakt.astro, faq.astro, o-mnie.astro, 404.astro
   pages/oferta.astro       szkic oferty — UKRYTY do czasu cen (sekcja 10, „Ukryta podstrona”)
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
+tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, dane-testowe.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
+tests/dane/galeria.json    dane testowe galerii (edytowane ręcznie) — z nich powstaje strona do testów
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
@@ -174,6 +176,11 @@ images/październik_26_EDYCJA_DSC7102.jpg (+ opcjonalnie październik_26_PRZED_D
 - `astro.config.mjs` buduje `image.remotePatterns` z `PUBLIC_R2_URL`. Przy zmianie domeny zdjęć zmienia się tylko zmienną.
 - EXIF czytany jest z pliku „przed” (oryginał z aparatu), jeśli taki istnieje; pola, których tam brakuje, skrypt uzupełnia z pliku „po” (`pobierzExifZPary()`).
 - Pola `wyroznione` i `paraSuwaka` (ustawia `npm run sync-images -- --wyroznij`) sterują stroną główną: `wyroznione` — sekcja "Wybrane prace", `paraSuwaka` — jedna para do suwaka na pierwszym ekranie. Brak oznaczeń nie przerywa builda — `index.astro` dobiera zastępcze zdjęcia i loguje ostrzeżenie (patrz sekcja 9).
+
+**Dane testowe:** testy Playwright nie używają prawdziwych zdjęć. `npm test` buduje stronę przez `scripts/build-testowy.mjs`: zamiast `src/data/galeria.json` bierze `tests/dane/galeria.json` (zdjęcia ułożone pod testy: ponad 8 zdjęć, kategoria z jednym zdjęciem, zdjęcia z „przed” i bez, para do suwaka, polskie litery w nazwach), zamiast R2 — atrapę na porcie 4324 z szarymi zdjęciami JPG, a Formspree i Turnstile dostają wartości testowe (testy nie potrzebują `.env`). Wynik idzie do `dist-testy/`, podgląd dla testów na porcie 4323; `npm run build` i `dist/` zostają prawdziwe. Kod strony nic o tym nie wie — podmiana jest tylko w skrypcie.
+- `tests/dane/galeria.json` wolno edytować ręcznie (zakaz z sekcji 2 dotyczy tylko `src/data/galeria.json`). Ma ten sam układ pól co prawdziwy plik. Nowy przypadek do sprawdzenia = nowy wpis tutaj, a gdy testy go wymagają — także warunek w `tests/dane-testowe.spec.ts`.
+- `tests/dane-testowe.spec.ts` pilnuje, że testy widzą stronę z danych testowych i że dane mają przypadki, których potrzebują testy galerii i suwaka — bez nich testy pomijałyby się po cichu (`test.skip`).
+- Nowe pole w `galeria.json` (zmiana `sync-images`) = to samo pole w `tests/dane/galeria.json`.
 
 ---
 
@@ -268,7 +275,7 @@ Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA
 
 **Nowa zmienna środowiskowa:**
 1. Dodaj ją do `src/env.d.ts` (z opisem po polsku) i do `.env.example`.
-2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` (testy korzystają z tego samego buildu) w `.github/workflows/ci.yml`.
+2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` w `.github/workflows/ci.yml`. Testy mają osobny build: jeśli zmienna włącza coś, co sprawdzają testy, dopisz jej wartość testową w `scripts/build-testowy.mjs` (tam, gdzie `PUBLIC_FORMSPREE_ID`).
 3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
 
 **Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Sprawdź kontrast (min. 4,5:1 dla tekstu). Te same kolory są też wpisane na sztywno w `public/offline.css`, `public/manifest.webmanifest` (`theme_color`, `background_color`) i `src/components/SEO.astro` (`theme-color`) — zmień je razem i podbij `CACHE_NAME` w `public/sw.js`.

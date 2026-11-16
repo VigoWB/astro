@@ -8,7 +8,8 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: 'html',
 	use: {
-		baseURL: 'http://localhost:4322',
+		// Podgląd builda na danych testowych (npm run build:testy → dist-testy/), nie prawdziwej strony.
+		baseURL: 'http://localhost:4323',
 		trace: 'on-first-retry',
 	},
 	projects: [
@@ -17,7 +18,7 @@ export default defineConfig({
 	],
 	webServer: {
 		command: 'node scripts/start-preview-if-needed.mjs',
-		url: 'http://localhost:4322',
+		url: 'http://localhost:4323',
 		reuseExistingServer: !process.env.CI,
 		timeout: 120000,
 	},

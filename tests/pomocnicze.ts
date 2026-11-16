@@ -67,12 +67,12 @@ export async function wypelnijFormularz(page: Page) {
 
 /**
  * Bez PUBLIC_FORMSPREE_ID formularz celowo nic nie wysyła — to brak ustawienia w buildzie,
- * a nie błąd formularza. Test z wysyłką mówi wtedy wprost, czego brakuje.
+ * a nie błąd formularza. Build testowy (scripts/build-testowy.mjs) zawsze ustawia wartość testową.
  */
 export async function sprawdzIdFormspree(page: Page) {
 	expect(
 		await page.getByTestId('contact-form').getAttribute('data-formspree-id'),
-		'Build bez PUBLIC_FORMSPREE_ID — ustaw tę zmienną (np. w .env) i zbuduj stronę ponownie'
+		'Build bez PUBLIC_FORMSPREE_ID — uruchom testy przez `npm test` (build testowy ustawia wartość testową)'
 	).toBeTruthy();
 }
 

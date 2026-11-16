@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-// Uruchamia serwer podglądu (astro preview) na porcie 4322, jeśli jeszcze nie
-// działa, i kończy czekanie dopiero gdy port faktycznie odpowiada. Używane przez
-// Playwright (webServer.command w playwright.config.ts) — w przeciwieństwie
-// do bashowego odpowiednika działa tak samo na Windows, Linux i macOS
-// (Playwright uruchamia ten skrypt przez `node`, więc końcówki linii CRLF
-// zapisane przez git na Windowsie nie mają tu znaczenia).
+// Uruchamia serwer podglądu builda testowego (`npm run preview:testy`: dist-testy/,
+// port 4323), jeśli jeszcze nie działa, i kończy czekanie dopiero gdy port faktycznie
+// odpowiada. Prawdziwy podgląd (`npm run preview`: dist/, port 4322) może działać
+// w tym samym czasie. Używane przez Playwright (webServer.command
+// w playwright.config.ts) — w przeciwieństwie do bashowego odpowiednika działa
+// tak samo na Windows, Linux i macOS (Playwright uruchamia ten skrypt przez `node`,
+// więc końcówki linii CRLF zapisane przez git na Windowsie nie mają tu znaczenia).
 //
 // Po wystartowaniu serwera ten skrypt NIE kończy się sam — czeka bezczynnie, aż
 // Playwright zatrzyma go po testach (razem z całym drzewem procesów, więc i z
@@ -14,15 +15,15 @@
 // zgłasza błąd "exited early" (tak działa jego wewnętrzny Promise.race, sprawdzone
 // w node_modules/playwright/lib/runner).
 //
-// Uwaga: `astro preview` w Astro 7 sam przechodzi w tło i od razu kończy polecenie,
-// gdy dostanie flagę --background albo gdy wykryje, że uruchamia go agent AI
-// (np. OpenCode). Taki serwer zostaje po testach w tle — zatrzymasz go poleceniem
-// `npx astro preview stop`. W zwykłym terminalu działa normalnie, jako proces
-// potomny tego skryptu.
+// `preview:testy` ma flagę --ignore-lock: bez niej `astro preview` w Astro 7 sam
+// przechodzi w tło, gdy wykryje agenta AI (np. OpenCode, Claude Code), i zostaje po
+// testach, a drugi podgląd w tym samym folderze (np. `npm run preview`) blokuje start.
+// Z tą flagą podgląd testowy zawsze działa jako proces potomny tego skryptu
+// i kończy się razem z testami.
 
 import { spawn, spawnSync } from "node:child_process";
 
-const PORT = 4322;
+const PORT = 4323;
 const URL = `http://localhost:${PORT}/`;
 const MAKS_PROB = 30;
 
@@ -36,7 +37,7 @@ async function czyGotowy() {
 	}
 }
 
-// Zatrzymuje uruchomione `npm run preview` razem z procesami potomnymi (powłoka → npm → astro).
+// Zatrzymuje uruchomione `npm run preview:testy` razem z procesami potomnymi (powłoka → npm → astro).
 // Samo kill() zamknęłoby tylko powłokę, a serwer podglądu zostałby jako sierota (na Windowsie
 // do zamknięcia ręcznie w Menedżerze zadań). Playwright sprząta procesy tylko wtedy, gdy ten
 // skrypt jeszcze działa — po wcześniejszym zakończeniu z błędem musimy posprzątać sami.
@@ -72,14 +73,13 @@ async function main() {
 		console.log(`Uruchamiam serwer podglądu na ${URL}...`);
 		// Polecenie jako jeden napis (a nie "npm" + lista argumentów): Node 24 przy
 		// `shell: true` z osobną listą argumentów wypisuje ostrzeżenie DEP0190.
-		const podglad = spawn("npm run preview", {
+		const podglad = spawn("npm run preview:testy", {
 			stdio: "inherit",
 			shell: true,
 		});
 
-		// `npm run preview` zakończone błędem (np. Astro: "Another astro preview server is
-		// already running") — nie ma na co czekać. Kod 0 jest w porządku: tak kończy się
-		// polecenie, gdy Astro przenosi serwer w tło.
+		// `npm run preview:testy` zakończone błędem (np. brak dist-testy/ — najpierw
+		// `npm run build:testy`) — nie ma na co czekać. Kod 0 nie przerywa czekania.
 		let kodBledu = null;
 		podglad.on("exit", (kod) => {
 			if (kod) kodBledu = kod;
@@ -94,8 +94,8 @@ async function main() {
 		if (!gotowy) {
 			console.error(
 				kodBledu !== null
-					? `BŁĄD: "npm run preview" zakończyło się błędem (kod ${kodBledu}) — szczegóły wyżej.`
-					: `BŁĄD: serwer podglądu nie odpowiedział na ${URL} po ${MAKS_PROB} próbach (czy port ${PORT} nie jest zajęty przez inny program?).`
+					? `BŁĄD: "npm run preview:testy" zakończyło się błędem (kod ${kodBledu}) — szczegóły wyżej.`
+					: `BŁĄD: serwer podglądu nie odpowiedział na ${URL} po ${MAKS_PROB} próbach (czy port ${PORT} nie jest zajęty przez inny program? czy build testowy się udał — npm run build:testy?).`
 			);
 			zatrzymaj(podglad);
 			process.exit(1);

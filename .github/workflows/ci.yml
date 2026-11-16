@@ -41,6 +41,19 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      # Testy idą na osobnym buildzie z danymi testowymi: tests/dane/galeria.json, szare zdjęcia
+      # z lokalnej atrapy R2, wynik w dist-testy/ (scripts/build-testowy.mjs). Nie potrzebują
+      # prawdziwych zdjęć ani sekretów, więc stoją przed prawdziwym buildem — awaria R2
+      # albo brak sekretu nie zasłania ich wyniku.
+      - name: Build na danych testowych
+        run: npm run build:testy
+
+      # `npm run test` zbudowałby stronę testową drugi raz (skrypt "pretest"),
+      # więc uruchamiamy same testy.
+      - name: Run tests
+        run: npx playwright test
+
+      # Prawdziwy build (prawdziwe zdjęcia z R2, do dist/) — sprawdza go Lighthouse.
       # Uwaga: PUBLIC_R2_URL musi istnieć TAKŻE jako sekret Dependabota
       # (Settings → Secrets and variables → Dependabot). Przebiegi uruchomione
       # przez Dependabota nie widzą zwykłych sekretów Actions i bez tego
@@ -53,14 +66,10 @@ jobs:
           PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA'
           PUBLIC_R2_URL: ${{ secrets.PUBLIC_R2_URL }}
 
-      # Strona jest już zbudowana w kroku "Build". `npm run test` zbudowałby ją
-      # drugi raz (skrypt "pretest"), więc uruchamiamy same testy.
-      - name: Run tests
-        run: npx playwright test
-
       # Progi z lighthouserc.json (wydajność ≥ 90, dostępność = 100) mają
       # "error" — dlatego ten krok ma zapalać CI na czerwono, gdy ich nie spełnia.
       # Stoi PO testach, żeby błąd Lighthouse nie zasłaniał wyniku testów.
+      # Sprawdza prawdziwy build (dist/), bo wydajność zależy od prawdziwych zdjęć.
       - name: Run Lighthouse
         run: npx lhci autorun
 

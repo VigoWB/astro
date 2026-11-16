@@ -272,7 +272,7 @@ test.describe('Turnstile (prawdziwy widżet Cloudflare)', () => {
 
 		await expect(
 			page.locator('input[name="cf-turnstile-response"]'),
-			'Widżet nie wydał tokenu. Lokalnie użyj klucza testowego: $env:PUBLIC_TURNSTILE_SITE_KEY="1x00000000000000000000AA"; npm test'
+			'Widżet nie wydał tokenu. Build testowy ma klucz testowy Cloudflare (scripts/build-testowy.mjs) — uruchom testy przez `npm test`'
 		).toHaveValue(/.+/, { timeout: 15_000 });
 	});
 });

@@ -1,5 +1,7 @@
 # build output
 dist/
+# build na danych testowych (npm test)
+dist-testy/
 
 # generated types
 .astro/

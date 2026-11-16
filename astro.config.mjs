@@ -1,6 +1,7 @@
 // @ts-check
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
 
@@ -95,6 +96,20 @@ const walidacjaZmiennychSrodowiskowych = {
   },
 };
 
+// --- Folder z gotową stroną ---
+// Zwykle dist/, a przy buildzie na danych testowych dist-testy/ (scripts/build-testowy.mjs).
+// Odczytany z konfiguracji Astro, żeby sitemapa czytała strony z tego samego buildu.
+let katalogWyjsciowy = join(process.cwd(), 'dist');
+const zapamietajKatalogWyjsciowy = {
+  name: 'katalog-wyjsciowy',
+  hooks: {
+    /** @param {import('astro').HookParameters<'astro:config:done'>} params */
+    'astro:config:done': ({ config }) => {
+      katalogWyjsciowy = fileURLToPath(config.outDir);
+    },
+  },
+};
+
 // --- Zdjęcia w sitemapie (image:image) dla Google Grafika ---
 // Sitemapa powstaje PO zbudowaniu stron (hook astro:build:done), więc
 // dist/galeria/index.html już istnieje. Zamiast drugi raz liczyć zmniejszone
@@ -103,7 +118,7 @@ const walidacjaZmiennychSrodowiskowych = {
 // zapisało w tej stronie — te same zmniejszone wersje 1920 px, co
 // w lightboxie. Żadnych adresów R2 w sitemapie.
 async function obrazyGaleriiDlaSitemapy() {
-  const sciezkaHtml = join(process.cwd(), 'dist', 'galeria', 'index.html');
+  const sciezkaHtml = join(katalogWyjsciowy, 'galeria', 'index.html');
 
   let html;
   try {
@@ -146,6 +161,7 @@ export default defineConfig({
   base: '/',
   integrations: [
     walidacjaZmiennychSrodowiskowych,
+    zapamietajKatalogWyjsciowy,
     sitemap({
       filter: (strona) => !STRONY_POZA_SITEMAPA.includes(new URL(strona).pathname),
       // Dokładamy zdjęcia (image:image) tylko do wpisu /galeria, reszta

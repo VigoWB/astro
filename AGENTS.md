@@ -111,7 +111,8 @@ Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersj�
 
 ```
 .agents/skills/            instrukcje dla agentów dotyczące Astro (patrz sekcja 11)
-.github/workflows/ci.yml   typy + build + Lighthouse + testy przy każdym pushu i PR
+.github/workflows/ci.yml   etapy po kolei: typy → testy e2e → build + Lighthouse → „Wynik” (wymagany do scalenia PR)
+.github/pull_request_template.md   szablon opisu PR: co i po co, wiedza z zadania, jak sprawdzone
 public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
   fonts/                   podzbiór Noto Sans (2 pliki .woff2) — patrz global.css i sekcja 10

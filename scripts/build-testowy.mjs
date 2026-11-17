@@ -150,14 +150,14 @@ try {
 		root: KORZEN,
 		outDir: KATALOG_WYJSCIOWY,
 		// Własny cache tego buildu (zamiast node_modules/.astro, którego używają `check`, `build` i `dev`).
-		// Astro trzyma tam cache optymalizatora Vite, a build z API, który trafi na cache zapisany przy
-		// innej konfiguracji (np. po `npm run check` albo `npm run build` — a tu dochodzi wtyczka)
-		// albo dopiero ten cache tworzy, wychodzi bez arkusza CSS w HTML: strona bez stylów i kilkadziesiąt
-		// fałszywych błędów testów. Własny folder usuwa pierwszy przypadek, a ponowne uruchomienie
+		// Na Windowsie (16.11) build z API, który trafił na cache zapisany przez `npm run check` albo
+		// `npm run build` albo dopiero ten cache tworzył, wychodził bez arkusza CSS w HTML: strona bez
+		// stylów i kilkadziesiąt fałszywych błędów testów. Na Linuksie (CI, sandbox Claude) to się nie
+		// zdarza; przyczyny nie ustalono. Własny folder usuwa pierwszy przypadek, a ponowne uruchomienie
 		// skryptu (niżej) — drugi.
 		cacheDir: "./node_modules/.astro-testy",
-		// Bez tego `build()` z API działa w trybie deweloperskim i też nie dopina arkuszy CSS do HTML.
-		// `astro build` z terminala ustawia ten tryb sam.
+		// Tryb produkcyjny, jak w `astro build`. To też domyślna wartość `build()` z API (sprawdzone
+		// w kodzie Astro 7.4) — wpisany jawnie dla porządku; sam nie naprawia braku CSS.
 		mode: "production",
 		vite: { plugins: [daneTestoweZamiastGalerii] },
 	});
@@ -176,9 +176,10 @@ if (podmienione === 0) {
 }
 
 // Drugie zabezpieczenie: strona bez arkusza stylów (patrz uwaga przy cacheDir) przeszłaby build,
-// a testy wysypałyby się dziesiątkami niezwiązanych błędów. Pierwszy build na świeżym cache
-// (np. nowy checkout w CI) tak właśnie wychodzi, a drugi, w NOWYM procesie, już jest poprawny
-// (ponowny build w tym samym procesie nie pomaga — sam zmienia cache). Dlatego raz uruchamiamy się jeszcze raz.
+// a testy wysypałyby się dziesiątkami niezwiązanych błędów. Na Windowsie pierwszy build na świeżym
+// cache tak właśnie wychodzi, a drugi, w NOWYM procesie, już jest poprawny (ponowny build w tym samym
+// procesie nie pomaga — sam zmienia cache). Dlatego raz uruchamiamy się jeszcze raz. Na Linuksie
+// (CI) pierwszy build jest od razu poprawny i ten krok się nie uruchamia.
 if (!stronaMaStyle()) {
 	if (TO_PONOWNY_BUILD) {
 		console.error("BŁĄD: strona testowa wyszła bez arkusza stylów nawet po ponownym buildzie (dist-testy/index.html nie ma <link rel=\"stylesheet\">). Usuń folder node_modules/.astro-testy i uruchom `npm run build:testy` jeszcze raz.");

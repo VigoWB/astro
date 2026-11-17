@@ -6,19 +6,20 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 3 * * 1'  # co poniedziałek 3:00 UTC — pełny przebieg (typy, testy, build, Lighthouse)
+    - cron: '0 3 * * 1'  # co poniedziałek 3:00 UTC — pełny przebieg (typy, wszystkie testy, build, Lighthouse)
 
 # Build i testy niczego nie zapisują w repozytorium, a repo jest publiczne —
 # token ma więc tylko prawo odczytu.
 permissions:
   contents: read
 
-# Etapy idą po kolei: każdy startuje dopiero, gdy poprzedni jest zielony (`needs`).
+# Etapy idą po kolei: typy i testy jednostkowe → testy integracyjne → testy e2e → build + Lighthouse.
+# Każdy startuje dopiero, gdy poprzedni jest zielony (`needs`).
 # Na końcu „Wynik” — to on jest wymaganym sprawdzeniem w regule gałęzi `main`:
 # pull request da się scalić tylko przy zielonym „Wyniku”.
 jobs:
-  typy:
-    name: Sprawdzanie typów
+  jednostkowe:
+    name: Typy i testy jednostkowe
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -40,9 +41,36 @@ jobs:
       - name: Type check
         run: npm run check
 
+      # Vitest, tests/jednostkowe/ — pojedyncze moduły, bez sieci, sekundy.
+      - name: Testy jednostkowe
+        run: npm run test:jednostkowe
+
+  integracyjne:
+    name: Testy integracyjne
+    needs: jednostkowe
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Vitest, tests/integracyjne/ — kod builda z atrapą R2 i astro:assets, komponenty .astro
+      # przez Container API. Bez sieci i bez sekretów.
+      - name: Testy integracyjne
+        run: npm run test:integracyjne
+
   e2e:
     name: Testy e2e
-    needs: typy
+    needs: integracyjne
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -67,7 +95,7 @@ jobs:
       - name: Build na danych testowych
         run: npm run build:testy
 
-      # `npm run test` zbudowałby stronę testową drugi raz (skrypt "pretest"),
+      # `npm run test:e2e` zbudowałby stronę testową drugi raz,
       # więc uruchamiamy same testy.
       - name: Run tests
         run: npx playwright test
@@ -136,7 +164,7 @@ jobs:
   # Nowy etap CI = dopisać go do `needs` poniżej.
   wynik:
     name: Wynik
-    needs: [typy, e2e, build]
+    needs: [jednostkowe, integracyjne, e2e, build]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

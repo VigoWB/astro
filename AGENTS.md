@@ -61,7 +61,7 @@ Każde zadanie idzie przez osobną gałąź i pull request (PR) do `main`. Na `m
    git switch -c <typ>/<krotki-opis>
    ```
    `<typ>` jak w komunikacie commita (`feat`, `fix`, `chore`, `docs`, `test`), opis małymi literami, bez polskich znaków, słowa połączone myślnikiem, np. `feat/testy-vitest`. Jeśli zadanie od Claude podaje nazwę gałęzi, użyj jej. Jeśli `git status` pokazuje zmiany, których nie robiłeś, zatrzymaj się i zapytaj. Poprawki do PR-a, który nie jest jeszcze scalony, robisz na jego gałęzi (`git switch <gałąź>`), bez zakładania nowej.
-2. Uruchom `npm run check` (na końcu musi być `0 errors`, to samo sprawdza CI na GitHubie). Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build na danych testowych i odpali testy Playwright).
+2. Uruchom `npm run check` (na końcu musi być `0 errors`), `npx vitest run` (testy jednostkowe i integracyjne, kilka sekund) i `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm test` — wszystkie etapy po kolei, tak jak CI: typy, testy jednostkowe, integracyjne i e2e (build na danych testowych i Playwright); zatrzymuje się na pierwszym błędzie.
 3. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
 4. `git status`, żeby zobaczyć, co się zmieniło.
 5. `git add <konkretne pliki>`.
@@ -116,7 +116,9 @@ PR: [link do pull requesta]
 - `npm run dev`: serwer deweloperski (localhost:4321)
 - `npm run build`: build do `dist/` (wcześniej warto `npm run check`: sprawdzanie typów TypeScript, także w plikach `.astro`; to samo robi CI)
 - `npm run preview`: podgląd buildu (localhost:4322)
-- `npm run test`: build na danych testowych do `dist-testy/` (`npm run build:testy`), potem testy Playwright (Chrome desktop i mobile, testy dostępności axe). Testy nigdy nie widzą prawdziwych zdjęć — sekcja 7, „Dane testowe”
+- `npm test`: wszystkie etapy po kolei, tak jak CI, do pierwszego błędu: `npm run check` → `npm run test:jednostkowe` → `npm run test:integracyjne` → `npm run test:e2e`
+- `npm run test:jednostkowe`, `npm run test:integracyjne`: testy Vitesta (`tests/jednostkowe/`, `tests/integracyjne/`), kilka sekund; oba naraz: `npx vitest run` (sekcja 7, „Poziomy testów”)
+- `npm run test:e2e`: build na danych testowych do `dist-testy/` (`npm run build:testy`), potem testy Playwright (Chrome desktop i mobile, testy dostępności axe). Testy nigdy nie widzą prawdziwych zdjęć — sekcja 7, „Dane testowe”
 - `npm run sync-images`: dodaje nowe zdjęcia z `images/` (uruchamiam ja, nie Ty)
 - `npm run sync-images -- --uzupelnij`: dopytuje o brakujące opisy i kategorie
 - `npm run sync-images -- --wyroznij`: wybór zdjęć na stronę główną — które pokazują się w sekcji "Wybrane prace" i która jedna para trafia do suwaka przed/po
@@ -127,7 +129,7 @@ PR: [link do pull requesta]
 
 ```
 .agents/skills/            instrukcje dla agentów dotyczące Astro (patrz sekcja 11)
-.github/workflows/ci.yml   etapy po kolei: typy → testy e2e → build + Lighthouse → „Wynik” (wymagany do scalenia PR)
+.github/workflows/ci.yml   etapy po kolei: typy i testy jednostkowe → testy integracyjne → testy e2e → build + Lighthouse → „Wynik” (wymagany do scalenia PR)
 .github/pull_request_template.md   szablon opisu PR: co i po co, wiedza z zadania, jak sprawdzone
 public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
@@ -166,6 +168,9 @@ src/
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
 tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, dane-testowe.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 tests/dane/galeria.json    dane testowe galerii (edytowane ręcznie) — z nich powstaje strona do testów
+tests/jednostkowe/         testy jednostkowe Vitesta (*.test.ts): kategorie.test.ts, nawigacja.test.ts
+tests/integracyjne/        testy integracyjne Vitesta (*.test.ts): galeria.test.ts (src/lib/galeria.ts z atrapą R2), seo-i-schema.test.ts
+vitest.config.ts           konfiguracja Vitesta: dwa projekty, „jednostkowe” i „integracyjne”
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
 
@@ -194,10 +199,18 @@ images/październik_26_EDYCJA_DSC7102.jpg (+ opcjonalnie październik_26_PRZED_D
 - EXIF czytany jest z pliku „przed” (oryginał z aparatu), jeśli taki istnieje; pola, których tam brakuje, skrypt uzupełnia z pliku „po” (`pobierzExifZPary()`).
 - Pola `wyroznione` i `paraSuwaka` (ustawia `npm run sync-images -- --wyroznij`) sterują stroną główną: `wyroznione` — sekcja "Wybrane prace", `paraSuwaka` — jedna para do suwaka na pierwszym ekranie. Brak oznaczeń nie przerywa builda — `index.astro` dobiera zastępcze zdjęcia i loguje ostrzeżenie (patrz sekcja 9).
 
-**Dane testowe:** testy Playwright nie używają prawdziwych zdjęć. `npm test` buduje stronę przez `scripts/build-testowy.mjs`: zamiast `src/data/galeria.json` bierze `tests/dane/galeria.json` (zdjęcia ułożone pod testy: ponad 8 zdjęć, kategoria z jednym zdjęciem, zdjęcia z „przed” i bez, para do suwaka, polskie litery w nazwach), zamiast R2 — atrapę na porcie 4324 z szarymi zdjęciami JPG, a Formspree i Turnstile dostają wartości testowe (testy nie potrzebują `.env`). Wynik idzie do `dist-testy/`, podgląd dla testów na porcie 4323; `npm run build` i `dist/` zostają prawdziwe. Kod strony nic o tym nie wie — podmiana jest tylko w skrypcie. Build testowy ma własny cache (`node_modules/.astro-testy`). Na Windowsie pierwszy build na świeżym cache potrafi wyjść bez arkusza CSS — skrypt to wykrywa i sam buduje drugi raz („Pierwszy build wyszedł bez arkusza stylów…” w logu to nie błąd); gdy i to nie pomoże, kończy się błędem z podpowiedzią.
+**Dane testowe:** testy Playwright nie używają prawdziwych zdjęć. `npm run test:e2e` (ostatni etap `npm test`) buduje stronę przez `scripts/build-testowy.mjs`: zamiast `src/data/galeria.json` bierze `tests/dane/galeria.json` (zdjęcia ułożone pod testy: ponad 8 zdjęć, kategoria z jednym zdjęciem, zdjęcia z „przed” i bez, para do suwaka, polskie litery w nazwach), zamiast R2 — atrapę na porcie 4324 z szarymi zdjęciami JPG, a Formspree i Turnstile dostają wartości testowe (testy nie potrzebują `.env`). Wynik idzie do `dist-testy/`, podgląd dla testów na porcie 4323; `npm run build` i `dist/` zostają prawdziwe. Kod strony nic o tym nie wie — podmiana jest tylko w skrypcie. Build testowy ma własny cache (`node_modules/.astro-testy`). Na Windowsie pierwszy build na świeżym cache potrafi wyjść bez arkusza CSS — skrypt to wykrywa i sam buduje drugi raz („Pierwszy build wyszedł bez arkusza stylów…” w logu to nie błąd); gdy i to nie pomoże, kończy się błędem z podpowiedzią.
 - `tests/dane/galeria.json` wolno edytować ręcznie (zakaz z sekcji 2 dotyczy tylko `src/data/galeria.json`). Ma ten sam układ pól co prawdziwy plik. Nowy przypadek do sprawdzenia = nowy wpis tutaj, a gdy testy go wymagają — także warunek w `tests/dane-testowe.spec.ts`.
 - `tests/dane-testowe.spec.ts` pilnuje, że testy widzą stronę z danych testowych i że dane mają przypadki, których potrzebują testy galerii i suwaka — bez nich testy pomijałyby się po cichu (`test.skip`).
 - Nowe pole w `galeria.json` (zmiana `sync-images`) = to samo pole w `tests/dane/galeria.json`.
+
+**Poziomy testów** (CI uruchamia je w tej kolejności, każdy dopiero po zielonym poprzednim; `npm test` lokalnie tak samo):
+- **Jednostkowe** — Vitest, `tests/jednostkowe/*.test.ts`: jedna funkcja albo jeden moduł, dane podstawione w teście (`vi.doMock`), bez sieci i bez renderowania. Przykład: lista kategorii liczona z `galeria.json`.
+- **Integracyjne** — Vitest, `tests/integracyjne/*.test.ts`: kilka modułów razem, z atrapami tego, co wychodzi poza komputer — R2 to `vi.stubGlobal("fetch", …)`, `astro:assets` to `vi.mock`. Komponenty `.astro` renderuje Container API (`experimental_AstroContainer` — w Astro nadal eksperymentalne). Przykład: `src/lib/galeria.ts` (znak wodny, wersja z ETag, awaria R2), JSON-LD w `Schema.astro`.
+- **E2e** — Playwright, `tests/*.spec.ts`: gotowa strona z danych testowych w przeglądarce (wyżej, „Dane testowe”).
+- Plik Vitesta kończy się na `.test.ts`, plik Playwrighta na `.spec.ts` — każde narzędzie bierze tylko swoje (`include` w `vitest.config.ts`, `testMatch` w `playwright.config.ts`).
+- Nowa logika w `src/lib/` albo `src/data/` = test jednostkowy albo integracyjny; zachowanie w przeglądarce = test e2e.
+- Test nie zależy od prawdziwych zdjęć ani od `.env`: dane podstawiasz w teście, a zmienne `PUBLIC_*` przez `vi.stubEnv`.
 
 ---
 

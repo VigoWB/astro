@@ -2,6 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
 	testDir: './tests',
+	// Tylko pliki *.spec.ts. Pliki *.test.ts w tests/jednostkowe/ i tests/integracyjne/ należą do Vitesta
+	// (vitest.config.ts) — Playwright próbowałby je uruchomić i padał na imporcie plików .astro.
+	testMatch: '**/*.spec.ts',
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,

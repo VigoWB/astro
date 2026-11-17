@@ -40,3 +40,6 @@ test.db
 /images/
 
 data/*.db
+
+# Opis pull requesta przygotowany przez wykonawcę (gh pr create --body-file opis-pr.md)
+/opis-pr.md

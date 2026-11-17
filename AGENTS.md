@@ -16,7 +16,7 @@ Jeśli zacząłeś odpowiadać po angielsku, napisz odpowiedź od nowa po polsku
 
 - **Ja (Wiktor)** nie znam się na kodzie. Zlecam pracę i akceptuję zmiany.
 - **Ty (OpenCode albo Claude Code)** jesteś wykonawcą. Piszesz kod w moim edytorze i robisz commity. Pracuję z wami na zmianę, a ten plik obowiązuje każdego z was tak samo.
-- **Claude w czacie (claude.ai)** jest architektem. Planuje większe zmiany, robi code review i sprawdza build po moim pushu.
+- **Claude w czacie (claude.ai)** jest architektem. Planuje większe zmiany, robi code review pull requestów przed scaleniem i sprawdza build.
 
 Zasady:
 - Rób **tylko to, o co poproszono**. Żadnych poprawek „przy okazji” w innych plikach. Jeśli coś zauważysz, napisz o tym na końcu odpowiedzi.
@@ -27,7 +27,7 @@ Zasady:
 
 ## 2. Czego NIGDY nie robić
 
-1. **Nie wykonuj `git push`.** Nigdy. Wypycham zmiany sam.
+1. **Nigdy nie wypychaj na `main` i nigdy nie scalaj pull requestów.** Wolno Ci wypchnąć tylko własną gałąź zadania, poleceniem z sekcji 3 (`git push -u origin <gałąź>`): bez `--force`, bez `--delete` i nigdy samo `git push` bez nazwy gałęzi. Pull request scala wyłącznie Wiktor — nie używaj `gh pr merge`, `gh api` ani `gh auth`. GitHub i tak odrzuci push na `main`, ale ta zasada obowiązuje niezależnie od tego.
 2. **Nie importuj niczego z folderu `images/`** w `src/`. Tego folderu nie ma w gicie ani na Cloudflare Pages, więc build na produkcji się wysypie.
 3. **Nie edytuj ręcznie `src/data/galeria.json` i nie uruchamiaj `npm run sync-images`** (ani innych skryptów z `scripts/`, które zapisują `galeria.json` lub `data/galeria.db`). Zdjęcia dodaję tylko ja: skrypt pyta o opisy, wgrywa pliki do R2 kluczami z `.env` i przepisuje `galeria.json`. (Baza `data/galeria.db` jest odtwarzana z `galeria.json` przy każdym uruchomieniu, więc po `git pull` skrypt jest bezpieczny na każdym moim komputerze. Zakaz dotyczy Ciebie, a nie sprzętu.) Jeśli zadanie wymaga odświeżenia `galeria.json`, napisz mi, że mam to zrobić sam.
 4. **Nie dodawaj adaptera `@astrojs/cloudflare`, SSR ani `output: "server"`.** Strona jest w pełni statyczna.
@@ -50,15 +50,30 @@ Zasady:
 
 ---
 
-## 3. Po każdej zmianie: sprawdź, potem commit
+## 3. Gałąź, sprawdzenie, commit, pull request
 
-1. Uruchom `npm run check` (na końcu musi być `0 errors`, to samo sprawdza CI na GitHubie). Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build na danych testowych i odpali testy Playwright).
-2. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
-3. `git status`, żeby zobaczyć, co się zmieniło.
-4. `git add <konkretne pliki>`.
-5. `git commit -m "fix: krótki opis po polsku"`. Przedrostki: `feat:` (nowa funkcja), `fix:` (poprawka), `chore:` (porządki), `docs:`, `test:`.
+Każde zadanie idzie przez osobną gałąź i pull request (PR) do `main`. Na `main` nic nie trafia bez PR-a i zielonego CI (reguła na GitHubie), a Cloudflare wdraża stronę z `main` dopiero po scaleniu, które robi Wiktor.
 
-Commit robisz automatycznie, bez pytania. O zgodę pytasz tylko przy samej zmianie w kodzie. Jeden commit to jedna zamknięta zmiana.
+1. **Przed pierwszą zmianą: świeży `main` i nowa gałąź.**
+   ```
+   git switch main
+   git pull
+   git switch -c <typ>/<krotki-opis>
+   ```
+   `<typ>` jak w komunikacie commita (`feat`, `fix`, `chore`, `docs`, `test`), opis małymi literami, bez polskich znaków, słowa połączone myślnikiem, np. `feat/testy-vitest`. Jeśli zadanie od Claude podaje nazwę gałęzi, użyj jej. Jeśli `git status` pokazuje zmiany, których nie robiłeś, zatrzymaj się i zapytaj. Poprawki do PR-a, który nie jest jeszcze scalony, robisz na jego gałęzi (`git switch <gałąź>`), bez zakładania nowej.
+2. Uruchom `npm run check` (na końcu musi być `0 errors`, to samo sprawdza CI na GitHubie). Uruchom `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm run test` (sam zrobi build na danych testowych i odpali testy Playwright).
+3. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
+4. `git status`, żeby zobaczyć, co się zmieniło.
+5. `git add <konkretne pliki>`.
+6. `git commit -m "fix: krótki opis po polsku"`. Przedrostki: `feat:` (nowa funkcja), `fix:` (poprawka), `chore:` (porządki), `docs:`, `test:`.
+7. **Push gałęzi.** Najpierw `git branch --show-current` — jeśli wychodzi `main`, nie wypychaj i napisz mi o tym. Potem `git push -u origin <gałąź>` (przy poprawkach do istniejącego PR-a: `git push origin <gałąź>`).
+8. **Pull request z wiedzą z zadania.** Opis zapisz w pliku `opis-pr.md` w głównym folderze projektu (git go pomija), według szablonu `.github/pull_request_template.md`:
+   - „Co i po co”, „Wiedza z zadania” i „Do obejrzenia przed Merge” przepisz z zadania od Claude bez skracania. Jeśli zadanie ich nie ma, napisz je sam z tego, co ustaliliśmy w rozmowie: decyzje i dlaczego tak, odrzucone warianty, pułapki.
+   - „Jak sprawdzone”: polecenia z punktu 2 i ich prawdziwe wyniki (np. `npm run check` — 0 errors, `npm test` — 158 passed) oraz czego nie sprawdziłeś.
+
+   Potem `gh pr create --base main --head <gałąź> --title "<komunikat commita>" --body-file opis-pr.md` i podaj mi link do PR-a. Przy poprawkach do istniejącego PR-a dopisz w `opis-pr.md`, co się zmieniło, i uruchom `gh pr edit <numer> --body-file opis-pr.md`.
+
+Commit, push gałęzi i PR robisz po kolei, bez pytania w rozmowie — o zgodę pytasz tylko przy samej zmianie w kodzie (polecenia `git push` i `gh pr create` i tak zatwierdzam w okienku). Jeden commit to jedna zamknięta zmiana. PR-a nigdy nie scalasz.
 
 ---
 
@@ -71,6 +86,7 @@ Co się zmieniło: [jak to wygląda/działa w przeglądarce, bez nazw plików i 
 Dlaczego tak: [tylko jeśli był realny wybór między podejściami, inaczej pomiń]
 Build/testy: [✅ przeszły / ❌ co nie przeszło]
 Co sprawdzić: [konkretna czynność, np. "zmniejsz okno, żeby zobaczyć wersję mobilną"]
+PR: [link do pull requesta]
 ```
 
 - Tłumacz efekt, a nie implementację. Szczegóły techniczne podawaj tylko, jeśli o nie zapytam.

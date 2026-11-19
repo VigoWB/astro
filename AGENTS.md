@@ -47,7 +47,7 @@ Zasady:
 7. **Nie czytaj na głos, nie wypisuj i nie commituj pliku `.env`.** Są w nim klucze.
 8. **Nie usuwaj atrybutów `data-testid`.** Opierają się na nich testy.
 9. **Nie dodawaj logiki układu (flex, grid) do `Container.astro`.** Ma zostać prostym opakowaniem szerokości.
-10. **Nie używaj `git add -A`.** Dodawaj tylko pliki zmienione w tym zadaniu. Jeśli `git status` pokazuje zmieniony `src/data/galeria.json`, którego nie ruszałeś, nie commituj go i zapytaj mnie.
+10. **Nie używaj `git add -A`.** Dodawaj tylko pliki zmienione w tym zadaniu. Jeśli `git status` pokazuje zmieniony `src/data/galeria.json`, którego nie ruszałeś, nie commituj go i zapytaj mnie. Wyjątek: commit `galeria.json`, o który sam poproszę po `sync-images` (sekcja 10, „Nowe zdjęcie w galerii”).
 
 ---
 
@@ -295,7 +295,7 @@ images/październik_26_EDYCJA_DSC7102.jpg (+ opcjonalnie październik_26_PRZED_D
 
 ## 10. Przepisy
 
-**Nowe zdjęcie w galerii:** robię to ja. Robię `git pull`, wrzucam plik do `images/`, uruchamiam `npm run sync-images` i commituję `src/data/galeria.json`. W kodzie nic nie trzeba zmieniać.
+**Nowe zdjęcie w galerii:** robię to ja, na komputerze z kluczami R2 w `.env` (na VM `opencode` ich nie ma). Najpierw scalam poprzedni PR ze zdjęciami, potem `git switch main` i `git pull`, wrzucam plik do `images/` i uruchamiam `npm run sync-images`. Zmieniony `src/data/galeria.json` idzie jak każda zmiana: przez osobną gałąź `zdjecia/<RRRR-MM-DD-GGMM>` i pull request, bo GitHub odrzuca push na `main`. Komendy mam w ściądze w Claude. W kodzie nic nie trzeba zmieniać. Jeśli poproszę Cię o commit `galeria.json` po `sync-images`: gałąź `zdjecia/<RRRR-MM-DD-GGMM>` (data i godzina), w commicie tylko `src/data/galeria.json`, komunikat ode mnie (bez niego `feat: zdjęcia w galerii`), dalej jak w sekcji 3 — sprawdzenie, push gałęzi, PR. Samego pliku nie zmieniasz (sekcja 2, punkt 3).
 
 **Nowa podstrona:**
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.

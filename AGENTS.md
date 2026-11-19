@@ -145,6 +145,7 @@ public/
   manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
+  sync-images-funkcje.mjs   czyste funkcje sync-images (nazwy par, klucze R2, opcje, numery, czyszczenie EXIF-u, galeria.json ↔ baza) — bez skutków przy imporcie, z testami Vitesta
   build-testowy.mjs        build na danych testowych do dist-testy/ (atrapa R2, tests/dane/galeria.json) — dla npm test
   start-preview-if-needed.mjs  uruchamia podgląd builda testowego dla testów, port 4323 (Node, dziala tez na Windows)
 src/
@@ -175,8 +176,9 @@ src/
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
 tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, dane-testowe.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 tests/dane/galeria.json    dane testowe galerii (edytowane ręcznie) — z nich powstaje strona do testów
-tests/jednostkowe/         testy jednostkowe Vitesta (*.test.ts): kategorie.test.ts, nawigacja.test.ts
-tests/integracyjne/        testy integracyjne Vitesta (*.test.ts): galeria.test.ts (src/lib/galeria.ts z atrapą R2), seo-i-schema.test.ts
+tests/piexifjs.d.ts   typy dla piexifjs (paczka ich nie ma) — tylko dla testu EXIF-u
+tests/jednostkowe/         testy jednostkowe Vitesta (*.test.ts): kategorie.test.ts, nawigacja.test.ts, sync-images.test.ts
+tests/integracyjne/        testy integracyjne Vitesta (*.test.ts): galeria.test.ts (src/lib/galeria.ts z atrapą R2), seo-i-schema.test.ts, sync-images.test.ts
 vitest.config.ts           konfiguracja Vitesta: dwa projekty, „jednostkowe” i „integracyjne”
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
@@ -218,6 +220,7 @@ images/październik_26_EDYCJA_DSC7102.jpg (+ opcjonalnie październik_26_PRZED_D
 - Plik Vitesta kończy się na `.test.ts`, plik Playwrighta na `.spec.ts` — każde narzędzie bierze tylko swoje (`include` w `vitest.config.ts`, `testMatch` w `playwright.config.ts`).
 - Nowa logika w `src/lib/` albo `src/data/` = test jednostkowy albo integracyjny; zachowanie w przeglądarce = test e2e.
 - Test nie zależy od prawdziwych zdjęć ani od `.env`: dane podstawiasz w teście, a zmienne `PUBLIC_*` przez `vi.stubEnv`.
+- `scripts/sync-images.mjs` rusza sam przy imporcie (pytania w terminalu, R2, zapis `galeria.json`) — testy importują tylko `scripts/sync-images-funkcje.mjs`. Nową logikę sync-images, którą da się oddzielić od terminala, R2 i plików, dodawaj do tego modułu razem z testem; moduł nie może nic robić przy imporcie.
 
 ---
 

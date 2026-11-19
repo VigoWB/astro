@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { kluczZnak as kluczZnakSkryptu } from "../../scripts/sync-images-funkcje.mjs";
+import daneTestowe from "../dane/galeria.json";
 
 // src/lib/galeria.ts przy buildzie: pyta R2 o każdy plik (HEAD), wybiera wersję ze znakiem wodnym
 // albo czysty oryginał, dopisuje do adresu wersję z ETag i zleca webp do lightboksa.
@@ -159,5 +161,24 @@ describe("zdjeciaDlaGoogle()", () => {
 		expect(galeria.zdjeciaDlaGoogle(zdjecia)).toEqual([
 			{ po: { src: "/_astro/atrapa-1920.webp", width: 1920, height: 1280 }, opis: "Złoty zegarek" },
 		]);
+	});
+});
+
+// kluczZnak() jest celowo w dwóch miejscach: skrypt .mjs nie zaimportuje galeria.ts.
+// sync-images wgrywa wersję ze znakiem pod kluczem ze skryptu, a strona szuka jej pod kluczem z galeria.ts.
+describe("kluczZnak()", () => {
+	test("daje to samo co kluczZnak() ze skryptu sync-images", async () => {
+		const { galeria } = await wczytaj([zdjecie()]);
+		const klucze = [
+			"zdjecia/DSC_1.jpg",
+			"zdjecia/przed_DSC_1.jpg",
+			"zdjecia/październik_26_PRZED_DSC7102.jpg",
+			"zdjecia/wrzesień_26_EDYCJA_przed_DSC7062.jpg",
+			"zdjecia/DSC_4968-Edytuj.jpg",
+			"zdjecia/DSC_2.PNG",
+			...daneTestowe.flatMap((z) => [z.klucz, z.kluczPrzed]).filter((k): k is string => Boolean(k)),
+		];
+		expect(klucze.length).toBeGreaterThan(6);
+		for (const klucz of klucze) expect(galeria.kluczZnak(klucz), klucz).toBe(kluczZnakSkryptu(klucz));
 	});
 });

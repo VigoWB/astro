@@ -15,13 +15,14 @@ Jeśli zacząłeś odpowiadać po angielsku, napisz odpowiedź od nowa po polsku
 ## 1. Jak pracujemy
 
 - **Ja (Wiktor)** nie znam się na kodzie. Zlecam pracę i akceptuję zmiany.
-- **Ty (OpenCode albo Claude Code)** jesteś wykonawcą. Piszesz kod w moim edytorze i robisz commity. Pracuję z wami na zmianę, a ten plik obowiązuje każdego z was tak samo.
-- **Claude w czacie (claude.ai)** jest architektem. Planuje większe zmiany, robi code review pull requestów przed scaleniem i sprawdza build.
+- **Ty (OpenCode albo Claude Code)** jesteś wykonawcą. Piszesz kod i robisz commity — w moim edytorze (VS Code) albo w terminalu na moim serwerze. Pracuję z wami na zmianę, a ten plik obowiązuje każdego z was tak samo.
+- **Claude w czacie (claude.ai)** jest architektem. Planuje zmiany, pisze dla Ciebie zadania i przegląda pull requesty przed scaleniem — na podstawie Twojego raportu (sekcja „Jak sprawdzone” w opisie PR-a) i zmian w PR-ze. Sam nie buduje strony ani nie uruchamia testów: robisz to Ty, na komputerze, na którym pracujesz.
 
 Zasady:
 - Rób **tylko to, o co poproszono**. Żadnych poprawek „przy okazji” w innych plikach. Jeśli coś zauważysz, napisz o tym na końcu odpowiedzi.
 - **Zatrzymaj się i zapytaj**, zanim: dodasz nowy pakiet npm, zmienisz przepływ zdjęć, dodasz zewnętrzną usługę, usuniesz plik albo zmienisz coś w `.github/`, `astro.config.mjs` lub `public/_headers`. Opisz propozycję, ale jej nie wdrażaj.
 - **Przed zmianą** pokaż krótki plan: 2–4 punkty, co i gdzie zmienisz, zwykłym językiem.
+- **Zadania od Claude** są opisane słowami: cel, pliki, ograniczenia, sprawdzenia i kiedy zadanie jest gotowe. Kod piszesz sam, według opisu. Teksty, wartości i fragmenty kodu, które zadanie podaje dosłownie, przepisujesz dokładnie. Jeśli opis jest niejasny albo nie zgadza się z kodem (np. nie ma takiej funkcji albo pliku), zatrzymaj się i zapytaj, zamiast zgadywać. Jeśli zadanie mówi „najpierw plan”, pokaż plan i nie zmieniaj plików, dopóki nie odpowiem.
 
 ---
 
@@ -61,7 +62,7 @@ Każde zadanie idzie przez osobną gałąź i pull request (PR) do `main`. Na `m
    git switch -c <typ>/<krotki-opis>
    ```
    `<typ>` jak w komunikacie commita (`feat`, `fix`, `chore`, `docs`, `test`), opis małymi literami, bez polskich znaków, słowa połączone myślnikiem, np. `feat/testy-vitest`. Jeśli zadanie od Claude podaje nazwę gałęzi, użyj jej. Jeśli `git status` pokazuje zmiany, których nie robiłeś, zatrzymaj się i zapytaj. Poprawki do PR-a, który nie jest jeszcze scalony, robisz na jego gałęzi (`git switch <gałąź>`), bez zakładania nowej.
-2. Uruchom `npm run check` (na końcu musi być `0 errors`), `npx vitest run` (testy jednostkowe i integracyjne, kilka sekund) i `npm run build`. Jeśli zmiana dotyczy galerii, formularza, menu albo `Layout.astro`, uruchom `npm test` — wszystkie etapy po kolei, tak jak CI: typy, testy jednostkowe, integracyjne i e2e (build na danych testowych i Playwright); zatrzymuje się na pierwszym błędzie.
+2. **Sprawdzenie robisz Ty** — Claude w czacie nie buduje strony. Zawsze uruchom `npm test` (wszystkie etapy po kolei, tak jak CI: typy, testy jednostkowe, integracyjne i e2e — build na danych testowych i Playwright; zatrzymuje się na pierwszym błędzie) i `npm run build` (prawdziwy build ze zdjęciami z R2, do `dist/`). Jeśli zadanie od Claude podaje dodatkowe sprawdzenia (np. co ma być w `dist/`: fragment HTML, JSON-LD, nazwa pliku), wykonaj każde i zapisz wynik. Wyjątek: gdy zmieniasz tylko pliki `.md`, testy i build pomijasz — napisz to w raporcie.
 3. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
 4. `git status`, żeby zobaczyć, co się zmieniło.
 5. `git add <konkretne pliki>`.
@@ -69,7 +70,13 @@ Każde zadanie idzie przez osobną gałąź i pull request (PR) do `main`. Na `m
 7. **Push gałęzi.** Najpierw `git branch --show-current` — jeśli wychodzi `main`, nie wypychaj i napisz mi o tym. Potem `git push -u origin <gałąź>` (przy poprawkach do istniejącego PR-a: `git push origin <gałąź>`).
 8. **Pull request z wiedzą z zadania.** Opis zapisz w pliku `opis-pr.md` w głównym folderze projektu (git go pomija), według szablonu `.github/pull_request_template.md`:
    - „Co i po co”, „Wiedza z zadania” i „Do obejrzenia przed Merge” przepisz z zadania od Claude bez skracania. Jeśli zadanie ich nie ma, napisz je sam z tego, co ustaliliśmy w rozmowie: decyzje i dlaczego tak, odrzucone warianty, pułapki.
-   - „Jak sprawdzone”: polecenia z punktu 2 i ich prawdziwe wyniki (np. `npm run check` — 0 errors, `npm test` — 158 passed) oraz czego nie sprawdziłeś.
+   - „Jak sprawdzone” to Twój raport dla Claude w czacie: Wiktor kopiuje go z PR-a do czatu, a Claude ocenia PR na jego podstawie, bez własnego buildu. Pisz konkretnie:
+      - każde polecenie z punktu 2 i jego prawdziwy wynik (np. `npm test` — 155 passed, 3 skipped; `npm run build` — Complete), a przy dodatkowych sprawdzeniach z zadania — co pokazały;
+      - zmienione pliki: wynik `git diff --stat origin/main...HEAD`;
+      - odstępstwa od zadania: co zrobiłeś inaczej niż w opisie i dlaczego (albo „brak”);
+      - czego nie sprawdziłeś, ryzyka i otwarte pytania;
+      - rzeczy zauważone przy okazji, których nie naprawiałeś.
+   - Do „Wiedzy z zadania” dopisz własne decyzje i pułapki, na które trafiłeś przy pracy.
 
    Potem `gh pr create --base main --head <gałąź> --title "<komunikat commita>" --body-file opis-pr.md` i podaj mi link do PR-a. Przy poprawkach do istniejącego PR-a dopisz w `opis-pr.md`, co się zmieniło, i uruchom `gh pr edit <numer> --body-file opis-pr.md`.
 

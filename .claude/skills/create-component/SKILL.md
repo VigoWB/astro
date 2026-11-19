@@ -5,6 +5,16 @@ description: Create Astro components, pages, and layouts with accessible markup 
 
 # Create Astro Component
 
+## W tym projekcie (balansbieli.pl)
+
+Najpierw obowiązują `AGENTS.md` i `.claude/rules/konwencje-kodu.md` — gdy ten skill mówi co innego, wygrywają one. Najważniejsze różnice:
+
+- Tylko komponenty `.astro`, bez React i Vue — krok 4 (wyspy, `client:*`) nie dotyczy projektu. Zachowanie w przeglądarce to `<script>` w tym samym pliku `.astro`, a wartości z `---` trafiają do skryptu przez atrybuty `data-*`.
+- Zamiast `<style>` z przykładu — klasy Tailwind v4 i tokeny z `@theme`; `<style>` tylko na to, czego nie da się zrobić klasami.
+- Nazwy plików, propsów i zmiennych po polsku, bez polskich znaków (np. `Karta.astro`, `pokazFiltry`). `src/components/ui/` to proste komponenty wizualne, `src/components/` — komponenty z logiką.
+- Nowa podstrona: przepis „Nowa podstrona” w `AGENTS.md`, sekcja 10.
+- Testy: zachowanie w przeglądarce = test Playwrighta, nowa logika w `src/lib/` albo `src/data/` = test Vitesta (`AGENTS.md`, sekcja 7, „Poziomy testów”).
+
 Use this skill when scaffolding a new Astro component, page, layout, or route from a feature request, design, or static markup.
 
 If `astro-best-practices` is available, apply it alongside this skill for project-wide conventions and review criteria.

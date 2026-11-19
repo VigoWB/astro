@@ -5,6 +5,16 @@ description: Apply performant, accessible, and maintainable defaults when buildi
 
 # Astro Best Practices
 
+## W tym projekcie (balansbieli.pl)
+
+Najpierw obowiązują `AGENTS.md` i `.claude/rules/konwencje-kodu.md` — gdy ten skill mówi co innego, wygrywają one. Najważniejsze różnice:
+
+- Astro 7, w pełni statyczny (`output: 'static'`): bez SSR, adapterów i wysp. Nie ma React ani Vue, więc dyrektywy `client:*` nie dotyczą projektu. Kod przeglądarki jest tylko w `<script>` w pliku `.astro`.
+- Bez kolekcji treści (content collections): dane są w `src/data/`, a `galeria.json` generuje `npm run sync-images` — nie edytuje się go ręcznie.
+- Style: klasy Tailwind v4 i tokeny z `@theme` w `src/styles/global.css`. `<style>` w komponencie tylko na to, czego nie da się zrobić klasami — zwykły CSS z `<style>` wygrywa z klasami Tailwinda (komentarz w `src/components/Footer.astro`).
+- Content-Security-Policy z `public/_headers` blokuje skrypty i style wklejone w HTML (`AGENTS.md`, sekcja 11, pułapka 7).
+- Przy przeglądzie kodu sprawdź też zakazy z `AGENTS.md`, sekcja 2.
+
 Use this skill as the baseline when designing, implementing, or reviewing Astro work. It translates Astro-specific architectural guidance into portable instructions that can be applied across agents.
 
 ## Core Principles

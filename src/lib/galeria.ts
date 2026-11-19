@@ -49,9 +49,9 @@ function adresZKlucza(klucz: string): string {
 
 // Ten sam klucz, tylko w folderze "znak/" zamiast "zdjecia/" — tam sync-images
 // wgrywa wersję ze znakiem wodnym. Musi być zgodne z kluczZnak()
-// w scripts/sync-images.mjs. Miniatury (Karta.astro) zostają na czystym oryginale,
+// w scripts/sync-images-funkcje.mjs — pilnuje tego test w tests/integracyjne/galeria.test.ts (eksport tylko dla testu). Miniatury (Karta.astro) zostają na czystym oryginale,
 // znak dostają tylko wersje do lightboksa i duże porównanie "przed/po" na stronie głównej.
-function kluczZnak(klucz: string): string {
+export function kluczZnak(klucz: string): string {
 	return klucz.replace(/^zdjecia\//, "znak/");
 }
 

@@ -31,16 +31,36 @@
  *
  * Ctrl+C przy pytaniu kończy od razu. W trakcie wgrywania skrypt najpierw dokańcza
  * bieżące zdjęcie (żeby nie zostało w połowie), a drugie Ctrl+C przerywa natychmiast.
+ *
+ * Czyste funkcje (bez terminala, R2 i plików) są w scripts/sync-images-funkcje.mjs i tam mają testy.
  */
 
 import { DatabaseSync } from 'node:sqlite';
 import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
-import piexif from 'piexifjs';
 import { readFile, readdir, mkdir, open, rename, rm } from 'node:fs/promises';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import readline from 'node:readline';
+import {
+  kluczZnak,
+  wybierzPlikPrzed,
+  wybierzZdjecia,
+  plikiPrzedBezPary,
+  odczytajOpcje,
+  rozbijNaNumery,
+  zdjeciaTracaceWyroznienie,
+  liczbaLubNull,
+  tekstLubNull,
+  wyczyscExifDoR2,
+  TABELA_ZDJEC,
+  bezBom,
+  parsujKategorie,
+  wczytajListe,
+  zapiszListeWBazie,
+  listaZBazy,
+  tekstGalerii,
+} from './sync-images-funkcje.mjs';
 
 const IMAGES_DIR = 'images';
 const DB_PATH = 'data/galeria.db';
@@ -91,77 +111,14 @@ function adresR2(kluczR2) {
   return `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${kluczZakodowany}`;
 }
 
-// Wersja ze znakiem wodnym leży pod tym samym kluczem, tylko w folderze "znak/"
-// zamiast "zdjecia/". Miniatury (Karta.astro) biorą oryginał z "zdjecia/",
-// lightbox i duże porównanie "przed/po" na stronie głównej (src/lib/galeria.ts)
-// wersję z "znak/" — tam musi być ta sama funkcja.
-// Klucz spoza "zdjecia/" zostałby bez zmian i wersja ze znakiem nadpisałaby czysty
-// oryginał — dlatego taki klucz przerywa pracę.
-function kluczZnak(kluczR2) {
-  if (!kluczR2.startsWith('zdjecia/')) {
-    throw new Error(
-      `nieoczekiwany klucz R2 "${kluczR2}" (powinien zaczynać się od "zdjecia/") — przerywam, żeby wersja ze znakiem nie nadpisała oryginału.`
-    );
-  }
-  return kluczR2.replace(/^zdjecia\//, 'znak/');
-}
-
-// Możliwe nazwy pliku "przed" dla pliku "po". Działają dwa sposoby nazywania:
-// - obecny (od listopada 2026): "PRZED_" w miejscu "EDYCJA_", np.
-//   październik_26_EDYCJA_DSC7102.jpg → październik_26_PRZED_DSC7102.jpg;
-// - dawny: "przed_" tuż przed numerem "DSC", np. DSC_1234.jpg → przed_DSC_1234.jpg,
-//   DSC_4968-Edytuj.jpg → przed_DSC_4968-Edytuj.jpg,
-//   wrzesień_26_EDYCJA_DSC7062.jpg → wrzesień_26_EDYCJA_przed_DSC7062.jpg
-//   (nazwa bez numeru "DSC" dostaje "przed_" na początku).
-// Dawny sposób zostaje dla zdjęć już wgranych — --podmien znajdzie ich "przed" pod starą nazwą.
-function nazwyWersjiPrzed(nazwaPliku) {
-  const nazwy = [];
-  if (/EDYCJA_/i.test(nazwaPliku)) nazwy.push(nazwaPliku.replace(/EDYCJA_/i, 'PRZED_'));
-  const zPrzed = nazwaPliku.replace(/(DSC_?\d)/i, 'przed_$1');
-  nazwy.push(zPrzed === nazwaPliku ? `przed_${nazwaPliku}` : zPrzed);
-  return nazwy;
-}
-
 // Plik "przed" dla pliku "po": nazwa pliku, który naprawdę leży w images/ (wielkość liter
 // bez znaczenia; klucz w R2 dostaje nazwę dokładnie taką jak na dysku). Gdy takiego pliku
 // nie ma — pierwsza nazwa z nazwyWersjiPrzed(), do komunikatu „nie ma pliku …”.
 function nazwaWersjiPrzed(nazwaPliku) {
-  const kandydaci = nazwyWersjiPrzed(nazwaPliku);
-  const pliki = existsSync(IMAGES_DIR) ? readdirSync(IMAGES_DIR) : [];
-  for (const kandydat of kandydaci) {
-    const plik = pliki.find((f) => f.toLowerCase() === kandydat.toLowerCase());
-    if (plik) return plik;
-  }
-  return kandydaci[0];
+  return wybierzPlikPrzed(nazwaPliku, existsSync(IMAGES_DIR) ? readdirSync(IMAGES_DIR) : []);
 }
 
 // --- Baza SQLite (wbudowana w Node; bez dodatkowej flagi działa od wersji 22.13) ---
-// Tabela jako stała, bo tworzymy ją w dwóch miejscach: przy otwarciu bazy
-// i przy odtwarzaniu bazy z galeria.json.
-const TABELA_ZDJEC = `
-    CREATE TABLE IF NOT EXISTS zdjecia (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nazwa_pliku TEXT UNIQUE NOT NULL,
-      nazwa_pliku_przed TEXT,
-      opis TEXT DEFAULT '',
-      kategorie TEXT DEFAULT '[]',
-      szerokosc INTEGER,
-      wysokosc INTEGER,
-      iso INTEGER,
-      przyslona REAL,
-      ogniskowa REAL,
-      czas_naswietlania REAL,
-      data_wykonania TEXT,
-      make TEXT,
-      model TEXT,
-      lens_model TEXT,
-      r2_klucz TEXT,
-      r2_klucz_przed TEXT,
-      wyroznione INTEGER DEFAULT 0,
-      para_suwaka INTEGER DEFAULT 0
-    );
-`;
-
 function initDb() {
   mkdirSync(dirname(DB_PATH), { recursive: true });
   const db = new DatabaseSync(DB_PATH);
@@ -172,15 +129,6 @@ function initDb() {
 function pobierzWgrane(db) {
   const rows = db.prepare('SELECT nazwa_pliku FROM zdjecia').all();
   return new Set(rows.map((r) => r.nazwa_pliku));
-}
-
-function parsujKategorie(tekst) {
-  try {
-    const wynik = JSON.parse(tekst ?? '[]');
-    return Array.isArray(wynik) ? wynik : [];
-  } catch {
-    return [];
-  }
 }
 
 // --- Kategorie ---
@@ -201,12 +149,6 @@ function pobierzUzywaneKategorie(db) {
 
 // --- Odtworzenie bazy z pliku JSON ---
 
-// Znak BOM na początku pliku (dopisują go niektóre edytory, np. stary Notatnik) nie jest
-// częścią JSON-a — bez jego usunięcia JSON.parse zgłasza błąd, choć plik jest w porządku.
-function bezBom(tekst) {
-  return tekst.charCodeAt(0) === 0xfeff ? tekst.slice(1) : tekst;
-}
-
 // Źródłem prawdy jest src/data/galeria.json — leży w gicie, więc po git pull jest taki
 // sam na każdym komputerze. Baza SQLite to tylko robocza kopia, dlatego przy KAŻDYM
 // uruchomieniu budujemy ją od nowa z pliku JSON. Stara baza z innego komputera nie może
@@ -215,80 +157,11 @@ function bezBom(tekst) {
 async function odtworzZJson(db) {
   if (!existsSync(JSON_PATH)) return; // pierwsze uruchomienie — nie ma jeszcze z czego odtwarzać
 
-  let lista;
-  try {
-    lista = JSON.parse(bezBom(await readFile(JSON_PATH, 'utf8')));
-  } catch (err) {
-    // Uszkodzony plik (np. nierozwiązany konflikt gita) — przerywamy, żeby go nie nadpisać.
-    throw new Error(
-      `Plik ${JSON_PATH} nie jest poprawnym JSON-em (${err.message}). ` +
-      'Możliwy nierozwiązany konflikt gita. Nic nie zmieniono — napraw plik albo przywróć jego poprzednią wersję z gita.'
-    );
-  }
-  // "kategorie" jako zwykły tekst (np. po ręcznej poprawce) po cichu przepadłyby przy zapisie —
-  // dlatego taki plik też zatrzymuje skrypt.
-  const zlyWpis = (z) =>
-    !z || typeof z.nazwaPliku !== 'string' || !z.nazwaPliku || (z.kategorie != null && !Array.isArray(z.kategorie));
-  if (!Array.isArray(lista) || lista.some(zlyWpis)) {
-    throw new Error(
-      `Plik ${JSON_PATH} ma nieoczekiwany format (oczekiwana lista zdjęć z polem nazwaPliku, a "kategorie" jako lista). Nic nie zmieniono.`
-    );
-  }
+  const lista = wczytajListe(await readFile(JSON_PATH, 'utf8'), JSON_PATH);
 
   const ileBylo = db.prepare('SELECT COUNT(*) AS n FROM zdjecia').get().n;
 
-  // Tabelę tworzymy od zera, więc stara baza z innego komputera (np. bez nowszych kolumn)
-  // też zadziała. Wszystko w jednej transakcji: błąd w połowie nie zostawi połowy bazy.
-  db.exec('BEGIN');
-  try {
-    db.exec('DROP TABLE IF EXISTS zdjecia');
-    db.exec(TABELA_ZDJEC);
-
-    const wstaw = db.prepare(`
-      INSERT INTO zdjecia
-        (nazwa_pliku, nazwa_pliku_przed, opis, kategorie, szerokosc, wysokosc,
-         iso, przyslona, ogniskowa, czas_naswietlania, data_wykonania, make, model, lens_model, r2_klucz, r2_klucz_przed,
-         wyroznione, para_suwaka)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    for (const z of lista) {
-      try {
-        wstaw.run(
-          z.nazwaPliku,
-          z.kluczPrzed ? z.kluczPrzed.replace(/^zdjecia\//, '') : null, // nazwa "przed" = klucz bez folderu (pasuje do każdego sposobu nazywania)
-          z.opis ?? '',
-          JSON.stringify(z.kategorie ?? []),
-          z.szerokosc ?? null,
-          z.wysokosc ?? null,
-          z.exif?.iso ?? null,
-          z.exif?.przyslona ?? null,
-          z.exif?.ogniskowa ?? null,
-          z.exif?.czasNaswietlania ?? null,
-          z.exif?.dataWykonania ?? null,
-          z.exif?.make ?? null,
-          z.exif?.model ?? null,
-          z.exif?.lensModel ?? null,
-          z.klucz ?? null,
-          z.kluczPrzed ?? null,
-          z.wyroznione ? 1 : 0,
-          z.paraSuwaka ? 1 : 0
-        );
-      } catch (err) {
-        throw new Error(`zdjęcie "${z.nazwaPliku}": ${err.message}`);
-      }
-    }
-    db.exec('COMMIT');
-  } catch (err) {
-    // Przy niektórych błędach (np. pełny dysk) SQLite sam wycofuje transakcję — wtedy
-    // ROLLBACK rzuciłby własny błąd i zasłonił ten prawdziwy.
-    try {
-      db.exec('ROLLBACK');
-    } catch {
-      // transakcja już wycofana
-    }
-    throw new Error(`Nie udało się odtworzyć bazy z ${JSON_PATH} (${err.message}). Plik nie został zmieniony.`);
-  }
+  zapiszListeWBazie(db, lista, JSON_PATH);
 
   console.log(`♻️  Baza odtworzona z ${JSON_PATH} (zdjęć: ${lista.length}, w starej bazie było: ${ileBylo}).`);
   console.log('   Jeśli pracujesz na innym komputerze niż zwykle, upewnij się, że zrobiłeś git pull.\n');
@@ -314,19 +187,6 @@ async function pobierzWymiary(sciezka) {
 }
 
 // --- Dane z aparatu (ISO, przysłona itd.) ---
-
-// Do bazy i galeria.json może trafić tylko zwykła liczba albo tekst. Część aparatów
-// zapisuje w jednym polu kilka wartości (np. ISO jako [100, 0]) — wtedy bierzemy pierwszą.
-// Inaczej do galeria.json trafiłby obiekt, strona pokazałaby "ISO [object Object]",
-// a następne uruchomienie skryptu przerwałoby się przy odtwarzaniu bazy.
-function liczbaLubNull(wartosc) {
-  const pierwsza = Array.isArray(wartosc) || ArrayBuffer.isView(wartosc) ? wartosc[0] : wartosc;
-  return typeof pierwsza === 'number' && Number.isFinite(pierwsza) && pierwsza > 0 ? pierwsza : null;
-}
-
-function tekstLubNull(wartosc) {
-  return typeof wartosc === 'string' && wartosc.trim() ? wartosc.trim() : null;
-}
 
 async function pobierzExif(sciezka) {
   const exifr = (await import('exifr')).default;
@@ -551,39 +411,6 @@ async function wyslijBuforDoR2(bufor, kluczR2, contentType) {
   }
 }
 
-// Usuwa z EXIF-u lokalizację GPS i numer seryjny (aparatu + obiektywu) przed
-// wysyłką "czystego" oryginału do R2 — ten bucket jest publiczny. Reszta EXIF-u
-// (data wykonania, model aparatu, obiektyw) zostaje — nic poufnego, a w pliku też
-// się przyda. Działa tylko na nagłówku pliku, bez przekodowywania pikseli — zero
-// utraty jakości. Wersji ze znakiem wodnym (nalozZnak niżej) to nie dotyczy — ona
-// i tak wychodzi z sharp bez EXIF-u.
-// Pliku, którego nie da się wyczyścić, NIE wysyłamy (bucket jest publiczny).
-// PNG pomijamy bez błędu — piexifjs obsługuje tylko JPEG, a aparaty i tak nie
-// produkują PNG (ten format dopuszczamy w kandydatach tylko teoretycznie).
-function wyczyscExifDoR2(bufor, kluczR2) {
-  if (!/\.jpe?g$/i.test(kluczR2)) return bufor;
-
-  try {
-    const binarny = bufor.toString('binary');
-    const exif = piexif.load(binarny);
-
-    exif.GPS = {};
-    if (exif.Exif) {
-      delete exif.Exif[piexif.ExifIFD.BodySerialNumber];
-      delete exif.Exif[piexif.ExifIFD.LensSerialNumber];
-      delete exif.Exif[piexif.ExifIFD.MakerNote]; // u części producentów numer seryjny jest schowany tu, nie w polu wyżej
-    }
-
-    const nowyExifBytes = piexif.dump(exif);
-    return Buffer.from(piexif.insert(nowyExifBytes, binarny), 'binary');
-  } catch (err) {
-    throw new Error(
-      `nie udało się wyczyścić EXIF-u (${err.message}) — nie wysyłam pliku, w którym mógłby zostać GPS albo numer seryjny. ` +
-      'Wyeksportuj zdjęcie jeszcze raz i spróbuj ponownie.'
-    );
-  }
-}
-
 // Znak wodny: logo z src/assets/logo.svg (ten sam plik co w nagłówku strony) w prawym
 // dolnym rogu. Kolor dobiera się do tła pod logo: na jasnym (np. białe tło zdjęć produktów)
 // logo jest ciemne i półprzezroczyste, na ciemnym — jasne; cienka obwódka w przeciwnym
@@ -721,17 +548,11 @@ async function usunZR2(kluczR2) {
 // Pliki "przed", których skrypt nie sparuje z żadnym "po" — np. "po" ma dopisek "-Edytuj",
 // a "przed" nie. Bez tego ostrzeżenia zdjęcie trafiłoby na stronę po cichu bez wersji "przed".
 function ostrzezOPlikachPrzedBezPary(zdjecia, nazwyPo) {
-  const oczekiwane = new Set(nazwyPo.flatMap((n) => nazwyWersjiPrzed(n)).map((n) => n.toLowerCase()));
-  for (const plik of zdjecia) {
-    if (/przed_/i.test(plik) && !oczekiwane.has(plik.toLowerCase())) {
-      // Podpowiedź: dawny sposób ("przed_" na początku albo obok "EDYCJA_") — "po" to nazwa
-      // bez "przed_"; obecny — "EDYCJA_" w miejscu "PRZED_".
-      const pasujacePo = /^przed_|EDYCJA_/i.test(plik) ? plik.replace(/przed_/i, '') : plik.replace(/przed_/i, 'EDYCJA_');
-      console.warn(
-        `⚠️  "${plik}" nie ma pary — pasowałoby do niego "po" o nazwie "${pasujacePo}". ` +
-        'Popraw nazwę jednego z plików (np. dopisek "-Edytuj"), inaczej zdjęcie trafi na stronę bez "przed".'
-      );
-    }
+  for (const { plik, pasujacePo } of plikiPrzedBezPary(zdjecia, nazwyPo)) {
+    console.warn(
+      `⚠️  "${plik}" nie ma pary — pasowałoby do niego "po" o nazwie "${pasujacePo}". ` +
+      'Popraw nazwę jednego z plików (np. dopisek "-Edytuj"), inaczej zdjęcie trafi na stronę bez "przed".'
+    );
   }
 }
 
@@ -743,9 +564,7 @@ async function dodajNoweZdjecia(db) {
   }
 
   const wszystkiePliki = existsSync(IMAGES_DIR) ? await readdir(IMAGES_DIR) : [];
-  // Pliki ukryte (np. "._DSC_1234.jpg", które macOS zostawia na pendrive'ach) to nie zdjęcia.
-  const zdjecia = wszystkiePliki.filter((f) => !f.startsWith('.') && /\.(jpe?g|png)$/i.test(f));
-  const kandydaci = zdjecia.filter((f) => /DSC_?\d/i.test(f) && !/przed_/i.test(f)).sort();
+  const { zdjecia, kandydaci } = wybierzZdjecia(wszystkiePliki);
 
   ostrzezOPlikachPrzedBezPary(zdjecia, [...kandydaci, ...wgrane]);
 
@@ -889,22 +708,6 @@ async function uzupelnijOpisy(db) {
   console.log('');
 }
 
-// Zamienia np. "1, 3 5" na [1, 3, 5]. Jeśli choć jeden fragment nie jest numerem z listy
-// (literówka "1;3", zakres "1-3", słowo), zwraca null — wtedy NIC nie zmieniamy, zamiast
-// zastosować resztę albo pustą listę (pusta lista skasowałaby wszystkie wyróżnienia).
-function rozbijNaNumery(tekst, maks) {
-  const fragmenty = tekst.split(/[\s,]+/).filter(Boolean);
-  const bledne = fragmenty.filter((f) => !/^\d+$/.test(f) || Number(f) < 1 || Number(f) > maks);
-
-  if (fragmenty.length === 0 || bledne.length > 0) {
-    console.warn(
-      `   ⚠️  Nieprawidłowe numery: ${bledne.join(', ') || tekst} — wpisz liczby od 1 do ${maks}, oddzielone przecinkiem lub spacją.`
-    );
-    return null;
-  }
-  return [...new Set(fragmenty.map(Number))];
-}
-
 // --- Tryb "wyróżnij": wybór zdjęć na stronę główną ---
 // Dwie niezależne rzeczy: (1) które zdjęcia pokazują się w sekcji "Wybrane prace"
 // (pole "wyroznione", dowolna liczba), (2) która JEDNA para trafia do suwaka
@@ -946,9 +749,7 @@ async function zarzadzajWyroznieniami(db) {
       // Nowa lista zastępuje obecną, więc zdjęcie, którego numeru nie wpisano, traci wyróżnienie.
       // Wpisany sam numer nowego zdjęcia zdjął je kiedyś z pozostałych — dlatego przed
       // zdjęciem wyróżnienia pytamy jeszcze raz (jak przy --podmien), a "nie" niczego nie zmienia.
-      const tracaWyroznienie = wszystkie
-        .map((w, i) => ({ ...w, numer: i + 1 }))
-        .filter((w) => w.wyroznione && !noweId.has(w.id));
+      const tracaWyroznienie = zdjeciaTracaceWyroznienie(wszystkie, numery);
       let zapisac = true;
       if (tracaWyroznienie.length > 0) {
         console.log('   ⚠️  Te zdjęcia stracą wyróżnienie (znikną z "Wybrane prace"):');
@@ -1160,30 +961,7 @@ async function zapiszAtomowo(sciezka, tresc) {
 }
 
 async function eksportujJson(db) {
-  const wiersze = db.prepare('SELECT * FROM zdjecia ORDER BY nazwa_pliku').all();
-
-  const lista = wiersze.map((w) => ({
-    nazwaPliku: w.nazwa_pliku,
-    opis: w.opis ?? '',
-    kategorie: parsujKategorie(w.kategorie),
-    szerokosc: w.szerokosc ?? null,
-    wysokosc: w.wysokosc ?? null,
-    klucz: w.r2_klucz,
-    kluczPrzed: w.r2_klucz_przed ?? null,
-    wyroznione: Boolean(w.wyroznione),
-    paraSuwaka: Boolean(w.para_suwaka),
-    exif: {
-      iso: w.iso ?? null,
-      przyslona: w.przyslona ?? null,
-      ogniskowa: w.ogniskowa ?? null,
-      czasNaswietlania: w.czas_naswietlania ?? null,
-      dataWykonania: w.data_wykonania ?? null,
-      make: w.make ?? null,
-      model: w.model ?? null,
-      lensModel: w.lens_model ?? null,
-    },
-  }));
-  const nowaTresc = JSON.stringify(lista, null, 2) + '\n';
+  const nowaTresc = tekstGalerii(listaZBazy(db));
 
   // Bez zmian (np. po "Anulowano") — nie dotykamy pliku, żeby git nie pokazywał zmian.
   // Porównujemy bez względu na końce linii (git na Windowsie zamienia LF na CRLF).
@@ -1199,55 +977,6 @@ async function eksportujJson(db) {
     throw new BladGlobalny(`nie udało się zapisać ${JSON_PATH} (${err.code ?? err.message}) — poprzednia wersja pliku została nietknięta.`);
   }
   zmienionoJson = true;
-}
-
-// --- Opcje z wiersza poleceń ---
-
-// Dozwolone opcje (true = po opcji musi być nazwa pliku). Literówka albo opcja "połknięta"
-// przez npm (brak "--" przed opcjami) kończy się błędem — inaczej skrypt po cichu
-// uruchomiłby zwykłe dodawanie zdjęć, które wgrywa pliki do R2.
-const OPCJE = { '--uzupelnij': false, '--wyroznij': false, '--usun': true, '--podmien': true };
-const PODPOWIEDZ_OPCJI =
-  '   Dostępne opcje: --uzupelnij, --wyroznij, --usun <plik>, --podmien <plik> — zawsze po "--", np.:\n' +
-  '   npm run sync-images -- --usun DSC_1111.jpg';
-
-// "--usuń" działa jak "--usun" — polskie litery w nazwie opcji nie są błędem.
-function bezPolskichLiter(tekst) {
-  return tekst.normalize('NFD').replace(/\p{M}/gu, '').replace(/ł/g, 'l').replace(/Ł/g, 'L');
-}
-
-function odczytajOpcje(argumenty) {
-  // npm bez "--" zabiera opcję dla siebie: do skryptu dociera wtedy tylko nazwa pliku
-  // (albo nic), a po opcji zostaje ślad w zmiennej środowiskowej npm_config_<opcja>.
-  const polkniete = Object.keys(process.env)
-    .filter((nazwa) => /^npm_config_/i.test(nazwa))
-    .map((nazwa) => `--${bezPolskichLiter(nazwa.slice('npm_config_'.length).toLowerCase())}`)
-    .filter((opcja) => Object.hasOwn(OPCJE, opcja));
-  if (polkniete.length > 0) {
-    throw new Error(`Opcję ${polkniete[0]} przejął npm, bo zabrakło "--" przed opcjami.\n${PODPOWIEDZ_OPCJI}`);
-  }
-
-  const wybrane = [];
-  for (let i = 0; i < argumenty.length; i++) {
-    const opcja = bezPolskichLiter(argumenty[i].toLowerCase());
-    if (!Object.hasOwn(OPCJE, opcja)) {
-      throw new Error(`Nieznana opcja albo argument: "${argumenty[i]}".\n${PODPOWIEDZ_OPCJI}`);
-    }
-    let plik = null;
-    if (OPCJE[opcja]) {
-      plik = argumenty[i + 1];
-      if (!plik || plik.startsWith('--')) {
-        throw new Error(`Podaj nazwę pliku, np.: npm run sync-images -- ${opcja} DSC_1111.jpg`);
-      }
-      i++;
-    }
-    wybrane.push({ opcja, plik });
-  }
-
-  if (wybrane.length > 1) {
-    throw new Error(`Podaj jedną opcję naraz (podano: ${wybrane.map((w) => w.opcja).join(', ')}).`);
-  }
-  return wybrane[0] ?? { opcja: null, plik: null };
 }
 
 // --- Główna logika ---

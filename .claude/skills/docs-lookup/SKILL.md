@@ -5,6 +5,12 @@ description: Look up official Astro documentation and answer version-sensitive A
 
 # Astro Docs Lookup
 
+## W tym projekcie (balansbieli.pl)
+
+- Strona działa na Astro 7 — dokładną wersję podaje `package.json` (`astro` w `dependencies`). Przykłady ze starszych wersji sprawdzaj w aktualnej dokumentacji (docs.astro.build) i w przewodnikach aktualizacji (upgrade guides), zanim ich użyjesz.
+- Strona jest w pełni statyczna: SSR, adaptery i wyspy z React czy Vue jej nie dotyczą (`AGENTS.md`, sekcja 2).
+- Odpowiadasz Wiktorowi po polsku; nazwy API i kod zostają po angielsku (`AGENTS.md`, zasada #1).
+
 Use this skill when answering Astro questions that depend on current documentation, exact API names, integration setup, upgrade paths, or version-sensitive behavior.
 
 ## Workflow

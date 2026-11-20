@@ -4,6 +4,7 @@
   "small_model": "opencode/big-pickle",
   "share": "disabled",
   "autoupdate": "notify",
+  "instructions": [".claude/rules/*.md"],
   "agent": {
     "build": {
       "steps": 40

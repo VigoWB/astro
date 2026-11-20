@@ -135,7 +135,8 @@ PR: [link do pull requesta]
 ## 6. Struktura plików
 
 ```
-.agents/skills/            instrukcje dla agentów dotyczące Astro (patrz sekcja 11)
+.claude/skills/            skille Astro: docs-lookup, astro-best-practices, create-component (sekcja 11)
+.claude/rules/             konwencje kodu, wczytywane przy pracy na plikach z src/ (sekcja 8)
 .github/workflows/ci.yml   etapy po kolei: typy i testy jednostkowe → testy integracyjne → testy e2e → build + Lighthouse → „Wynik” (wymagany do scalenia PR)
 .github/pull_request_template.md   szablon opisu PR: co i po co, wiedza z zadania, jak sprawdzone
 public/
@@ -226,39 +227,7 @@ images/październik_26_EDYCJA_DSC7102.jpg (+ opcjonalnie październik_26_PRZED_D
 
 ## 8. Konwencje kodu
 
-**TypeScript**
-- Każdy komponent ma `interface Props` w tym samym pliku, a `Astro.props` jest destrukturyzowane z domyślnymi wartościami.
-- Żadnego `any`. W skryptach przeglądarki stosuj rzutowania typu `as HTMLImageElement`.
-
-**Komponenty i importy**
-- Wszystko w `.astro`, bez React/Vue.
-- Ścieżki względne (`../components/...`), bez aliasu `@/`.
-- `ui/` to proste komponenty wizualne, `components/` to komponenty z logiką.
-- `<script>` zostaje w tym samym pliku `.astro`.
-
-**Style**
-- Tylko klasy Tailwind v4 i tokeny z `@theme`: `paper`, `ink`, `przycisk`, `przycisk-hover`, `muted`, `line`, `blok`, `blok-tekst`, `cien`, `error`, `success`. Paleta ma cztery role: tło `paper`, tekst `ink`, akcent `przycisk` (szałwia), tekst na akcencie `ink` — nie dodawaj nowej zieleni ani jaśniejszego wariantu akcentu do tła; nowy kolor tylko po decyzji Wiktora. Do czego który:
-  - przyciski i stany aktywne (filtr, „Pokaż przed”, numery kroków): `bg-przycisk text-ink hover:bg-przycisk-hover`;
-  - linki i aktywny link w menu: w kolorze tekstu (`text-ink`), wyróżnione podkreśleniem — link w tekście `underline underline-offset-2 hover:decoration-2`, aktywny link w menu `underline decoration-2 underline-offset-8`, pozostałe w menu po najechaniu `decoration-ink/40 hover:underline`; nie zmieniaj koloru linku po najechaniu;
-  - drugoplanowe: `muted` (tekst), `line` (linie, obwódki kafelków — kafelki z obwódką, bez kolorowego tła);
-  - wyróżniona sekcja w treści (zaproszenie do kontaktu na dole strony, „Co poprawiam przy retuszu”): tło strony z obwódką jak kafelki — `rounded-lg border border-line`, w środku `text-ink` (nagłówki, punkty), `text-muted` (akapit), przycisk `bg-przycisk`. Sekcjom w treści nie dawaj ciemnego tła (`bg-blok`) — ciemny blok przyciągał za dużo uwagi (decyzja Wiktora 4.11);
-  - ciemny blok tylko w stopce: `bg-blok`, w środku `text-paper` (nagłówki, linki), `text-blok-tekst` (zwykły tekst), akcent `przycisk`;
-  - nakładki na zdjęciach, tło lightboxa i ramki zdjęć: `cien` (np. `bg-cien/90`), nigdy `ink` — `ink` jest zielony i barwiłby zdjęcia. Biały napis na zdjęciu (etykiety „Przed” / „Po”, przycisk „Pokaż przed”) stoi na co najmniej `bg-cien/70` — przy jaśniejszej nakładce na białym zdjęciu kontrast spada poniżej 4,5:1.
-- Zaokrąglenia tylko z trzech stopni (`--radius-*` w `@theme`): `rounded-lg` (12 px) — duże powierzchnie: kafelki i sekcje z obwódką, suwak przed/po; `rounded-md` (8 px) — przyciski (także ikonowe w lightboksie), pola formularza, filtry, miniatury; `rounded-sm` (4 px) — małe elementy: etykiety na zdjęciach, obwódka fokusu wokół logo. `rounded-full` tylko dla prawdziwych kół (zdjęcie na „O mnie”, uchwyt suwaka, numery kroków, kropki). Innych (`rounded-xl`, `rounded-xs`, `rounded-[…]`) nie używaj — reszta skali jest wyłączona i nic by nie zrobiła. Przyciski stojące obok siebie mają tę samą wysokość: jeśli jeden ma obwódkę (`border-2`), drugi też (w kolorze swojego tła) i oba `py-2.5`; przycisk bez obwódki ma `py-3`.
-- Bez stylów wklejonych w HTML — żadnego `style="..."` w HTML, `<style>` wklejanego w stronę ani `setAttribute('style', …)` — blokuje je Content-Security-Policy (pułapka 7). Ze skryptu wolno tylko przez `element.style.nazwa = …` (tak działa `transform` w nagłówku i opóźnienie animacji w galerii).
-- Podejście mobile-first: bazowe klasy są dla telefonu, a `md:`, `lg:` dla większych ekranów.
-
-**Dostępność (obowiązkowo, testy to sprawdzają)**
-- Każdy interaktywny element ma etykietę (`aria-label` albo widoczny tekst).
-- Widoczny fokus przez `focus-visible:ring-2 focus-visible:ring-ink`; w stopce (ciemny blok) `focus-visible:ring-przycisk focus-visible:ring-offset-blok`, a w lightboksie i na przyciskach leżących na zdjęciu `focus-visible:ring-przycisk focus-visible:ring-offset-cien` — `ring-ink` na ciemnym tle byłby niewidoczny.
-- Szanuj `prefers-reduced-motion`: animacje przez `motion-safe:` albo sprawdzenie w skrypcie.
-- Semantyczny HTML: `<nav>`, `<main>`, `<article>`, `<footer>`, `<button type="button">`.
-- Kontrast tekstu do tła co najmniej 4.5:1 (wymóg WCAG AA); zwykły tekst — także drugoplanowy `muted` — trzymamy co najmniej 7:1.
-
-**Obrazy**
-- `<Image>` / `<Picture>` z `astro:assets` z `width`, `height`, `loading="lazy"`, `decoding="async"`.
-- Pierwsze zdjęcie na stronie ładuje się `eager` z `fetchpriority="high"`.
-- Zdjęcia galerii mają `draggable="false"`, a prawy klik jest zablokowany (ochrona przed kopiowaniem, nie usuwaj).
+Konwencje kodu (TypeScript, komponenty i importy, style i kolory, zaokrąglenia, dostępność, obrazy) są w `.claude/rules/konwencje-kodu.md`. Claude Code wczytuje ten plik sam, gdy czyta albo zmienia plik w `src/`, a OpenCode — na starcie każdej sesji. Zanim utworzysz nowy plik w `src/` albo zrobisz przegląd kodu, przeczytaj go, jeśli nie masz go jeszcze w rozmowie.
 
 ---
 
@@ -338,7 +307,7 @@ Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA
 
 ## 11. Pułapki
 
-1. **Astro 7 jest nowy.** Twoja wiedza może dotyczyć starszej wersji. Jeśli nie masz pewności co do API Astro, przeczytaj `.agents/skills/docs-lookup/SKILL.md` i sprawdź w dokumentacji zamiast zgadywać. Przy review kodu korzystaj z `.agents/skills/astro-best-practices/SKILL.md`.
+1. **Astro 7 jest nowy.** Twoja wiedza może dotyczyć starszej wersji. Jeśli nie masz pewności co do API Astro, użyj skilla `docs-lookup` (`.claude/skills/docs-lookup/SKILL.md`) i sprawdź w dokumentacji zamiast zgadywać. Przy nowym komponencie albo nowej stronie korzystaj ze skilla `create-component`, a przy przeglądzie kodu — z `astro-best-practices` (oba w `.claude/skills/`).
 2. **`Astro.url` a `Astro.site`:** `Astro.url` to adres bieżącej strony, a `Astro.site` to domena z konfiguracji. Absolutne adresy buduj przez `Astro.site`.
 3. **W `public/_headers` komentarz to tylko `#`.** Styl `/* */` Cloudflare czyta jako wzorzec ścieżki i nagłówki przestają działać.
 4. **W `astro.config.mjs` nie ma `import.meta.env`.** Zmienne wczytuje `loadEnv` z Vite.

@@ -43,3 +43,6 @@ data/*.db
 
 # Opis pull requesta przygotowany przez wykonawcę (gh pr create --body-file opis-pr.md)
 /opis-pr.md
+
+# Lokalne blokady Claude Code (każdy komputer ma własne); reszta folderu .claude/ jest w repo
+.claude/settings.local.json

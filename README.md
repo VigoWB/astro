@@ -2,7 +2,7 @@
 
 Prywatna strona portfolio fotograficznego Wiktora: Astro 7 (w pełni statyczny), Tailwind CSS v4, hosting na Cloudflare Pages. Zdjęcia trzymane w Cloudflare R2, formularz kontaktowy przez Formspree z ochroną Cloudflare Turnstile.
 
-Zasady pracy nad projektem, stos technologiczny i konwencje kodu opisuje [`AGENTS.md`](./AGENTS.md).
+Zasady pracy nad projektem i stos technologiczny opisuje [`AGENTS.md`](./AGENTS.md), a konwencje kodu — [`.claude/rules/konwencje-kodu.md`](./.claude/rules/konwencje-kodu.md).
 
 ## Komendy
 

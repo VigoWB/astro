@@ -46,3 +46,10 @@ data/*.db
 
 # Lokalne blokady Claude Code (każdy komputer ma własne); reszta folderu .claude/ jest w repo
 .claude/settings.local.json
+
+# Pliki robocze pluginu superpowers (Claude Code): projekty i plany zadań — tylko lokalnie, nie do repo
+/docs/superpowers/
+
+# Kopie robocze repo (git worktree) zakładane przez agentów — nie do repo
+/.worktrees/
+/.claude/worktrees/

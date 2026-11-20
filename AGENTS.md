@@ -23,6 +23,7 @@ Zasady:
 - **Zatrzymaj się i zapytaj**, zanim: dodasz nowy pakiet npm, zmienisz przepływ zdjęć, dodasz zewnętrzną usługę, usuniesz plik albo zmienisz coś w `.github/`, `astro.config.mjs` lub `public/_headers`. Opisz propozycję, ale jej nie wdrażaj.
 - **Przed zmianą** pokaż krótki plan: 2–4 punkty, co i gdzie zmienisz, zwykłym językiem.
 - **Zadania od Claude** są opisane słowami: cel, pliki, ograniczenia, sprawdzenia i kiedy zadanie jest gotowe. Kod piszesz sam, według opisu. Teksty, wartości i fragmenty kodu, które zadanie podaje dosłownie, przepisujesz dokładnie. Jeśli opis jest niejasny albo nie zgadza się z kodem (np. nie ma takiej funkcji albo pliku), zatrzymaj się i zapytaj, zamiast zgadywać. Jeśli zadanie mówi „najpierw plan”, pokaż plan i nie zmieniaj plików, dopóki nie odpowiem.
+- **Pluginy i skille** (np. superpowers): ten plik i zadanie od Claude mają pierwszeństwo przed ich instrukcjami. Zadanie od Claude jest już zaprojektowane — nie zaczynasz projektowania od nowa i nie dopytujesz o zakres; wystarczy krótki plan z tej sekcji, a pytasz tylko wtedy, gdy coś jest niejasne albo nie zgadza się z kodem. Pracujesz w głównym folderze projektu, bez kopii roboczych (git worktree) — blokady Claude Code są w `.claude/settings.local.json` tego folderu. Plany i notatki robocze zapisujesz tylko w `docs/superpowers/` (git go pomija); wiedza z zadania trafia do opisu PR-a. Pracę kończysz zawsze tak samo: push własnej gałęzi i pull request (sekcja 3) — nigdy nie scalasz niczego z `main`, także lokalnie.
 
 ---
 
@@ -44,7 +45,7 @@ Zasady:
    - w znaczniku `<script>` (wykonuje się w przeglądarce).
 
    Nigdy luzem w HTML. Zmiennych z `---` nie ma w `<script>`, więc przekazuj je przez atrybuty `data-*`.
-7. **Nie czytaj na głos, nie wypisuj i nie commituj pliku `.env`.** Są w nim klucze.
+7. **`.env` nie jest dla Ciebie.** To konfiguracja produkcyjna — jest tylko jeden, u mnie (do `sync-images`). Nie czytasz go, nie tworzysz, nie kopiujesz, nie wypisujesz i nie commitujesz. Nie uruchamiasz poleceń, które biorą z niego prawdziwe wartości: `npm run dev`, `npm run build`, `npm run preview`, `npm run sync-images`. Cała Twoja praca działa bez `.env`, na danych testowych i atrapach (`npm test`, `npm run build:testy`, `npm run preview:testy`). Jeśli coś bez `.env` nie działa, to błąd do opisania w raporcie, a nie powód, żeby `.env` założyć.
 8. **Nie usuwaj atrybutów `data-testid`.** Opierają się na nich testy.
 9. **Nie dodawaj logiki układu (flex, grid) do `Container.astro`.** Ma zostać prostym opakowaniem szerokości.
 10. **Nie używaj `git add -A`.** Dodawaj tylko pliki zmienione w tym zadaniu. Jeśli `git status` pokazuje zmieniony `src/data/galeria.json`, którego nie ruszałeś, nie commituj go i zapytaj mnie. Wyjątek: commit `galeria.json`, o który sam poproszę po `sync-images` (sekcja 10, „Nowe zdjęcie w galerii”).
@@ -62,7 +63,7 @@ Każde zadanie idzie przez osobną gałąź i pull request (PR) do `main`. Na `m
    git switch -c <typ>/<krotki-opis>
    ```
    `<typ>` jak w komunikacie commita (`feat`, `fix`, `chore`, `docs`, `test`), opis małymi literami, bez polskich znaków, słowa połączone myślnikiem, np. `feat/testy-vitest`. Jeśli zadanie od Claude podaje nazwę gałęzi, użyj jej. Jeśli `git status` pokazuje zmiany, których nie robiłeś, zatrzymaj się i zapytaj. Poprawki do PR-a, który nie jest jeszcze scalony, robisz na jego gałęzi (`git switch <gałąź>`), bez zakładania nowej.
-2. **Sprawdzenie robisz Ty** — Claude w czacie nie buduje strony. Zawsze uruchom `npm test` (wszystkie etapy po kolei, tak jak CI: typy, testy jednostkowe, integracyjne i e2e — build na danych testowych i Playwright; zatrzymuje się na pierwszym błędzie) i `npm run build` (prawdziwy build ze zdjęciami z R2, do `dist/`). Jeśli zadanie od Claude podaje dodatkowe sprawdzenia (np. co ma być w `dist/`: fragment HTML, JSON-LD, nazwa pliku), wykonaj każde i zapisz wynik. Wyjątek: gdy zmieniasz tylko pliki `.md`, testy i build pomijasz — napisz to w raporcie.
+2. **Sprawdzenie robisz Ty** — Claude w czacie nie buduje strony. Zawsze uruchom `npm test` (wszystkie etapy po kolei, tak jak CI: typy, testy jednostkowe, integracyjne i e2e — build na danych testowych i Playwright; zatrzymuje się na pierwszym błędzie). Prawdziwego buildu (`npm run build`) nie uruchamiasz — potrzebuje `.env` (sekcja 2, punkt 7). Prawdziwy build ze zdjęciami z R2 i Lighthouse robi CI (etap „Build i Lighthouse”); bez niego nie ma zielonego „Wyniku”. Jeśli zadanie od Claude podaje dodatkowe sprawdzenia (np. co ma być w zbudowanej stronie: fragment HTML, JSON-LD, nazwa pliku), wykonaj je na `dist-testy/` (powstaje w `npm test` albo `npm run build:testy`) i zapisz wynik. Wyjątek: gdy zmieniasz tylko pliki `.md`, testy pomijasz — napisz to w raporcie.
 3. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
 4. `git status`, żeby zobaczyć, co się zmieniło.
 5. `git add <konkretne pliki>`.
@@ -71,7 +72,7 @@ Każde zadanie idzie przez osobną gałąź i pull request (PR) do `main`. Na `m
 8. **Pull request z wiedzą z zadania.** Opis zapisz w pliku `opis-pr.md` w głównym folderze projektu (git go pomija), według szablonu `.github/pull_request_template.md`:
    - „Co i po co”, „Wiedza z zadania” i „Do obejrzenia przed Merge” przepisz z zadania od Claude bez skracania. Jeśli zadanie ich nie ma, napisz je sam z tego, co ustaliliśmy w rozmowie: decyzje i dlaczego tak, odrzucone warianty, pułapki.
    - „Jak sprawdzone” to Twój raport dla Claude w czacie: Wiktor kopiuje go z PR-a do czatu, a Claude ocenia PR na jego podstawie, bez własnego buildu. Pisz konkretnie:
-      - każde polecenie z punktu 2 i jego prawdziwy wynik (np. `npm test` — 155 passed, 3 skipped; `npm run build` — Complete), a przy dodatkowych sprawdzeniach z zadania — co pokazały;
+      - każde polecenie z punktu 2 i jego prawdziwy wynik (np. `npm test` — 155 passed, 3 skipped), a przy dodatkowych sprawdzeniach z zadania — co pokazały;
       - zmienione pliki: wynik `git diff --stat origin/main...HEAD`;
       - odstępstwa od zadania: co zrobiłeś inaczej niż w opisie i dlaczego (albo „brak”);
       - czego nie sprawdziłeś, ryzyka i otwarte pytania;
@@ -110,6 +111,8 @@ PR: [link do pull requesta]
 
 ### Zmienne środowiskowe (`.env`, wzór w `.env.example`, typy w `src/env.d.ts`)
 
+Plik `.env` z prawdziwymi wartościami jest tylko u Wiktora (sekcja 2, punkt 7). CI bierze je z sekretów GitHuba, a build testowy i testy mają własne wartości testowe.
+
 | Zmienna | Czy wymagana | Do czego |
 |---|---|---|
 | `PUBLIC_R2_URL` | **tak**, bez niej build się przerywa | adres bucketa R2 ze zdjęciami |
@@ -120,9 +123,11 @@ PR: [link do pull requesta]
 
 ### Komendy
 
-- `npm run dev`: serwer deweloperski (localhost:4321)
-- `npm run build`: build do `dist/` (wcześniej warto `npm run check`: sprawdzanie typów TypeScript, także w plikach `.astro`; to samo robi CI)
-- `npm run preview`: podgląd buildu (localhost:4322)
+- `npm run dev`: serwer deweloperski (localhost:4321) — tylko Wiktor, potrzebuje `.env`
+- `npm run build`: prawdziwy build do `dist/` — tylko Wiktor i CI (prawdziwe wartości z `.env` albo z sekretów GitHuba)
+- `npm run preview`: podgląd `dist/` (localhost:4322) — tylko Wiktor
+- `npm run build:testy`: build na danych testowych do `dist-testy/` (atrapa R2, wartości testowe, bez `.env`) — dla wykonawcy
+- `npm run preview:testy`: podgląd `dist-testy/` (localhost:4323) — dla wykonawcy
 - `npm test`: wszystkie etapy po kolei, tak jak CI, do pierwszego błędu: `npm run check` → `npm run test:jednostkowe` → `npm run test:integracyjne` → `npm run test:e2e`
 - `npm run test:jednostkowe`, `npm run test:integracyjne`: testy Vitesta (`tests/jednostkowe/`, `tests/integracyjne/`), kilka sekund; oba naraz: `npx vitest run` (sekcja 7, „Poziomy testów”)
 - `npm run test:e2e`: build na danych testowych do `dist-testy/` (`npm run build:testy`), potem testy Playwright (Chrome desktop i mobile, testy dostępności axe). Testy nigdy nie widzą prawdziwych zdjęć — sekcja 7, „Dane testowe”
@@ -267,7 +272,7 @@ Konwencje kodu (TypeScript, komponenty i importy, style i kolory, zaokrąglenia,
 
 ## 10. Przepisy
 
-**Nowe zdjęcie w galerii:** robię to ja, na komputerze z kluczami R2 w `.env` (na VM `opencode` ich nie ma). Najpierw scalam poprzedni PR ze zdjęciami, potem `git switch main` i `git pull`, wrzucam plik do `images/` i uruchamiam `npm run sync-images`. Zmieniony `src/data/galeria.json` idzie jak każda zmiana: przez osobną gałąź `zdjecia/<RRRR-MM-DD-GGMM>` i pull request, bo GitHub odrzuca push na `main`. Komendy mam w ściądze w Claude. W kodzie nic nie trzeba zmieniać. Jeśli poproszę Cię o commit `galeria.json` po `sync-images`: gałąź `zdjecia/<RRRR-MM-DD-GGMM>` (data i godzina), w commicie tylko `src/data/galeria.json`, komunikat ode mnie (bez niego `feat: zdjęcia w galerii`), dalej jak w sekcji 3 — sprawdzenie, push gałęzi, PR. Samego pliku nie zmieniasz (sekcja 2, punkt 3).
+**Nowe zdjęcie w galerii:** robię to ja, na jedynym komputerze z plikiem `.env` (sekcja 2, punkt 7). Najpierw scalam poprzedni PR ze zdjęciami, potem `git switch main` i `git pull`, wrzucam plik do `images/` i uruchamiam `npm run sync-images`. Zmieniony `src/data/galeria.json` idzie jak każda zmiana: przez osobną gałąź `zdjecia/<RRRR-MM-DD-GGMM>` i pull request, bo GitHub odrzuca push na `main`. Komendy mam w ściądze w Claude. W kodzie nic nie trzeba zmieniać. Jeśli poproszę Cię o commit `galeria.json` po `sync-images`: gałąź `zdjecia/<RRRR-MM-DD-GGMM>` (data i godzina), w commicie tylko `src/data/galeria.json`, komunikat ode mnie (bez niego `feat: zdjęcia w galerii`), dalej jak w sekcji 3 — sprawdzenie, push gałęzi, PR. Samego pliku nie zmieniasz (sekcja 2, punkt 3).
 
 **Nowa podstrona:**
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
@@ -283,7 +288,7 @@ Konwencje kodu (TypeScript, komponenty i importy, style i kolory, zaokrąglenia,
 Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA`, dodaj link w `nav.ts`, stronę w `public/sw.js` (i podbij `CACHE_NAME`) oraz w `lighthouserc.json`, a `tests/oferta.spec.ts` zmień tak, żeby sprawdzał link w menu i obecność w sitemapie.
 
 **Nowa zmienna środowiskowa:**
-1. Dodaj ją do `src/env.d.ts` (z opisem po polsku) i do `.env.example`.
+1. Dodaj ją do `src/env.d.ts` (z opisem po polsku) i do `.env.example`. Prawdziwą wartość do `.env` wpisuje Wiktor — Ty dopisujesz tylko `.env.example`.
 2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` w `.github/workflows/ci.yml`. Testy mają osobny build: jeśli zmienna włącza coś, co sprawdzają testy, dopisz jej wartość testową w `scripts/build-testowy.mjs` (tam, gdzie `PUBLIC_FORMSPREE_ID`).
 3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
 

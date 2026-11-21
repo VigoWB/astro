@@ -6,7 +6,8 @@ import { test, expect } from '@playwright/test';
 // dist-testy/), a nie z prawdziwych zdjęć. Ten plik pilnuje dwóch rzeczy:
 // 1. że to naprawdę ta strona (a nie np. prawdziwa, z innego podglądu na tym samym porcie),
 // 2. że tests/dane/galeria.json dalej ma przypadki, których potrzebują inne testy —
-//    bez nich testy galerii i suwaka by się po cichu pomijały (test.skip).
+//    bez nich testy galerii i suwaka padałyby z mniej jasnym komunikatem, a ten plik mówi wprost,
+//    czego brakuje w danych.
 
 interface ZdjecieTestowe {
 	opis: string;
@@ -43,5 +44,13 @@ test.describe('Dane testowe', () => {
 
 		await page.goto('/');
 		await expect(page.locator('[data-porownanie-suwak]'), 'suwak przed/po na stronie głównej (para w tych samych proporcjach)').toHaveCount(1);
+
+		// Build testowy ustawia testowy klucz Turnstile. Bez niego poczekajNaTokenTurnstile() (pomocnicze.ts)
+		// i asercje w kontakt.spec.ts oraz csp.spec.ts po cichu pomijałyby token.
+		await page.goto('/kontakt/');
+		await expect(
+			page.getByTestId('contact-form'),
+			'Formularz bez włączonego Turnstile — build testowy powinien ustawić testowy PUBLIC_TURNSTILE_SITE_KEY (scripts/build-testowy.mjs)'
+		).toHaveAttribute('data-turnstile-enabled', 'true');
 	});
 });

@@ -11,9 +11,9 @@ import { STRONY, podstawAtrapeTurnstile, poczekajNaTokenTurnstile, sprawdzIdForm
 // albo docelowy, także oba naraz) i zbiera zdarzenia "securitypolicyviolation", które
 // przeglądarka wysyła przy każdym naruszeniu — w obu trybach.
 //
-// Zewnętrzne usługi (Turnstile, statystyki Cloudflare) sprawdzają się tylko tam,
-// gdzie jest do nich dostęp (np. CI na GitHubie). Bez sieci po prostu się nie
-// ładują — to nie jest naruszenie CSP, więc test i tak przechodzi.
+// Turnstile sprawdza się tylko tam, gdzie jest dostęp do Cloudflare (np. CI na GitHubie) — bez sieci
+// skrypt się nie ładuje, to nie jest naruszenie CSP i test przechodzi. Statystyk Cloudflare ten test
+// nie sprawdza: build testowy ma pusty PUBLIC_CF_BEACON_TOKEN, więc ich skrypt nie trafia do HTML.
 
 declare global {
 	interface Window {

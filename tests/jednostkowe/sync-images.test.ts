@@ -285,7 +285,7 @@ describe("parsujKategorie() i bezBom()", () => {
 	});
 
 	test("usuwa BOM z początku", () => {
-		expect(bezBom("﻿[]")).toBe("[]");
+		expect(bezBom("\uFEFF[]")).toBe("[]");
 		expect(bezBom("[]")).toBe("[]");
 	});
 });

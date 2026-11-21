@@ -231,7 +231,7 @@ describe("obieg galeria.json → baza → galeria.json", () => {
 
 describe("wczytajListe()", () => {
 	test("działa z BOM", () => {
-		expect(wczytajListe("﻿" + JSON.stringify(LISTA_Z_GITA), SCIEZKA)).toEqual(LISTA_Z_GITA);
+		expect(wczytajListe("\uFEFF" + JSON.stringify(LISTA_Z_GITA), SCIEZKA)).toEqual(LISTA_Z_GITA);
 	});
 
 	test("konflikt gita to nie JSON", () => {

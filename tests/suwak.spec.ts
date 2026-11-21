@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 // Suwak przed/po na stronie głównej (PorownanieSuwak.astro): przeciąganie myszą i palcem oraz opis wartości
 // dla czytnika ekranu. Sprawdzamy skutek: gdzie stoi linia i które zdjęcie widać po obu jej stronach.
-// Klawiaturę sprawdza a11y.spec.ts. Bez pary do suwaka (galeria.json) strona pokazuje przełącznik — testy się pomijają.
+// Klawiaturę sprawdza a11y.spec.ts. Dane testowe mają parę do suwaka (pilnuje tego dane-testowe.spec.ts), więc brak suwaka na stronie to błąd testu.
 
 /** Środek linii jako procent szerokości zdjęcia (0 = lewa krawędź). */
 function pozycjaLinii(page: Page): Promise<number> {
@@ -20,7 +20,7 @@ function widacPrzed(page: Page, x: number, y: number): Promise<boolean> {
 
 async function otworzSuwak(page: Page) {
 	await page.goto('/');
-	test.skip((await page.locator('[data-porownanie-suwak]').count()) === 0, 'Brak pary do suwaka — strona pokazuje przełącznik „Pokaż przed”');
+	await expect(page.locator('[data-porownanie-suwak]'), 'Brak suwaka — dane testowe mają parę do suwaka, a strona pokazuje przełącznik „Pokaż przed” (sprawdź index.astro i PorownanieSuwak.astro)').toHaveCount(1);
 	const ramka = (await page.locator('[data-porownanie]').boundingBox())!;
 	return { y: ramka.y + ramka.height / 2, x: (procent: number) => ramka.x + (ramka.width * procent) / 100 };
 }
@@ -73,11 +73,11 @@ test('suwak: palcem — stuknięcie i ruch w poziomie przesuwają linię, przewi
 // Pierwszy ekran na komputerze (PorownanieSuwak.astro, klasa lg:max-w-…): zdjęcie dopasowuje się do wysokości
 // okna, żeby na laptopach (1366×768, 1536×864) cały suwak i przycisk „Zapytaj o wycenę” były widoczne bez
 // przewijania. Na dużym monitorze zdjęcie ma dalej pełną szerokość kolumny. Działa też z przełącznikiem
-// „Pokaż przed” (ten sam kontener); bez zdjęcia na pierwszym ekranie (pusta galeria) testy się pomijają.
+// „Pokaż przed” (ten sam kontener); brak zdjęcia na pierwszym ekranie to błąd testu.
 async function otworzPierwszyEkran(page: Page, szerokosc: number, wysokosc: number) {
 	await page.setViewportSize({ width: szerokosc, height: wysokosc });
 	await page.goto('/');
-	test.skip((await page.locator('[data-porownanie]').count()) === 0, 'Brak zdjęcia na pierwszym ekranie — galeria jest pusta');
+	await expect(page.locator('[data-porownanie]'), 'Brak zdjęcia na pierwszym ekranie — dane testowe mają zdjęcia, więc zgubiła je strona (sprawdź index.astro)').toHaveCount(1);
 }
 
 test('pierwszy ekran: na laptopie całe zdjęcie i przycisk „Zapytaj o wycenę” mieszczą się w oknie', async ({ page }, testInfo) => {

@@ -86,7 +86,7 @@ test('a11y: Galeria – filtry działają klawiaturą (Tab, Enter, Spacja)', asy
 	await page.goto('/galeria/');
 
 	const przyciski = page.getByTestId('gallery-filters').getByRole('button');
-	test.skip((await przyciski.count()) < 2, 'W galerii nie ma jeszcze żadnej kategorii');
+	expect(await przyciski.count(), 'Pasek filtrów bez kategorii (powinien mieć „Wszystkie” i co najmniej jedną kategorię) — dane testowe je mają, więc zgubiła je strona').toBeGreaterThanOrEqual(2);
 	const wszystkie = przyciski.first();
 	const kategoria = przyciski.nth(1);
 

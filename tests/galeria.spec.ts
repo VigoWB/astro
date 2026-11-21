@@ -2,8 +2,9 @@ import { test, expect, type Page } from '@playwright/test';
 import { poczekajNaZdjecie, pokazanyPlik, plikiWersji } from './pomocnicze';
 
 // Oczekiwane liczby test liczy sam — z atrybutów kart (data-kategoria) i z data-na-strone —
-// zamiast wpisywać dzisiejsze dane na sztywno. Dzięki temu testy przeżyją wymianę zdjęć
-// testowych na prawdziwe (inne kategorie, inna liczba zdjęć).
+// zamiast wpisywać dzisiejsze dane na sztywno. Przypadki potrzebne testom (kategorie, wersje „przed”,
+// więcej zdjęć niż jedna porcja) gwarantują dane testowe (tests/dane/galeria.json, pilnuje ich
+// tests/dane-testowe.spec.ts). Brak takiego przypadku na stronie to błąd testu, nie pominięcie.
 
 const karty = (page: Page) => page.getByTestId('gallery-item');
 // Karty, które są w układzie strony (bez ukrycia przez filtr albo "Załaduj więcej").
@@ -56,7 +57,7 @@ test.describe('Galeria', () => {
 
 	test('filtr kategorii: każdy przycisk pokazuje wszystkie zdjęcia ze swojej kategorii i tylko je', async ({ page }) => {
 		const kategorie = await nazwyKategorii(page);
-		test.skip(kategorie.length === 0, 'W galerii nie ma jeszcze żadnej kategorii');
+		expect(kategorie.length, 'Pasek filtrów bez kategorii — dane testowe je mają, więc zgubiła je strona (sprawdź Galeria.astro i kategorie.ts)').toBeGreaterThan(0);
 		const porcja = await naStrone(page);
 
 		for (const kategoria of kategorie) {
@@ -77,7 +78,7 @@ test.describe('Galeria', () => {
 
 	test('filtr "Wszystkie" przywraca pierwszą porcję zdjęć i licznik "Załaduj więcej"', async ({ page }) => {
 		const [kategoria] = await nazwyKategorii(page);
-		test.skip(!kategoria, 'W galerii nie ma jeszcze żadnej kategorii');
+		expect(kategoria, 'Pasek filtrów bez kategorii — dane testowe je mają, więc zgubiła je strona (sprawdź Galeria.astro i kategorie.ts)').toBeTruthy();
 		const porcja = await naStrone(page);
 		const wszystkie = await karty(page).count();
 
@@ -105,7 +106,7 @@ test.describe('Galeria', () => {
 
 	test('zmiana filtra idzie płynnym przejściem (View Transitions), a po nim nic nie ma nazwy przejścia', async ({ page }) => {
 		const [kategoria] = await nazwyKategorii(page);
-		test.skip(!kategoria, 'W galerii nie ma jeszcze żadnej kategorii');
+		expect(kategoria, 'Pasek filtrów bez kategorii — dane testowe je mają, więc zgubiła je strona (sprawdź Galeria.astro i kategorie.ts)').toBeTruthy();
 		test.skip(!(await page.evaluate(() => 'startViewTransition' in document)), 'Przeglądarka bez View Transitions');
 		await liczPrzejscia(page);
 
@@ -127,7 +128,7 @@ test.describe('Galeria', () => {
 
 	test('przy ograniczonym ruchu filtr zmienia się od razu, bez przejścia', async ({ page }) => {
 		const [kategoria] = await nazwyKategorii(page);
-		test.skip(!kategoria, 'W galerii nie ma jeszcze żadnej kategorii');
+		expect(kategoria, 'Pasek filtrów bez kategorii — dane testowe je mają, więc zgubiła je strona (sprawdź Galeria.astro i kategorie.ts)').toBeTruthy();
 		await page.emulateMedia({ reducedMotion: 'reduce' });
 		await page.reload();
 		await liczPrzejscia(page);
@@ -141,7 +142,7 @@ test.describe('Galeria', () => {
 		const porcja = await naStrone(page);
 		const wszystkie = await karty(page).count();
 		// Przycisk pojawia się tylko wtedy, gdy zdjęć jest więcej niż jedna porcja.
-		test.skip(wszystkie <= porcja, 'Za mało zdjęć, żeby przycisk "Załaduj więcej" się pojawił');
+		expect(wszystkie, 'Dane testowe mają więcej zdjęć niż jedna porcja, a strona pokazuje ich mniej — sprawdź Galeria.astro i galeria.ts').toBeGreaterThan(porcja);
 
 		const licznik = page.getByTestId('load-more-count');
 
@@ -165,7 +166,8 @@ test.describe('Galeria', () => {
 		const porcja = await naStrone(page);
 		const wszystkie = await karty(page).count();
 		const [kategoria] = await nazwyKategorii(page);
-		test.skip(wszystkie <= porcja || !kategoria, 'Potrzeba więcej zdjęć niż jedna porcja i co najmniej jednej kategorii');
+		expect(wszystkie, 'Dane testowe mają więcej zdjęć niż jedna porcja, a strona pokazuje ich mniej — sprawdź Galeria.astro i galeria.ts').toBeGreaterThan(porcja);
+		expect(kategoria, 'Pasek filtrów bez kategorii — dane testowe je mają, więc zgubiła je strona (sprawdź Galeria.astro i kategorie.ts)').toBeTruthy();
 
 		const licznik = page.getByTestId('load-more-count');
 		const kontener = page.getByTestId('load-more-container');
@@ -192,8 +194,7 @@ test.describe('Galeria', () => {
 	test('"Załaduj więcej" przy włączonym filtrze dokłada tylko zdjęcia z tej kategorii', async ({ page }) => {
 		const porcja = await naStrone(page);
 		const kategoria = await kategoriaGdzie(page, (ile) => ile > porcja);
-		// Brak takiej kategorii = test jawnie pominięty (z powodem w raporcie), a nie zaliczony.
-		test.skip(!kategoria, `Żadna kategoria nie ma więcej niż ${porcja} zdjęć — na obecnych danych nie da się tego sprawdzić`);
+		expect(kategoria, `Żadna kategoria nie ma więcej niż ${porcja} zdjęć — dane testowe mają taką, więc strona gubi zdjęcia lub kategorie`).toBeTruthy();
 		const pasujace = await liczbaWKategorii(page, kategoria);
 
 		await przyciskFiltra(page, kategoria).click();
@@ -208,14 +209,14 @@ test.describe('Galeria', () => {
 	});
 
 	// Odstęp (w px) między najniżej położoną widoczną kartą a stopką.
-	async function odstepOdStopki(page: Page): Promise<number> {
+	// Zwraca null, gdy nie ma żadnej widocznej karty (nie ma czego mierzyć).
+	async function odstepOdStopki(page: Page): Promise<number | null> {
 		return page.evaluate(() => {
-			const dolKart = Math.max(
-				...Array.from(document.querySelectorAll<HTMLElement>('[data-gallery-item]'))
-					.filter((karta) => karta.getClientRects().length > 0)
-					.map((karta) => karta.getBoundingClientRect().bottom)
-			);
-			return document.querySelector('footer')!.getBoundingClientRect().top - dolKart;
+			const doly = Array.from(document.querySelectorAll<HTMLElement>('[data-gallery-item]'))
+				.filter((karta) => karta.getClientRects().length > 0)
+				.map((karta) => karta.getBoundingClientRect().bottom);
+			if (doly.length === 0) return null;
+			return document.querySelector('footer')!.getBoundingClientRect().top - Math.max(...doly);
 		});
 	}
 
@@ -225,12 +226,14 @@ test.describe('Galeria', () => {
 		await page.emulateMedia({ reducedMotion: 'reduce' });
 		await page.reload();
 		const zaladujWiecej = page.getByTestId('load-more-btn');
-		test.skip(!(await zaladujWiecej.isVisible()), 'Za mało zdjęć, żeby przycisk "Załaduj więcej" się pojawił');
+		await expect(zaladujWiecej, 'Przycisk "Załaduj więcej" się nie pokazał — dane testowe mają więcej zdjęć niż jedna porcja, więc zgubiła go strona').toBeVisible();
 
 		while (await zaladujWiecej.isVisible()) {
 			await zaladujWiecej.click();
 		}
-		expect(await odstepOdStopki(page)).toBeGreaterThanOrEqual(40);
+		const odstep = await odstepOdStopki(page);
+		expect(odstep, 'Brak widocznych kart — pomiaru odstępu nie da się zrobić').not.toBeNull();
+		expect(odstep!).toBeGreaterThanOrEqual(40);
 	});
 
 	test('odstęp nad stopką zostaje po wybraniu filtra, w którym zdjęcia mieszczą się w jednej porcji', async ({ page }) => {
@@ -238,11 +241,13 @@ test.describe('Galeria', () => {
 		await page.reload();
 		const porcja = await naStrone(page);
 		const kategoria = await kategoriaGdzie(page, (ile) => ile <= porcja);
-		test.skip(!kategoria, `Każda kategoria ma więcej niż ${porcja} zdjęć`);
+		expect(kategoria, `Każda kategoria ma więcej niż ${porcja} zdjęć — dane testowe mają kategorię mieszczącą się w jednej porcji`).toBeTruthy();
 
 		await przyciskFiltra(page, kategoria).click();
 		await expect(page.getByTestId('load-more-container')).toBeHidden();
-		expect(await odstepOdStopki(page)).toBeGreaterThanOrEqual(40);
+		const odstep = await odstepOdStopki(page);
+		expect(odstep, 'Brak widocznych kart — pomiaru odstępu nie da się zrobić').not.toBeNull();
+		expect(odstep!).toBeGreaterThanOrEqual(40);
 	});
 
 	test('karty i miniatury naprawdę się pokazują po przewinięciu (animacja wejścia i wczytanie)', async ({ page }) => {
@@ -261,7 +266,7 @@ test.describe('Galeria', () => {
 		const ostatnia = widoczneKarty(page).last();
 		// Sens testu: ostatnia karta jest poza ekranem — z animacją czekałaby na przewinięcie.
 		const pozaEkranem = await ostatnia.evaluate((el) => el.getBoundingClientRect().top > window.innerHeight);
-		test.skip(!pozaEkranem, 'Za mało zdjęć — wszystkie mieszczą się na ekranie, nie ma czego sprawdzić');
+		expect(pozaEkranem, 'Wszystkie karty mieszczą się na ekranie 375×400 — dane testowe mają ich więcej, więc strona pokazuje za mało zdjęć').toBeTruthy();
 		await expect(ostatnia).toHaveCSS('opacity', '1');
 	});
 
@@ -291,7 +296,7 @@ test.describe('Galeria', () => {
 
 	test('lightbox: przełącznik "Pokaż przed" działa klawiaturą i pokazuje wersję "przed" tego zdjęcia', async ({ page }) => {
 		const karta = karty(page).first();
-		test.skip(!(await karta.getAttribute('data-przed')), 'Pierwsze zdjęcie nie ma wersji "przed"');
+		expect(await karta.getAttribute('data-przed'), 'Pierwsze zdjęcie bez wersji "przed" — dane testowe ją mają, więc zgubiła ją strona (sprawdź Karta.astro)').toBeTruthy();
 
 		await karta.click();
 
@@ -326,8 +331,8 @@ test.describe('Galeria', () => {
 	test('lightbox: zdjęcie bez wersji "przed" nie ma przełącznika, a fokus z niego nie ginie', async ({ page }) => {
 		const lista = widoczneKarty(page);
 		const ile = await lista.count();
-		test.skip(ile < 2, 'Potrzeba co najmniej 2 widocznych zdjęć');
-		test.skip(!(await lista.first().getAttribute('data-przed')), 'Pierwsze zdjęcie nie ma wersji "przed"');
+		expect(ile, 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(2);
+		expect(await lista.first().getAttribute('data-przed'), 'Pierwsze zdjęcie bez wersji "przed" — dane testowe ją mają, więc zgubiła ją strona (sprawdź Karta.astro)').toBeTruthy();
 
 		// W danych każde zdjęcie może mieć parę — drugiemu "zabieramy" ją na czas testu
 		// (lightbox czyta te atrybuty karty dopiero przy pokazaniu zdjęcia).
@@ -361,7 +366,7 @@ test.describe('Galeria', () => {
 		// przy więcej niż jednej porcji to mniej niż wszystkie karty w HTML.
 		const lista = widoczneKarty(page);
 		const ile = await lista.count();
-		test.skip(ile < 2, 'Potrzeba co najmniej 2 widocznych zdjęć, żeby sprawdzić nawigację');
+		expect(ile, 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(2);
 
 		await lista.first().click();
 
@@ -404,7 +409,7 @@ test.describe('Galeria', () => {
 
 	test('lightbox przy włączonym filtrze przegląda tylko zdjęcia z tej kategorii', async ({ page }) => {
 		const kategoria = await kategoriaGdzie(page, (ile) => ile >= 2);
-		test.skip(!kategoria, 'Żadna kategoria nie ma co najmniej 2 zdjęć');
+		expect(kategoria, 'Żadna kategoria nie ma co najmniej 2 zdjęć — dane testowe mają taką, więc strona gubi zdjęcia lub kategorie').toBeTruthy();
 		const ile = Math.min(await liczbaWKategorii(page, kategoria), await naStrone(page));
 
 		await przyciskFiltra(page, kategoria).click();
@@ -422,7 +427,7 @@ test.describe('Galeria', () => {
 
 	test('lightbox: przy jednym widocznym zdjęciu nie ma strzałek ani licznika', async ({ page }) => {
 		const kategoria = await kategoriaGdzie(page, (ile) => ile === 1);
-		test.skip(!kategoria, 'Żadna kategoria nie ma dokładnie jednego zdjęcia');
+		expect(kategoria, 'Żadna kategoria nie ma dokładnie jednego zdjęcia — dane testowe mają taką, więc strona gubi zdjęcia lub kategorie').toBeTruthy();
 
 		await przyciskFiltra(page, kategoria).click();
 		await expect(widoczneKarty(page)).toHaveCount(1);
@@ -436,8 +441,8 @@ test.describe('Galeria', () => {
 
 	test('lightbox: przełącznik "Pokaż przed" resetuje się po przejściu do kolejnego zdjęcia', async ({ page }) => {
 		const lista = widoczneKarty(page);
-		test.skip((await lista.count()) < 2, 'Potrzeba co najmniej 2 widocznych zdjęć');
-		test.skip(!(await lista.first().getAttribute('data-przed')), 'Pierwsze zdjęcie nie ma wersji "przed"');
+		expect(await lista.count(), 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(2);
+		expect(await lista.first().getAttribute('data-przed'), 'Pierwsze zdjęcie bez wersji "przed" — dane testowe ją mają, więc zgubiła ją strona (sprawdź Karta.astro)').toBeTruthy();
 
 		await lista.first().click();
 
@@ -454,7 +459,7 @@ test.describe('Galeria', () => {
 
 	test('lightbox: przesunięcie palcem zmienia zdjęcie, a ruch w pionie i krótkie muśnięcie nie', async ({ page }) => {
 		const ile = await widoczneKarty(page).count();
-		test.skip(ile < 2, 'Potrzeba co najmniej 2 widocznych zdjęć');
+		expect(ile, 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(2);
 
 		await widoczneKarty(page).first().click();
 

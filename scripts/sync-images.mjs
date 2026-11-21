@@ -2,12 +2,13 @@
 /**
  * sync-images.mjs
  *
- * Skanuje folder images/ w poszukiwaniu nowych zdjęć (nazwa z numerem "DSC", np. DSC_1234.jpg
+ * Skanuje folder images/ w poszukiwaniu nowych zdjęć JPG (nazwa z numerem "DSC", np. DSC_1234.jpg
  * albo wrzesien_26_EDYCJA_DSC7062.jpg, bez "przed_" — parę "przed" znajduje po nazwie,
- * patrz nazwaWersjiPrzed()),
+ * patrz nazwaWersjiPrzed(); PNG pomija z ostrzeżeniem),
  * odczytuje wymiary z samego pliku i dane z aparatu (EXIF), pyta o opis i kategorie,
  * wgrywa pliki (po + opcjonalnie przed) do Cloudflare R2 — każdy w dwóch wersjach:
- * czystej (klucz "zdjecia/...", z niej strona robi miniatury) i ze znakiem wodnym
+ * czystej (klucz "zdjecia/...", tylko metadane z białej listy, piksele sprawdzone z oryginałem —
+ * plikiDoWgrania() w sync-images-funkcje.mjs; z niej strona robi miniatury) i ze znakiem wodnym
  * (klucz "znak/...", z niej strona robi powiększenia do lightboksa — logo
  * z src/assets/logo.svg w rogu, funkcja nalozZnak() niżej)
  * i zapisuje metadane w lokalnej bazie SQLite (data/galeria.db).
@@ -45,6 +46,7 @@ import readline from 'node:readline';
 import {
   kluczZnak,
   wybierzPlikPrzed,
+  czyJpg,
   wybierzZdjecia,
   plikiPrzedBezPary,
   odczytajOpcje,
@@ -52,7 +54,8 @@ import {
   zdjeciaTracaceWyroznienie,
   liczbaLubNull,
   tekstLubNull,
-  wyczyscExifDoR2,
+  dekoderPikseli,
+  plikiDoWgrania,
   TABELA_ZDJEC,
   bezBom,
   parsujKategorie,
@@ -440,7 +443,7 @@ async function warstwaZMaski(maska, szerokosc, wysokosc, kolor, krycie) {
     .toBuffer();
 }
 
-async function nalozZnak(bufor, format) {
+async function nalozZnak(bufor) {
   const meta = await sharp(bufor).metadata();
   // Orientacja EXIF 5–8 = zdjęcie obrócone o 90°. Wersja ze znakiem wychodzi z sharp
   // bez EXIF-u, więc obrót "wypalamy" w piksele (autoOrient() niżej) — inaczej zdjęcie
@@ -507,21 +510,20 @@ async function nalozZnak(bufor, format) {
     { input: obwodka, left, top },
     { input: logo, left, top },
   ]);
-  return format === 'png' ? zeZnakiem.png().toBuffer() : zeZnakiem.jpeg({ quality: 88 }).toBuffer();
+  return zeZnakiem.jpeg({ quality: 88 }).toBuffer();
 }
 
-// Przygotowuje oba pliki do wysłania: czysty oryginał (bez GPS i numeru seryjnego)
-// i wersję ze znakiem wodnym. Wszystko, co może się nie udać na samym pliku (uszkodzony
-// JPEG, nieczytelny EXIF), dzieje się tu — PRZED pierwszym wgraniem do R2 i przed
-// pytaniem o opis, więc taki błąd nie zostawia w R2 połowy zdjęcia ani wpisanego na darmo opisu.
+// Piksele, wymiary i obrót pliku — do porównania czystej wersji z oryginałem przed wysyłką.
+const dekoduj = dekoderPikseli(sharp);
+
+// Przygotowuje oba pliki do wysłania (plikiDoWgrania() w sync-images-funkcje.mjs): czysty
+// oryginał (tylko metadane z białej listy, piksele, wymiary i obrót sprawdzone z oryginałem)
+// i wersję ze znakiem wodnym, zrobioną z czystego pliku. Wszystko, co może się nie udać na
+// samym pliku (PNG, uszkodzony JPEG, nieczytelny EXIF), dzieje się tu — PRZED pierwszym
+// wgraniem do R2 i przed pytaniem o opis, więc taki błąd nie zostawia w R2 połowy zdjęcia
+// ani wpisanego na darmo opisu.
 async function przygotujDoWgrania(sciezkaLokalna, kluczR2) {
-  const oryginal = await readFile(sciezkaLokalna);
-  const png = kluczR2.toLowerCase().endsWith('.png');
-  const typ = png ? 'image/png' : 'image/jpeg';
-  return [
-    { klucz: kluczR2, bufor: wyczyscExifDoR2(oryginal, kluczR2), typ },
-    { klucz: kluczZnak(kluczR2), bufor: await nalozZnak(oryginal, png ? 'png' : 'jpeg'), typ },
-  ];
+  return plikiDoWgrania(await readFile(sciezkaLokalna), kluczR2, { nalozZnak, dekoduj });
 }
 
 async function wgrajDoR2(pliki) {
@@ -556,6 +558,13 @@ function ostrzezOPlikachPrzedBezPary(zdjecia, nazwyPo) {
   }
 }
 
+// PNG nie wysyłamy (tylko JPG umiemy wyczyścić bez ponownej kompresji) — ale nie po cichu.
+function ostrzezOPlikachPng(pominiete) {
+  if (pominiete.length === 0) return;
+  console.warn(`⚠️  Pomijam pliki PNG (do R2 wysyłamy tylko JPG): ${pominiete.join(', ')}`);
+  console.warn('   Wyeksportuj je jako JPG i uruchom skrypt jeszcze raz.');
+}
+
 async function dodajNoweZdjecia(db) {
   const wgrane = pobierzWgrane(db);
 
@@ -564,8 +573,9 @@ async function dodajNoweZdjecia(db) {
   }
 
   const wszystkiePliki = existsSync(IMAGES_DIR) ? await readdir(IMAGES_DIR) : [];
-  const { zdjecia, kandydaci } = wybierzZdjecia(wszystkiePliki);
+  const { zdjecia, kandydaci, pominiete } = wybierzZdjecia(wszystkiePliki);
 
+  ostrzezOPlikachPng(pominiete);
   ostrzezOPlikachPrzedBezPary(zdjecia, [...kandydaci, ...wgrane]);
 
   const doWgrania = kandydaci.filter((f) => !wgrane.has(f));
@@ -674,6 +684,7 @@ async function dodajNoweZdjecia(db) {
   console.log(`   Dodano:       ${dodanoLiczba}`);
   console.log(`   Błędy:        ${bledyLiczba}`);
   if (nieruszone > 0) console.log(`   Nieruszone:   ${nieruszone} (zostaną dodane przy następnym uruchomieniu)`);
+  if (pominiete.length > 0) console.log(`   Pominięte PNG: ${pominiete.length}`);
   console.log(`   Już w bazie:  ${juzWgrane}`);
   console.log('─'.repeat(40) + '\n');
 }
@@ -848,6 +859,13 @@ async function usunZdjecie(db, nazwaPliku) {
 // nic by nie zrobiło. Ten tryb wgrywa ponownie to, co akurat znajdzie lokalnie w images/
 // (samo "po", samo "przed" albo oba) i nadpisuje odpowiednie pola w bazie.
 async function podmienPlik(db, nazwaPliku) {
+  // Bez tego skrypt odesłałby do zwykłego "npm run sync-images", które PNG pomija.
+  if (!czyJpg(nazwaPliku)) {
+    console.error(`❌ "${nazwaPliku}" to nie JPG — do R2 wysyłamy tylko JPG. Wyeksportuj zdjęcie jako JPG.`);
+    process.exitCode = 1;
+    return;
+  }
+
   const wiersz = db.prepare('SELECT * FROM zdjecia WHERE nazwa_pliku = ?').get(nazwaPliku);
 
   if (!wiersz) {
@@ -877,8 +895,8 @@ async function podmienPlik(db, nazwaPliku) {
   const kluczPo = wiersz.r2_klucz ?? `zdjecia/${nazwaPliku}`;
   const kluczPrzed = maPrzed ? (wiersz.r2_klucz_przed ?? `zdjecia/${nazwaPrzed}`) : wiersz.r2_klucz_przed;
 
-  // Najpierw wszystko lokalnie (wymiary, EXIF, czyszczenie EXIF-u, znak wodny) — błąd
-  // pliku wyjdzie tu, zanim cokolwiek trafi do R2.
+  // Najpierw wszystko lokalnie (wymiary, EXIF, czyszczenie i porównanie pikseli, znak wodny) —
+  // błąd pliku wyjdzie tu, zanim cokolwiek trafi do R2.
   // Wymiary (szerokość/wysokość w galeria.json) opisują "po" — zmieniają się tylko,
   // gdy naprawdę podmieniamy "po".
   const wymiary = maPo ? await pobierzWymiary(sciezkaPo) : { szerokosc: wiersz.szerokosc, wysokosc: wiersz.wysokosc };

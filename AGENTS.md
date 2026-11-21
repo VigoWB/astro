@@ -31,7 +31,7 @@ Zasady:
 
 1. **Nigdy nie wypychaj na `main` i nigdy nie scalaj pull requestów.** Wolno Ci wypchnąć tylko własną gałąź zadania, poleceniem z sekcji 3 (`git push -u origin <gałąź>`): bez `--force`, bez `--delete` i nigdy samo `git push` bez nazwy gałęzi. Pull request scala wyłącznie Wiktor — nie używaj `gh pr merge`, `gh api` ani `gh auth`. GitHub i tak odrzuci push na `main`, ale ta zasada obowiązuje niezależnie od tego.
 2. **Nie importuj niczego z folderu `images/`** w `src/`. Tego folderu nie ma w gicie ani na Cloudflare Pages, więc build na produkcji się wysypie.
-3. **Nie edytuj ręcznie `src/data/galeria.json` i nie uruchamiaj `npm run sync-images`** (ani innych skryptów z `scripts/`, które zapisują `galeria.json` lub `data/galeria.db`). Zdjęcia dodaję tylko ja: skrypt pyta o opisy, wgrywa pliki do R2 kluczami z `.env` i przepisuje `galeria.json`. (Baza `data/galeria.db` jest odtwarzana z `galeria.json` przy każdym uruchomieniu, więc po `git pull` skrypt jest bezpieczny na każdym moim komputerze. Zakaz dotyczy Ciebie, a nie sprzętu.) Jeśli zadanie wymaga odświeżenia `galeria.json`, napisz mi, że mam to zrobić sam.
+3. **Nie edytuj ręcznie `src/data/galeria.json` i nie uruchamiaj `npm run sync-images`** (ani innych skryptów z `scripts/`, które zapisują `galeria.json` lub `data/galeria.db`). Zdjęcia dodaję tylko ja: skrypt pyta o opisy, wgrywa pliki do R2 kluczami z `.env` i przepisuje `galeria.json`. (Baza `data/galeria.db` jest odtwarzana z `galeria.json` przy każdym uruchomieniu, więc po `git pull` skrypt jest bezpieczny na każdym moim komputerze. Zakaz dotyczy Ciebie, a nie sprzętu.) `node scripts/sprawdz-czyszczenie.mjs` też uruchamiam tylko ja: niczego nie zapisuje, ale czyta moje zdjęcia z `images/`. Jeśli zadanie wymaga odświeżenia `galeria.json`, napisz mi, że mam to zrobić sam.
 4. **Nie dodawaj adaptera `@astrojs/cloudflare`, SSR ani `output: "server"`.** Strona jest w pełni statyczna.
 5. **Nie pisz składni Tailwind v3.** Nie ma `tailwind.config.js` ani `@tailwind base`. Kolory są w `@theme` w `global.css`. Zamienniki:
    - `bg-opacity-50` → `bg-black/50`
@@ -131,9 +131,10 @@ Plik `.env` z prawdziwymi wartościami jest tylko u Wiktora (sekcja 2, punkt 7).
 - `npm test`: wszystkie etapy po kolei, tak jak CI, do pierwszego błędu: `npm run check` → `npm run test:jednostkowe` → `npm run test:integracyjne` → `npm run test:e2e`
 - `npm run test:jednostkowe`, `npm run test:integracyjne`: testy Vitesta (`tests/jednostkowe/`, `tests/integracyjne/`), kilka sekund; oba naraz: `npx vitest run` (sekcja 7, „Poziomy testów”)
 - `npm run test:e2e`: build na danych testowych do `dist-testy/` (`npm run build:testy`), potem testy Playwright (Chrome desktop i mobile, testy dostępności axe). Testy nigdy nie widzą prawdziwych zdjęć — sekcja 7, „Dane testowe”
-- `npm run sync-images`: dodaje nowe zdjęcia z `images/` (uruchamiam ja, nie Ty)
+- `npm run sync-images`: dodaje nowe zdjęcia z `images/`, tylko JPG (uruchamiam ja, nie Ty)
 - `npm run sync-images -- --uzupelnij`: dopytuje o brakujące opisy i kategorie
 - `npm run sync-images -- --wyroznij`: wybór zdjęć na stronę główną — które pokazują się w sekcji "Wybrane prace" i która jedna para trafia do suwaka przed/po
+- `node scripts/sprawdz-czyszczenie.mjs`: tylko odczyt — pokazuje, co czyszczenie zostawi w zdjęciach z `images/` (wszystkie JPG albo plik podany na końcu), zanim trafią do R2; bez R2, `.env` i zapisu plików, kod wyjścia 1 przy problemach (uruchamiam ja przed `--podmien`, nie Ty)
 
 ---
 
@@ -151,7 +152,8 @@ public/
   manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
-  sync-images-funkcje.mjs   czyste funkcje sync-images (nazwy par, klucze R2, opcje, numery, czyszczenie EXIF-u, galeria.json ↔ baza) — bez skutków przy imporcie, z testami Vitesta
+  sync-images-funkcje.mjs   czyste funkcje sync-images (nazwy par, klucze R2, opcje, numery, czyszczenie plików do R2 z porównaniem pikseli, galeria.json ↔ baza) — bez skutków przy imporcie, z testami Vitesta
+  sprawdz-czyszczenie.mjs   tylko odczyt: co czyszczenie zostawi w zdjęciach z images/ (uruchamia Wiktor przed --podmien; logika w sync-images-funkcje.mjs)
   build-testowy.mjs        build na danych testowych do dist-testy/ (atrapa R2, tests/dane/galeria.json) — dla npm test
   start-preview-if-needed.mjs  uruchamia podgląd builda testowego dla testów, port 4323 (Node, dziala tez na Windows)
 src/
@@ -206,6 +208,8 @@ images/październik_26_EDYCJA_DSC7102.jpg (+ opcjonalnie październik_26_PRZED_D
 ```
 
 - Na stronie nie ma żadnego adresu z R2: miniatury, lightbox i dane dla Google (Schema.org) wskazują pliki w `/_astro/`. Oryginały z R2 pobiera tylko build.
+- **Do R2 trafia tylko czysty JPG.** Bucket jest publiczny, a klucze plików są jawne (`galeria.json` leży w publicznym repo). `wyczyscExifDoR2()` (`scripts/sync-images-funkcje.mjs`) przechodzi plik po znacznikach JPEG-a, bez ponownej kompresji, i zostawia w czystym oryginale (`zdjecia/…`) tylko białą listę: EXIF (`Make`, `Model`, `Orientation`, `DateTimeOriginal`, `DateTimeDigitized`, `LensModel`, `LensMake`, `LensSpecification`, `ExposureTime`, `FNumber`, `ISO`, `FocalLength`), profil kolorów ICC, nagłówki JFIF (bez miniatury) i Adobe oraz dane obrazu do znacznika końca. Znika wszystko inne: GPS, numery seryjne, autor i prawa autorskie, komentarze, nazwa programu, XMP, IPTC, miniatury, podglądy z aparatu i dane doklejone po końcu obrazu (np. film z „Motion Photo”). Nowe pole na białej liście = decyzja Wiktora + test.
+- `plikiDoWgrania()` po czyszczeniu porównuje piksele, wymiary i obrót z oryginałem. Przy różnicy, tak samo jak przy pliku, którego nie da się wyczyścić, nic nie trafia do R2. Wersja ze znakiem wodnym (`znak/…`) powstaje z czystego pliku. PNG skrypt pomija z ostrzeżeniem. Pliki przed `--podmien` sprawdzam `node scripts/sprawdz-czyszczenie.mjs` (sekcja 5).
 - Wymiary pliku „przed” build odczytuje z R2 (`inferRemoteSize`). Brak pliku „przed” w R2 = build przerywa się z komunikatem, którego pliku brakuje.
 - Adresy z R2 przekazywane do `getImage()` i `<Image>` mają na końcu wersję pliku (`?v=` + skrót ETag z zapytania `HEAD`, funkcja `adresZWersjaWR2()` w `src/lib/galeria.ts`). Astro liczy nazwy plików w `/_astro/` z adresu, a nie z treści, a te pliki przeglądarka i `sw.js` trzymają długo — bez wersji zdjęcie podmienione przez `--podmien` dostałoby starą nazwę i odwiedzający widzieliby starą wersję. Nie usuwaj tej wersji z adresów.
 

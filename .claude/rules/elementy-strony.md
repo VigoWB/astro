@@ -1,0 +1,39 @@
+---
+paths:
+  - "src/**"
+  - "public/**"
+---
+
+# Jak działają kluczowe elementy — portfolio fotograficzne (balansbieli.pl)
+
+Dawna sekcja 9 `AGENTS.md`. Claude Code wczytuje ten plik sam, gdy czyta albo zmienia plik w `src/` albo `public/`, a OpenCode — na starcie każdej sesji (`instructions` w `opencode.json`). Zakazy z sekcji 2 i pułapki z sekcji 11 `AGENTS.md` obowiązują niezależnie od niego.
+
+**Header.astro:** jeden nagłówek, dwa układy.
+- Telefon i tablet (do `lg`): pasek u góry. Na samej górze strony ma 96 px i logo 80 px; po przewinięciu (`scrollY > 8`) skrypt ustawia na `<header>` atrybut `data-zwiniety` i pasek zwija się do 60 px z logo 44 px (klasy `max-lg:group-data-zwiniety:*`, animacja tylko `motion-safe:`). W układzie strony `<header>` zajmuje zawsze 60 px + `mb-9`, a duży pasek (`absolute`) tylko nachodzi na ten odstęp — zwijanie nie przesuwa treści. Nie zamieniaj tego na zmianę wysokości samego `<header>`: przeglądarka koryguje wtedy przewinięcie i pasek zaczyna migać na granicy.
+- Komputer (od `lg` = 1024 px): pasek boczny `lg:fixed` o szerokości `w-64`, z logo 160 px i menu w pionie. Miejsce robi mu `lg:pl-64` na `<body>` w `Layout.astro` — zmieniasz szerokość paska, zmień w obu miejscach.
+- Linki z `nav.ts`, aktywny link dostaje `aria-current="page"`. Hamburger (do `md`) przełącza klasę `hidden` na menu mobilnym, a klasa `md:hidden` zostaje na stałe. Menu leży w pasku, więc otwiera się tuż pod nim przy każdej jego wysokości. Menu zamyka kliknięcie w link, stuknięcie w przyciemnione tło obok menu (`#tlo-menu` pod nagłówkiem: tło `z-30`, nagłówek `z-40`), Escape albo poszerzenie okna. Menu ma focus trap. Zachowanie obu układów sprawdza `tests/naglowek.spec.ts`.
+
+**Galeria.astro**
+- Siatka to kolumny CSS (`columns-2 md:columns-3`), bez JS. Więcej kolumn nie dokładaj: kolumna treści ma maks. 960 px, a od `lg` obok stoi pasek boczny — przy 4–6 kolumnach miniatury na komputerze były mniejsze niż na tablecie.
+- Na start widać `NA_STRONE` (8) zdjęć, reszta ma `hidden`. O tym, co jest widoczne, decyduje jedna funkcja (filtr + „Załaduj więcej”).
+- Filtry porównują `data-kategoria` karty (lista kategorii jako JSON — nazwa może mieć spację) z przyciskami z `kategorie.ts`.
+- Zdjęcia pojawiają się rzędami, grupowane po pozycji Y (tolerancja 24 px), a nie po kolejności w HTML, bo kolumny CSS mieszają kolejność.
+- Efekt „wyostrzenia” miniatury: klasy startowe są w `Karta.astro`, a zdejmuje je skrypt w `Galeria.astro` (nie `onload` w HTML).
+- Podpis miniatury: z myszką — nakładka po najechaniu; na ekranach dotykowych (`pointer-coarse:`) stały podpis pod zdjęciem, bo najechania tam nie ma. Oba `aria-hidden` — opis czyta czytnik z `alt`.
+- Lightbox jest jeden, wspólny, i podmienia `sizes`, `srcset` i `src` (funkcja `ustawZdjecie`) — dane bierze z atrybutów karty `data-po*` / `data-przed*`. Wersję „przed” pokazuje przycisk „Pokaż przed” (`id="lightbox-przelacznik"`, `aria-pressed`) — działa z klawiatury, myszki i dotyku, resetuje się przy zamknięciu lightboxa i zmianie zdjęcia. Podpis EXIF pochodzi z `data-exif`. Lightbox ma focus trap i zamyka się Escape, kliknięciem w tło albo przyciskiem.
+- Propy `pokazFiltry`, `pokazZaladujWiecej` i `priorytetPierwszego` (domyślnie `true`) wyłączają pasek filtrów, przycisk „Załaduj więcej” i wysoki priorytet pierwszego zdjęcia — używa tego `index.astro` (sekcja „Wybrane prace” pokazuje przekazane zdjęcia od razu, bez filtrowania).
+
+**index.astro (strona główna)**
+- Dane bierze z `wczytajZdjecia()` (`src/lib/galeria.ts`), tak jak `/galeria`.
+- Para do suwaka: `wybierzBohatera()` szuka zdjęcia z `paraSuwaka: true`. Jeśli go nie ma, albo jego „przed”/„po” mają różne proporcje (tolerancja 2%, `proporcjeZgodne()`), build **nie przerywa się** — loguje ostrzeżenie (`console.warn`, widoczne przy `npm run build`) i pokazuje zastępcze zdjęcie z przełącznikiem „Pokaż przed” zamiast suwaka. Realny suwak wymaga pary w identycznym kadrze.
+- Sekcja „Wybrane prace”: `wybierzWyroznione()` bierze zdjęcia z `wyroznione: true` (max 6, bez zdjęcia użytego jako bohater). Gdy żadne nie jest oznaczone, tymczasowo pokazuje pierwsze zdjęcia z `galeria.json` (z ostrzeżeniem w logu) — żeby strona nie była pusta, zanim ktoś uruchomi `npm run sync-images -- --wyroznij`.
+- Sekcja „Jak zamówić retusz” (`KROKI_ZAMOWIENIA`): 4 kroki w `<ol>`. Te same warunki są też w innych miejscach — lista w sekcji 10, „Treści powtórzone w kilku miejscach”.
+- Treść sekcji „Co poprawiam przy retuszu” (`PUNKTY_RETUSZU`) i zaproszenia do kontaktu to na razie tekst tymczasowy — do potwierdzenia.
+
+**PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` (tryb suwaka; połowa odsłonięta już w CSS, zanim zadziała skrypt) albo pokazywane w całości (`object-contain`) zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. W trybie suwaka widać tylko pionową linię z okrągłym uchwytem, etykiety „Przed” / „Po” w górnych rogach i podpowiedź „Przesuń linię, żeby porównać” na dole (`data-porownanie-podpowiedz`) — skrypt chowa ją (`opacity-0`) przy pierwszym ruchu linii myszą, palcem albo klawiaturą. Linię przeciąga się w dowolnym miejscu zdjęcia: zdarzenia `pointerdown` / `pointermove` / `pointerup` / `pointercancel` na kontenerze z `touch-pan-y touch-pinch-zoom`. Przeciąga jeden wskaźnik naraz (mysz albo pierwszy palec). Palcem linia rusza dopiero przy ruchu w poziomie (próg 8 px) albo po stuknięciu — ruch w pionie przewija stronę i linii nie przesuwa (zanim przeglądarka wyśle `pointercancel`, przychodzą jeszcze 1–2 `pointermove`, stąd sprawdzanie kierunku), a dwoma palcami można powiększyć zdjęcie. Przeciąganie myszą i palcem sprawdza `tests/suwak.spec.ts`. Pod spodem zostaje `<input type="range">` z klasą `sr-only` (`data-porownanie-suwak`): obsługuje klawiaturę (strzałki) i czytniki ekranu, a jego wartość steruje linią (skrypt dopisuje `aria-valuetext`, np. „50% zdjęcia przed retuszem, 50% po retuszu”, żeby czytnik nie czytał samej liczby); fokus z klawiatury widać jako obwódkę na uchwycie (`group-has-[input:focus-visible]:ring-2`). Nie usuwaj tego suwaka i nie rób go widocznym — opiera się na nim test dostępności w `tests/a11y.spec.ts`. Pozycję linii i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.
+
+**ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em. Pola pod wycenę (wszystkie nieobowiązkowe) są w `<fieldset id="szczegoly-zlecenia">`: rodzaj usługi (lista z `uslugi` w `siteConfig.json` + „Inne / jeszcze nie wiem”; pusta lista = pole znika), liczba zdjęć, termin i link do plików (sprawdzany tylko, gdy coś wpisano). Puste pola z tego fieldsetu skrypt usuwa przed wysyłką. Ukryte pole `subject` („Zapytanie o wycenę”) ustawia temat maila od Formspree, a skrypt dopisuje do niego imię (cały temat sprawdza test w `tests/kontakt.spec.ts`).
+
+**Schema.astro:** zawsze `Person`, `ProfessionalService` i `WebSite`. `ImageGallery` pojawia się, gdy strona przekaże `zdjecia`, a `BreadcrumbList`, gdy przekaże `breadcrumbs`. Dane pochodzą z `siteConfig.json`, a adresy są absolutne przez `Astro.site`.
+
+**SEO.astro:** canonical z propa albo z `Astro.url.pathname` + `Astro.site`. Obraz OG domyślnie `/og-default.jpg`. Locale `pl_PL`. Prop `bezIndeksowania` (podawany przez `Layout`) dodaje `<meta name="robots" content="noindex">` — tylko dla stron-szkiców.

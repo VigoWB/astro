@@ -18,7 +18,10 @@ test.describe('Oferta (szkic, ukryta)', () => {
 		for (const sciezka of STRONY.filter((s) => s !== '/oferta/')) {
 			await page.goto(sciezka);
 			await expect(page.locator('a[href^="/oferta"]'), sciezka).toHaveCount(0);
-			await expect(page.locator('meta[name="robots"]'), sciezka).toHaveCount(0);
+			if (sciezka !== '/offline.html') {
+				// Strona offline ma noindex celowo (Google nie ma indeksować „Jesteś offline”) — sprawdza to tests/offline.spec.ts.
+				await expect(page.locator('meta[name="robots"]'), sciezka).toHaveCount(0);
+			}
 		}
 	});
 

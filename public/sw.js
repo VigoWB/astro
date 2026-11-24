@@ -7,14 +7,14 @@
 //   gdy sieć milczy dłużej niż LIMIT_SIECI_MS, pokazuje zapisaną kopię;
 // - czcionki, ikony, obrazki, style i skrypty: najpierw z pamięci, potem z sieci.
 //
-// Zmieniasz listę plików albo logikę poniżej? Podbij CACHE_NAME (foto-v13 → foto-v14),
+// Zmieniasz listę plików albo logikę poniżej? Podbij numer w CACHE_NAME o jeden (aktualny niżej),
 // inaczej odwiedzający zostaną przy starej kopii. Dotyczy to też plików bez hasha
 // w nazwie (ikony, czcionki, offline.css) — te odświeżają się tylko razem z CACHE_NAME.
 //
 // Obsługujemy tylko zapytania do naszej domeny. Zdjęcia galerii Astro robi przy
 // buildzie do /_astro/, więc strona nie pobiera niczego z R2.
 
-const CACHE_NAME = 'foto-v17';
+const CACHE_NAME = 'foto-v18';
 const LIMIT_SIECI_MS = 4000;
 
 const OFFLINE_URL = '/offline.html';
@@ -94,17 +94,24 @@ self.addEventListener('activate', (event) => {
 async function obsluzNawigacje(event) {
   const { request } = event;
 
+  // Kopię zapisujemy i szukamy pod adresem bez części po „?”: wejścia z Facebooka
+  // i Google mają dopiski typu ?fbclid= albo ?utm_source=, a HTML strony jest ten sam.
+  // Do sieci idzie pełny adres (parametr ma dotrzeć do serwera).
+  const adres = new URL(request.url);
+  adres.search = '';
+  const klucz = adres.href;
+
   const siec = fetch(request).then((odpowiedz) => {
     if (odpowiedz.status === 200) {
       // Tylko poprawna odpowiedź zastępuje kopię — strona błędu (404/500) jej nie nadpisze.
       const kopia = odpowiedz.clone();
-      event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, kopia)));
+      event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(klucz, kopia)));
     }
     return odpowiedz;
   });
   siec.catch(() => {}); // błąd sieci obsługujemy niżej; to tylko ucisza ostrzeżenie w konsoli
 
-  const zapisana = () => caches.match(request);
+  const zapisana = () => caches.match(klucz);
 
   try {
     const zwloka = new Promise((resolve) => setTimeout(resolve, LIMIT_SIECI_MS, null));

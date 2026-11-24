@@ -1,6 +1,6 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { STRONY } from './pomocnicze';
+import { test, expect, STRONY, podstawAtrapeTurnstile } from './pomocnicze';
 
 // Testy dostępności sprawdzają stan końcowy strony: przy ograniczonym ruchu kafelki galerii są widoczne
 // od razu, bez półprzezroczystej animacji wejścia (w jej trakcie axe liczył za słaby kontrast podpisów).
@@ -28,6 +28,8 @@ async function naruszeniaAxe(page: Page, wylaczoneReguly: string[] = [], pominie
 
 for (const sciezka of STRONY) {
 	test(`a11y: ${sciezka} – brak naruszeń WCAG A/AA`, async ({ page }) => {
+		// Atrapa zamiast prawdziwego Turnstile na /kontakt/ (wynik nie zależy od sieci); gdzie indziej niczego nie zmienia.
+		await podstawAtrapeTurnstile(page);
 		await page.goto(sciezka);
 		expect(await naruszeniaAxe(page)).toEqual([]);
 	});
@@ -196,6 +198,7 @@ test('a11y: Menu mobilne otwarte – brak naruszeń WCAG A/AA', async ({ page })
 test('a11y: Formularz z komunikatami błędów – brak naruszeń WCAG A/AA', async ({ page }) => {
 	// Komunikaty błędów (czerwony tekst) pojawiają się dopiero po próbie wysyłki —
 	// zwykły skan /kontakt/ ich nie widzi, więc ich kontrast sprawdzamy tutaj.
+	await podstawAtrapeTurnstile(page);
 	await page.goto('/kontakt/');
 	await page.getByTestId('contact-submit').click();
 	await expect(page.locator('#kontakt-name-blad')).not.toBeEmpty();

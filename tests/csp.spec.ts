@@ -1,7 +1,16 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { STRONY, podstawAtrapeTurnstile, poczekajNaTokenTurnstile, sprawdzIdFormspree, wypelnijFormularz } from './pomocnicze';
+import {
+	test,
+	expect,
+	ADRES_STATYSTYK,
+	STRONY,
+	podstawAtrapeTurnstile,
+	poczekajNaTokenTurnstile,
+	sprawdzIdFormspree,
+	wypelnijFormularz,
+} from './pomocnicze';
 
 // Test Content-Security-Policy (CSP).
 //
@@ -11,9 +20,12 @@ import { STRONY, podstawAtrapeTurnstile, poczekajNaTokenTurnstile, sprawdzIdForm
 // albo docelowy, także oba naraz) i zbiera zdarzenia "securitypolicyviolation", które
 // przeglądarka wysyła przy każdym naruszeniu — w obu trybach.
 //
-// Turnstile sprawdza się tylko tam, gdzie jest dostęp do Cloudflare (np. CI na GitHubie) — bez sieci
-// skrypt się nie ładuje, to nie jest naruszenie CSP i test przechodzi. Statystyk Cloudflare ten test
-// nie sprawdza: build testowy ma pusty PUBLIC_CF_BEACON_TOKEN, więc ich skrypt nie trafia do HTML.
+// Usług Cloudflare test nie woła naprawdę — działa bez sieci. Skrypt i ramkę Turnstile oraz skrypt statystyk
+// (Web Analytics) i jego zapytanie podstawiają atrapy z tests/pomocnicze.ts, ale każda idzie spod adresu
+// prawdziwej usługi, więc polityka sprawdza script-src, frame-src i connect-src tak, jak na produkcji:
+// build testowy ma token statystyk (scripts/build-testowy.mjs), więc skrypt statystyk jest w HTML każdej strony.
+// Zasada dla tras w tym pliku: zapytania, których nie podmieniamy, przepuszczamy przez route.fallback(),
+// a nie route.continue() — continue() idzie prosto do sieci i omija atrapy z context.route (w tym atrapę statystyk).
 
 declare global {
 	interface Window {
@@ -54,7 +66,9 @@ test.beforeEach(async ({ page, baseURL }) => {
 		const naszaStrona =
 			zapytanie.resourceType() === 'document' && !!baseURL && zapytanie.url().startsWith(baseURL);
 		if (!naszaStrona) {
-			await route.continue();
+			// fallback(), nie continue(): continue() wysyła zapytanie prosto do sieci, z pominięciem atrap
+			// z context.route (statystyki Cloudflare) — a prawdziwej analityki testy nie wołają.
+			await route.fallback();
 			return;
 		}
 		const odpowiedz = await route.fetch();
@@ -103,10 +117,39 @@ async function sprawdzBrakNaruszen(page: Page, gdzie: string) {
 
 for (const sciezka of STRONY) {
 	test(`CSP: ${sciezka} – brak naruszeń`, async ({ page }) => {
+		// Na stronach bez formularza atrapa Turnstile niczego nie zmienia; na /kontakt/ zastępuje prawdziwy
+		// widżet (wynik nie zależy od sieci), a jej ramka z domeny Cloudflare sprawdza frame-src.
+		await podstawAtrapeTurnstile(page);
 		await page.goto(sciezka, { waitUntil: 'load' });
+		if (sciezka === '/kontakt/') {
+			await expect(
+				page.locator('iframe[title="Atrapa Turnstile"]'),
+				'Na /kontakt/ nie ma ramki Turnstile (atrapa z tests/pomocnicze.ts dokłada ją do .cf-turnstile) — bez niej test nie sprawdzi frame-src'
+			).toHaveCount(1);
+		}
 		await sprawdzBrakNaruszen(page, sciezka);
 	});
 }
+
+test('CSP: statystyki Cloudflare (atrapa beacona) – skrypt i wysyłka nie są blokowane', async ({ page }) => {
+	// Skrypt statystyk (script-src) i jego zapytanie (connect-src) podstawia atrapa z tests/pomocnicze.ts;
+	// zapytanie musi faktycznie wyjść — gdyby polityka zablokowała skrypt, nic by nie wysłał,
+	// a pusta lista naruszeń niczego by nie dowodziła.
+	const zapytania: string[] = [];
+	page.on('request', (zapytanie) => {
+		if (zapytanie.url().startsWith(ADRES_STATYSTYK)) zapytania.push(zapytanie.url());
+	});
+
+	await page.goto('/', { waitUntil: 'load' });
+	await expect
+		.poll(() => zapytania, {
+			message: `Skrypt statystyk nie wysłał zapytania pod ${ADRES_STATYSTYK} — zablokowała go polityka (script-src: static.cloudflareinsights.com w public/_headers) albo strona nie ma go w HTML (PUBLIC_CF_BEACON_TOKEN w scripts/build-testowy.mjs)`,
+			timeout: 10_000,
+		})
+		.toContain(ADRES_STATYSTYK);
+
+	await sprawdzBrakNaruszen(page, 'statystyki Cloudflare');
+});
 
 test('CSP: strona główna – suwak/przełącznik przed-po i lightbox wybranych prac – brak naruszeń', async ({ page }) => {
 	await page.goto('/', { waitUntil: 'load' });

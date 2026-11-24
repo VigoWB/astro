@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect, type Page } from '@playwright/test';
-import { podstawAtrapeTurnstile, poczekajNaTokenTurnstile, sprawdzIdFormspree, wypelnijFormularz } from './pomocnicze';
+import type { Locator, Page } from '@playwright/test';
+import { test, expect, podstawAtrapeTurnstile, poczekajNaTokenTurnstile, sprawdzIdFormspree, wypelnijFormularz } from './pomocnicze';
 
 // Testy formularza nie zależą od Cloudflare: skrypt Turnstile podmieniamy atrapą, która
 // od razu wstawia token (tests/pomocnicze.ts). Nieudany test znaczy więc "formularz zepsuty",
@@ -38,6 +38,16 @@ function polaWysylki(tresc: string): Record<string, string> {
 
 const POLA_SZCZEGOLOW = ['usluga', 'liczba_zdjec', 'termin', 'link_do_plikow'];
 
+// Błąd pola ma się pokazać dopiero po wyjściu z niego, a nie w trakcie pisania. Samo toBeEmpty() zaraz po fill()
+// przechodziło też wtedy, gdy błąd pojawiał się chwilę później (np. opóźniona walidacja): Playwright kończy czekanie
+// przy pierwszym spełnionym warunku. Dlatego najpierw przepuszczamy dwie klatki animacji (wszystko, co skrypt
+// zaplanował na „zaraz”), a dopiero potem sprawdzamy, że błędu nie ma — ani w treści, ani w aria-invalid.
+async function sprawdzBrakBleduWTrakciePisania(page: Page, blad: Locator, pole: Locator) {
+	await page.evaluate(() => new Promise<void>((gotowe) => requestAnimationFrame(() => requestAnimationFrame(() => gotowe()))));
+	await expect(blad).toBeEmpty();
+	await expect(pole).not.toHaveAttribute('aria-invalid', 'true');
+}
+
 async function otworzFormularz(page: Page) {
 	await podstawAtrapeTurnstile(page);
 	await page.goto('/kontakt/');
@@ -57,6 +67,12 @@ test.describe('Formularz kontaktowy', () => {
 
 		await otworzFormularz(page);
 		await sprawdzIdFormspree(page);
+		// Turnstile ma być włączony — build testowy ustawia klucz testowy (scripts/build-testowy.mjs, pilnuje tego też
+		// dane-testowe.spec.ts). Bez tej asercji poczekajNaTokenTurnstile() po cichu pomijałoby token.
+		await expect(
+			page.getByTestId('contact-form'),
+			'Formularz bez włączonego Turnstile — build testowy powinien ustawić testowy PUBLIC_TURNSTILE_SITE_KEY (scripts/build-testowy.mjs)'
+		).toHaveAttribute('data-turnstile-enabled', 'true');
 		await wypelnijFormularz(page);
 		await poczekajNaTokenTurnstile(page);
 
@@ -75,14 +91,16 @@ test.describe('Formularz kontaktowy', () => {
 		const formularz = page.getByTestId('contact-form');
 		expect(wyslane).toHaveLength(1);
 		expect(wyslane[0].adres).toBe(`https://formspree.io/f/${await formularz.getAttribute('data-formspree-id')}`);
-		expect(wyslane[0].tresc).toContain('Wiktor Testowy');
-		expect(wyslane[0].tresc).toContain('wiktor@example.com');
-		expect(wyslane[0].tresc).toContain('To jest testowa wiadomość o wystarczającej długości.');
-		if ((await formularz.getAttribute('data-turnstile-enabled')) === 'true') {
-			expect(wyslane[0].tresc).toContain('atrapa-tokenu-1');
-			// Token działa tylko raz — po wysyłce formularz prosi widżet o nowy (kolejna wiadomość bez odświeżania strony).
-			await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue('atrapa-tokenu-2');
-		}
+		// Konkretne pola (nazwy z ContactForm.astro), a nie „gdziekolwiek w treści”: imię jest też w temacie maila,
+		// więc samo toContain('Wiktor Testowy') przeszłoby, nawet gdyby pole „name” poszło puste albo pod inną nazwą.
+		const pola = polaWysylki(wyslane[0].tresc);
+		expect(pola.name).toBe('Wiktor Testowy');
+		expect(pola.email).toBe('wiktor@example.com');
+		expect(pola.message).toBe('To jest testowa wiadomość o wystarczającej długości.');
+		expect(pola.subject).toBe('Zapytanie o wycenę — Wiktor Testowy');
+		expect(pola['cf-turnstile-response']).toBe('atrapa-tokenu-1');
+		// Token działa tylko raz — po wysyłce formularz prosi widżet o nowy (kolejna wiadomość bez odświeżania strony).
+		await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue('atrapa-tokenu-2');
 
 		// Formularz wyczyszczony.
 		await expect(page.getByTestId('contact-name')).toHaveValue('');
@@ -122,7 +140,7 @@ test.describe('Formularz kontaktowy', () => {
 
 		await page.getByTestId('contact-name').fill('Wiktor Testowy');
 		await email.fill('nie-email');
-		await expect(blad).toBeEmpty(); // w trakcie pisania jeszcze bez błędu
+		await sprawdzBrakBleduWTrakciePisania(page, blad, email); // w trakcie pisania jeszcze bez błędu
 		await email.press('Tab'); // wyjście z pola pokazuje błąd
 		await expect(blad).toHaveText('Ten adres e-mail wygląda na niepoprawny.');
 		await expect(email).toHaveAttribute('aria-invalid', 'true');
@@ -205,7 +223,7 @@ test.describe('Formularz kontaktowy', () => {
 		const blad = page.locator('#kontakt-link-blad');
 
 		await link.fill('swisstransfer.com/d/atrapa-123');
-		await expect(blad).toBeEmpty(); // w trakcie pisania jeszcze bez błędu
+		await sprawdzBrakBleduWTrakciePisania(page, blad, link); // w trakcie pisania jeszcze bez błędu
 		await link.press('Tab'); // wyjście z pola pokazuje błąd
 		await expect(blad).toHaveText('Wklej cały link — zaczyna się od https://');
 		await expect(link).toHaveAttribute('aria-invalid', 'true');

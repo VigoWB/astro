@@ -190,10 +190,11 @@ src/
   pages/oferta.astro       szkic oferty — UKRYTY do czasu cen (sekcja 10, „Ukryta podstrona”)
   pages/polityka-prywatnosci.md  polityka prywatności (ArticleLayout) — to strona: zmiana = testy (sekcja 3, krok 2)
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
-tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, dane-testowe.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
+tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, dane-testowe.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, sitemapa.spec.ts, suwak.spec.ts; pomocnicze.ts (funkcje dla testów i `test` z automatyczną atrapą statystyk Cloudflare)
+tests/strony.ts            wspólna lista stron STRONY — bez importów, czytają ją i Vitest, i Playwright (przez pomocnicze.ts)
 tests/dane/galeria.json    dane testowe galerii (edytowane ręcznie) — z nich powstaje strona do testów
 tests/piexifjs.d.ts   typy dla piexifjs (paczka ich nie ma) — tylko dla testu EXIF-u
-tests/jednostkowe/         testy jednostkowe Vitesta (*.test.ts): kategorie.test.ts, nawigacja.test.ts, odmiana.test.ts, sync-images.test.ts
+tests/jednostkowe/         testy jednostkowe Vitesta (*.test.ts): kategorie.test.ts, nawigacja.test.ts, odmiana.test.ts, strony.test.ts (public/sw.js i lighthouserc.json zgodne z listą STRONY), sync-images.test.ts
 tests/integracyjne/        testy integracyjne Vitesta (*.test.ts): galeria.test.ts (src/lib/galeria.ts z atrapą R2), porownanie-suwak.test.ts, seo-i-schema.test.ts, sync-images.test.ts
 vitest.config.ts           konfiguracja Vitesta: dwa projekty, „jednostkowe” i „integracyjne”
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
@@ -234,7 +235,7 @@ images/październik_26_EDYCJA_DSC7102.jpg (+ opcjonalnie październik_26_PRZED_D
 **Poziomy testów** (CI uruchamia je w tej kolejności, każdy dopiero po zielonym poprzednim; `npm test` lokalnie tak samo):
 - **Jednostkowe** — Vitest, `tests/jednostkowe/*.test.ts`: jedna funkcja albo jeden moduł, dane podstawione w teście (`vi.doMock`), bez sieci i bez renderowania. Przykład: lista kategorii liczona z `galeria.json`.
 - **Integracyjne** — Vitest, `tests/integracyjne/*.test.ts`: kilka modułów razem, z atrapami tego, co wychodzi poza komputer — R2 to `vi.stubGlobal("fetch", …)`, `astro:assets` to `vi.mock`. Komponenty `.astro` renderuje Container API (`experimental_AstroContainer` — w Astro nadal eksperymentalne). Przykład: `src/lib/galeria.ts` (znak wodny, wersja z ETag, awaria R2), JSON-LD w `Schema.astro`.
-- **E2e** — Playwright, `tests/*.spec.ts`: gotowa strona z danych testowych w przeglądarce (wyżej, „Dane testowe”).
+- **E2e** — Playwright, `tests/*.spec.ts`: gotowa strona z danych testowych w przeglądarce (wyżej, „Dane testowe”). Testy e2e importują `test` i `expect` z `./pomocnicze` (atrapa statystyk Cloudflare w każdym teście), a w `page.route`, który przepuszcza zapytania, używamy `route.fallback()`, nie `route.continue()` (continue idzie prosto do sieci i omija atrapy z `context.route`).
 - Plik Vitesta kończy się na `.test.ts`, plik Playwrighta na `.spec.ts` — każde narzędzie bierze tylko swoje (`include` w `vitest.config.ts`, `testMatch` w `playwright.config.ts`).
 - Nowa logika w `src/lib/` albo `src/data/` = test jednostkowy albo integracyjny; zachowanie w przeglądarce = test e2e.
 - Test nie zależy od prawdziwych zdjęć ani od `.env`: dane podstawiasz w teście, a zmienne `PUBLIC_*` przez `vi.stubEnv`.
@@ -290,11 +291,11 @@ Konwencje kodu (TypeScript, komponenty i importy, style i kolory, zaokrąglenia,
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
 2. Dodaj link w `src/data/nav.ts`: `navLinks` (menu i stopka) albo `linkiStopki` (tylko stopka).
 3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (numer o jeden w górę — aktualny sprawdź w pliku).
-4. Dopisz adres do `STRONY` w `tests/pomocnicze.ts` (z tej listy korzystają testy dostępności i CSP) i do `url` w `lighthouserc.json`.
+4. Dopisz adres do `STRONY` w `tests/strony.ts` (z tej listy korzystają testy dostępności, CSP i sitemapy) i do `url` w `lighthouserc.json`. Zgodność `public/sw.js` i `lighthouserc.json` z tą listą pilnuje `tests/jednostkowe/strony.test.ts`, a sitemapy — `tests/sitemapa.spec.ts`.
 
 **Ukryta podstrona (szkic, np. `/oferta/` przed podaniem cen):**
 1. Utwórz stronę jak wyżej, ale przekaż do `Layout` prop `bezIndeksowania` (Google jej nie indeksuje).
-2. Dopisz adres do `STRONY_POZA_SITEMAPA` w `astro.config.mjs` i do `STRONY` w `tests/pomocnicze.ts` (szkic też przechodzi testy dostępności i CSP).
+2. Dopisz adres do `STRONY_POZA_SITEMAPA` w `astro.config.mjs` i do `STRONY` w `tests/strony.ts` (szkic też przechodzi testy dostępności i CSP). Zgodność `public/sw.js`, `lighthouserc.json` i sitemapy z tą listą pilnują `tests/jednostkowe/strony.test.ts` i `tests/sitemapa.spec.ts` (szkic zostaje na liście `STRONY`, ale nie ma go w `public/sw.js`, `lighthouserc.json` ani sitemapie).
 3. Bez linku w `nav.ts` ani z innych stron, bez wpisu w `public/sw.js` i w `lighthouserc.json` (Lighthouse obniża ocenę SEO za noindex). Pilnuje tego `tests/oferta.spec.ts`.
 
 Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA`, dodaj link w `nav.ts`, stronę w `public/sw.js` (i podbij `CACHE_NAME`) oraz w `lighthouserc.json`, a `tests/oferta.spec.ts` zmień tak, żeby sprawdzał link w menu i obecność w sitemapie.
@@ -346,7 +347,7 @@ Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA
    - żadnych `onclick=` / `onload=`, `style="..."`, `<script>` z atrybutem `is:inline` ani `set:html` z kodem JS — wszystko, co wklejone w HTML, zostanie zablokowane (`set:html` z danymi JSON-LD jest w porządku),
    - w `astro.config.mjs` zostają `build.inlineStylesheets: 'never'` i `vite.build.assetsInlineLimit: 0` — bez nich Astro wkleja małe skrypty i style prosto do HTML,
    - nowa zewnętrzna usługa (skrypt, ramka, `fetch` do innej domeny) = najpierw zapytaj, potem dopisz jej domenę do właściwej dyrektywy CSP w `_headers`,
-   - `tests/csp.spec.ts` czyta politykę z `_headers` i wykrywa naruszenia na wszystkich stronach (także przy wysyłce formularza i rejestracji service workera) — nowa podstrona trafia do `STRONY` w `tests/pomocnicze.ts`.
+   - `tests/csp.spec.ts` czyta politykę z `_headers` i wykrywa naruszenia na wszystkich stronach (także przy wysyłce formularza i rejestracji service workera) — nowa podstrona trafia do `STRONY` w `tests/strony.ts`.
 8. **Link w środku zdania pisz w tej samej linii co tekst wokół niego.** Gdy między tekstem a znacznikiem (np. `<a>`) jest przejście do nowej linii, Astro przy buildzie usuwa spację i na stronie słowa sklejają się z linkiem („przezSwissTransfer”). Dobrze: `Pliki wyślij przez <a href="…">SwissTransfer</a>: jest darmowy`.
 
 ---

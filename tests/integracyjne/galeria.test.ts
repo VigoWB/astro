@@ -87,6 +87,26 @@ describe("wczytajZdjecia()", () => {
 		for (const zapytanie of zapytania) expect(zapytanie).toMatch(/^HEAD .+\?sprawdz=\d+$/);
 	});
 
+	// Lightbox nie powiększa zdjęć (galeria.ts: Math.min(1, …)): oryginał mniejszy niż 1280 i 1920 px
+	// dostaje jedną wersję w swoim rozmiarze, a nie rozciągnięte kopie.
+	test.each([
+		{ opis: "poziome 1000×800", szerokosc: 1000, wysokosc: 800 },
+		{ opis: "pionowe 800×1000", szerokosc: 800, wysokosc: 1000 },
+	])("lightbox nie powiększa małego zdjęcia: $opis zostaje w swoim rozmiarze", async ({ szerokosc, wysokosc }) => {
+		atrapaR2();
+		const { galeria, getImage } = await wczytaj([zdjecie({ szerokosc, wysokosc })]);
+		const [z] = await galeria.wczytajZdjecia();
+
+		expect(getImage).toHaveBeenCalledWith({
+			src: `${R2}/znak/DSC_1.jpg?v=${WERSJA}`,
+			width: szerokosc,
+			height: wysokosc,
+			widths: [szerokosc],
+			format: "webp",
+		});
+		expect(z.lightbox.po).toMatchObject({ szerokosc, wysokosc });
+	});
+
 	test("brak wersji ze znakiem (404) → czysty oryginał i ostrzeżenie z podpowiedzią", async () => {
 		atrapaR2((adres) => (adres.includes("/znak/") ? { status: 404 } : { status: 200, naglowki: { etag: ETAG } }));
 		const { galeria, getImage } = await wczytaj([zdjecie()]);

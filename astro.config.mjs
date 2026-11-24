@@ -154,7 +154,7 @@ async function obrazyGaleriiDlaSitemapy() {
 
 // Strony-szkice, których jeszcze nie pokazujemy (mają też noindex i nie ma do nich linków):
 // nie trafiają do sitemapy. Strona gotowa = usuń ją z tej listy (AGENTS.md, sekcja 10, „Ukryta podstrona”).
-const STRONY_POZA_SITEMAPA = ['/oferta/'];
+export const STRONY_POZA_SITEMAPA = ['/oferta/'];
 
 export default defineConfig({
   site: 'https://balansbieli.pl',

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './pomocnicze';
 
 // Suwak przed/po na stronie głównej (PorownanieSuwak.astro): przeciąganie myszą i palcem oraz opis wartości
 // dla czytnika ekranu. Sprawdzamy skutek: gdzie stoi linia i które zdjęcie widać po obu jej stronach.

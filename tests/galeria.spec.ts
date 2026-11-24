@@ -1,13 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { odmienZdjecia } from '../src/lib/odmiana.ts';
-import { poczekajNaZdjecie, pokazanyPlik, plikiWersji } from './pomocnicze';
+import { test, expect, poczekajNaZdjecie, pokazanyPlik, plikiWersji } from './pomocnicze';
 
 // Oczekiwane liczby test liczy sam — z atrybutów kart (data-kategoria) i z data-na-strone —
 // zamiast wpisywać dzisiejsze dane na sztywno. Przypadki potrzebne testom (kategorie, wersje „przed”,
 // więcej zdjęć niż jedna porcja) gwarantują dane testowe (tests/dane/galeria.json, pilnuje ich
 // tests/dane-testowe.spec.ts). Brak takiego przypadku na stronie to błąd testu, nie pominięcie.
+
+// Dane testowe, z których powstaje strona (tests/dane/galeria.json, patrz scripts/build-testowy.mjs). Oczekiwane liczby
+// w testach „Załaduj więcej” wynikają z nich, a nie ze strony: gdyby strona zgubiła zdjęcie, test by to zauważył.
+const daneTestowe = JSON.parse(readFileSync(join(process.cwd(), 'tests', 'dane', 'galeria.json'), 'utf8')) as { kategorie: string[] }[];
+const ileWDanychWKategorii = (kategoria: string) => daneTestowe.filter((zdjecie) => zdjecie.kategorie.includes(kategoria)).length;
 
 const karty = (page: Page) => page.getByTestId('gallery-item');
 // Karty, które są w układzie strony (bez ukrycia przez filtr albo "Załaduj więcej").
@@ -143,9 +148,12 @@ test.describe('Galeria', () => {
 
 	test('"Załaduj więcej": pokazuje kolejną porcję zdjęć, a licznik zgadza się z rzeczywistością', async ({ page }) => {
 		const porcja = await naStrone(page);
-		const wszystkie = await karty(page).count();
-		// Przycisk pojawia się tylko wtedy, gdy zdjęć jest więcej niż jedna porcja.
-		expect(wszystkie, 'Dane testowe mają więcej zdjęć niż jedna porcja, a strona pokazuje ich mniej — sprawdź Galeria.astro i galeria.ts').toBeGreaterThan(porcja);
+		// Liczby wynikają z tests/dane/galeria.json (12 zdjęć) i z porcji (8): po jednym kliknięciu widać wszystkie zdjęcia,
+		// licznik pokazuje 0, a przycisk znika. Zmieniasz dane albo porcję — popraw oczekiwania poniżej, a nie chowaj ich w warunku.
+		const wszystkie = daneTestowe.length;
+		expect(wszystkie, 'Dane testowe (tests/dane/galeria.json) mają mniej zdjęć niż jedna porcja — test „Załaduj więcej” nie ma czego doładować').toBeGreaterThan(porcja);
+		expect(wszystkie, 'Dane testowe (tests/dane/galeria.json) nie mieszczą się w dwóch porcjach — po jednym kliknięciu zostałoby jeszcze coś do doładowania; ten test zakłada, że nie, więc rozbuduj go').toBeLessThanOrEqual(porcja * 2);
+		await expect(karty(page), 'Strona ma inną liczbę kart niż tests/dane/galeria.json — sprawdź Galeria.astro i galeria.ts').toHaveCount(wszystkie);
 
 		const licznik = page.getByTestId('load-more-count');
 
@@ -155,37 +163,45 @@ test.describe('Galeria', () => {
 
 		await page.getByTestId('load-more-btn').click();
 
-		// Po kliknięciu dochodzi kolejna porcja (albo wszystkie pozostałe).
-		await expect(widoczneKarty(page)).toHaveCount(Math.min(wszystkie, porcja * 2));
-		await expect(licznik).toHaveText(String(Math.max(wszystkie - porcja * 2, 0)));
-
-		// Gdy nie ma już czego doładowywać, przycisk znika.
-		if (wszystkie <= porcja * 2) {
-			await expect(page.getByTestId('load-more-container')).toBeHidden();
-		}
+		// Doszły wszystkie pozostałe zdjęcia, licznik zszedł do zera, a przycisk zniknął — nie ma już czego doładowywać.
+		await expect(widoczneKarty(page)).toHaveCount(wszystkie);
+		await expect(licznik).toHaveText('0');
+		await expect(page.getByTestId('load-more-container')).toBeHidden();
 	});
 
 	test('zmiana filtra po "Załaduj więcej" zaczyna od pierwszej porcji, a licznik się zgadza', async ({ page }) => {
 		const porcja = await naStrone(page);
-		const wszystkie = await karty(page).count();
-		const [kategoria] = await nazwyKategorii(page);
-		expect(wszystkie, 'Dane testowe mają więcej zdjęć niż jedna porcja, a strona pokazuje ich mniej — sprawdź Galeria.astro i galeria.ts').toBeGreaterThan(porcja);
-		expect(kategoria, 'Pasek filtrów bez kategorii — dane testowe je mają, więc zgubiła je strona (sprawdź Galeria.astro i kategorie.ts)').toBeTruthy();
+		const wszystkie = daneTestowe.length;
+		expect(wszystkie, 'Dane testowe (tests/dane/galeria.json) mają mniej zdjęć niż jedna porcja — test „Załaduj więcej” nie ma czego doładować').toBeGreaterThan(porcja);
+		expect(wszystkie, 'Dane testowe (tests/dane/galeria.json) nie mieszczą się w dwóch porcjach — ten test zakłada, że po jednym kliknięciu widać wszystkie zdjęcia').toBeLessThanOrEqual(porcja * 2);
+
+		// Filtrujemy po kategorii, która ma więcej zdjęć niż jedna porcja (w danych: „Zegarki”, 9 przy porcji 8). Pierwsza kategoria
+		// z paska („Pióra”, 1 zdjęcie) nie odróżniałaby „od pierwszej porcji” od „z rozwiniętej listy” — w obu przypadkach widać 1 zdjęcie.
+		const duza = await kategoriaGdzie(page, (ile) => ile > porcja);
+		expect(duza, `Żadna kategoria nie ma więcej niż ${porcja} zdjęć — tests/dane/galeria.json ma taką, więc strona gubi zdjęcia lub kategorie`).toBeTruthy();
+		// I kategorię, która mieści się w jednej porcji (w danych: „Spinki”, 3) — przy niej przycisk „Załaduj więcej” znika.
+		const mala = await kategoriaGdzie(page, (ile) => ile >= 2 && ile <= porcja);
+		expect(mala, `Żadna kategoria nie ma od 2 do ${porcja} zdjęć — tests/dane/galeria.json ma taką, więc strona gubi zdjęcia lub kategorie`).toBeTruthy();
+		const wDuzej = ileWDanychWKategorii(duza);
+		const wMalej = ileWDanychWKategorii(mala);
 
 		const licznik = page.getByTestId('load-more-count');
 		const kontener = page.getByTestId('load-more-container');
 
 		await page.getByTestId('load-more-btn').click();
-		await expect(widoczneKarty(page)).toHaveCount(Math.min(wszystkie, porcja * 2));
+		await expect(widoczneKarty(page)).toHaveCount(wszystkie);
 
-		// Filtr: tylko zdjęcia z kategorii, liczone od pierwszej porcji (a nie od rozwiniętej listy).
-		const pasujace = await liczbaWKategorii(page, kategoria);
-		await przyciskFiltra(page, kategoria).click();
-		await expect(widoczneKarty(page)).toHaveCount(Math.min(pasujace, porcja));
-		await expect(licznik).toHaveText(String(Math.max(pasujace - porcja, 0)));
-		if (pasujace <= porcja) {
-			await expect(kontener).toBeHidden();
-		}
+		// Filtr po dużej kategorii: liczone od pierwszej porcji (8 zdjęć), a nie od rozwiniętej listy (wtedy byłoby 9 i bez przycisku).
+		await przyciskFiltra(page, duza).click();
+		await expect(widoczneKarty(page)).toHaveCount(porcja);
+		await expect(licznik).toHaveText(String(wDuzej - porcja));
+		await expect(kontener).toBeVisible();
+
+		// Filtr po małej kategorii: wszystkie jej zdjęcia mieszczą się w jednej porcji, więc przycisk znika.
+		await przyciskFiltra(page, mala).click();
+		await expect(widoczneKarty(page)).toHaveCount(wMalej);
+		await expect(licznik).toHaveText('0');
+		await expect(kontener).toBeHidden();
 
 		// Powrót do "Wszystkie": znowu jedna porcja i przycisk z poprawnym licznikiem.
 		await przyciskFiltra(page, 'Wszystkie').click();

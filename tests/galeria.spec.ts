@@ -623,7 +623,7 @@ test.describe('Galeria', () => {
 		);
 	});
 
-	test('karta: podpis pokazuje się też przy fokusie z klawiatury, na tle co najmniej cien/70', async ({ page }) => {
+	test('karta: podpis pokazuje się też przy fokusie z klawiatury, na tle co najmniej cien/75', async ({ page }) => {
 		// Klawiatura: z ostatniego filtra jeden Tab na pierwszą kartę.
 		await page.getByTestId('gallery-filters').getByRole('button').last().focus();
 		const podpis = karty(page).first().getByTestId('podpis-karty');
@@ -639,7 +639,7 @@ test.describe('Galeria', () => {
 		await page.keyboard.press('Tab');
 		await expect(karty(page).first()).toBeFocused();
 		await expect(podpis).toHaveCSS('opacity', '1');
-		await expect.poll(przezroczystoscTla).toBeGreaterThanOrEqual(0.7);
+		await expect.poll(przezroczystoscTla).toBeGreaterThanOrEqual(0.75);
 		await expect(podpis).toHaveText((await karty(page).first().getAttribute('data-opis')) ?? '');
 	});
 

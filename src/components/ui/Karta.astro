@@ -84,9 +84,10 @@ const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.widt
 			]}
 		/>
 		<!-- Podpis po najechaniu myszką albo po fokusie z klawiatury — tylko dla oka (aria-hidden). Czytnik ekranu
-		     dostaje opis z alt obrazka, więc bez tego przeczytałby go dwa razy. Tło co najmniej cien/70:
-		     biały napis na jaśniejszym tle nie trzymałby kontrastu 4,5:1 na jasnym zdjęciu. -->
-		<span class="absolute inset-0 bg-cien/0 group-hover:bg-cien/70 group-focus-visible:bg-cien/70 transition-colors duration-300 flex items-end p-3" aria-hidden="true">
+		     dostaje opis z alt obrazka, więc bez tego przeczytałby go dwa razy. Tło co najmniej cien/75:
+		     biały napis (text-paper) na czystej bieli zdjęcia ma wtedy kontrast 7,49:1 (zasada 7:1 z konwencji),
+		     a przy cien/70 tylko 6,24:1. -->
+		<span class="absolute inset-0 bg-cien/0 group-hover:bg-cien/75 group-focus-visible:bg-cien/75 transition-colors duration-300 flex items-end p-3" aria-hidden="true">
 			<span class="block w-full text-center text-paper text-sm font-medium opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-300" data-testid="podpis-karty">
 				{opis}
 			</span>

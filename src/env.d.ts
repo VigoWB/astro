@@ -2,11 +2,11 @@
 
 interface ImportMetaEnv {
 	/** ID formularza z Formspree (https://formspree.io/forms) — bez pełnego URL-a, sam identyfikator. */
-	readonly PUBLIC_FORMSPREE_ID: string;
+	readonly PUBLIC_FORMSPREE_ID?: string;
 	/** Publiczny adres bucketa R2 ze zdjęciami, bez ukośnika na końcu (np. https://pub-xxxx.r2.dev). Po założeniu własnej subdomeny wystarczy podmienić tę zmienną. */
 	readonly PUBLIC_R2_URL: string;
 	/** Site key (publiczny) z Cloudflare Turnstile — zabezpiecza formularz kontaktowy. */
-	readonly PUBLIC_TURNSTILE_SITE_KEY: string;
+	readonly PUBLIC_TURNSTILE_SITE_KEY?: string;
 	/** Token Cloudflare Web Analytics (opcjonalny) — bez niego statystyki się nie zbierają. */
 	readonly PUBLIC_CF_BEACON_TOKEN?: string;
 }

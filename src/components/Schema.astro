@@ -35,6 +35,10 @@ interface Props {
 
 const { zdjecia, breadcrumbs } = Astro.props;
 
+// JSON do wstawienia w <script>: każde "<" zamieniamy na \u003c, żeby tekst z danych
+// (np. opis zdjęcia z "</script>") nie zamknął znacznika. Po JSON.parse dane są te same.
+const jsonLd = (dane: unknown) => JSON.stringify(dane).replace(/</g, "\\u003c");
+
 const bazowyUrl = Astro.site ?? new URL(Astro.url.origin);
 const adresZdjeciaProfilowego = new URL(zdjecieProfilowe.src, bazowyUrl).toString();
 
@@ -120,8 +124,8 @@ const breadcrumbList = breadcrumbs?.length
 	: null;
 ---
 
-<script type="application/ld+json" set:html={JSON.stringify(person)} />
-<script type="application/ld+json" set:html={JSON.stringify(business)} />
-<script type="application/ld+json" set:html={JSON.stringify(website)} />
-{gallery && <script type="application/ld+json" set:html={JSON.stringify(gallery)} />}
-{breadcrumbList && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbList)} />}
+<script type="application/ld+json" set:html={jsonLd(person)} />
+<script type="application/ld+json" set:html={jsonLd(business)} />
+<script type="application/ld+json" set:html={jsonLd(website)} />
+{gallery && <script type="application/ld+json" set:html={jsonLd(gallery)} />}
+{breadcrumbList && <script type="application/ld+json" set:html={jsonLd(breadcrumbList)} />}

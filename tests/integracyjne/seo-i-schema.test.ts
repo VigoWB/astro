@@ -49,6 +49,23 @@ describe("Schema.astro", () => {
 		expect(obraz).not.toHaveProperty("license");
 	});
 
+	test("tekst z \"</script>\" w opisie zdjęcia nie zamyka znacznika, a po JSON.parse zostaje bez zmian", async () => {
+		const grozny = "</script><script>alert(1)</script>";
+		const html = await wyrenderuj(
+			Schema,
+			{ zdjecia: [{ po: { src: "/_astro/zegarek.webp", width: 1920, height: 1280 }, opis: grozny }] },
+			"https://balansbieli.pl/galeria/"
+		);
+		const otwarcia = html.match(/<script type="application\/ld\+json">/g) ?? [];
+		const zamkniecia = html.match(/<\/script/gi) ?? [];
+		// Każdy znacznik ma dokładnie jedno zamknięcie — to, które napisał komponent, a nie dane.
+		expect(otwarcia).toHaveLength(4);
+		expect(zamkniecia).toHaveLength(otwarcia.length);
+		expect(html).not.toContain("<script>alert(1)");
+		const galeria = daneJsonLd(html).find((dane) => dane["@type"] === "ImageGallery") as { image: Record<string, unknown>[] };
+		expect(galeria.image[0].name).toBe(grozny);
+	});
+
 	test("bez zdjęć nie ma ImageGallery, a Person, firma i WebSite są zawsze", async () => {
 		const html = await wyrenderuj(Schema, {}, "https://balansbieli.pl/");
 		const typy = daneJsonLd(html).map((dane) => dane["@type"]);

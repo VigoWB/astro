@@ -43,7 +43,7 @@ const currentPath = Astro.url.pathname;
 				<nav aria-label="Główna nawigacja" class="hidden md:block">
 					<ul class="flex flex-row gap-4 lg:flex-col lg:gap-5">
 						{navLinks.map((link) => {
-							const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
+							const isActive = link.href === currentPath;
 							return (
 								<li>
 									<a
@@ -85,7 +85,7 @@ const currentPath = Astro.url.pathname;
 				<Container>
 					<ul class="flex flex-col py-2">
 						{navLinks.map((link) => {
-							const isActive = link.href === currentPath || (link.href === "/" && currentPath === "/");
+							const isActive = link.href === currentPath;
 							return (
 								<li>
 									<a

@@ -51,7 +51,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 			maxlength="100"
 			autocomplete="name"
 			aria-describedby="kontakt-name-blad"
-			class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink aria-invalid:border-error"
+			class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus-visible:outline-hidden focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink aria-invalid:border-error"
 			data-testid="contact-name"
 		/>
 		<p id="kontakt-name-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
@@ -67,7 +67,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 			maxlength="254"
 			autocomplete="email"
 			aria-describedby="kontakt-email-blad"
-			class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink aria-invalid:border-error"
+			class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus-visible:outline-hidden focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink aria-invalid:border-error"
 			data-testid="contact-email"
 		/>
 		<p id="kontakt-email-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
@@ -90,7 +90,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 						<select
 							id="kontakt-usluga"
 							name="usluga"
-							class="w-full appearance-none rounded-md border border-muted bg-paper py-2.5 pl-3 pr-10 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink"
+							class="w-full appearance-none rounded-md border border-muted bg-paper py-2.5 pl-3 pr-10 text-ink transition-colors focus-visible:outline-hidden focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink"
 							data-testid="contact-usluga"
 						>
 							<option value="">Wybierz</option>
@@ -108,7 +108,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 					<select
 						id="kontakt-liczba-zdjec"
 						name="liczba_zdjec"
-						class="w-full appearance-none rounded-md border border-muted bg-paper py-2.5 pl-3 pr-10 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink"
+						class="w-full appearance-none rounded-md border border-muted bg-paper py-2.5 pl-3 pr-10 text-ink transition-colors focus-visible:outline-hidden focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink"
 						data-testid="contact-liczba-zdjec"
 					>
 						<option value="">Wybierz</option>
@@ -127,7 +127,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 					maxlength="100"
 					autocomplete="off"
 					aria-describedby="kontakt-termin-podpowiedz"
-					class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink"
+					class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus-visible:outline-hidden focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink"
 					data-testid="contact-termin"
 				/>
 				<p id="kontakt-termin-podpowiedz" class="text-sm text-muted">Na przykład „do 20 listopada” albo „bez pośpiechu”.</p>
@@ -142,7 +142,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 					maxlength="2000"
 					autocomplete="off"
 					aria-describedby="kontakt-link-podpowiedz kontakt-link-blad"
-					class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink aria-invalid:border-error"
+					class="w-full rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus-visible:outline-hidden focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink aria-invalid:border-error"
 					data-testid="contact-link"
 				/>
 				<p id="kontakt-link-podpowiedz" class="text-sm text-muted">Pliki wyślij przez SwissTransfer albo Dysk Google i wklej tu cały link.</p>
@@ -160,21 +160,21 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 			minlength="10"
 			rows="6"
 			aria-describedby="kontakt-message-blad"
-			class="w-full resize-y rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus:outline-hidden focus:border-ink focus:ring-2 focus:ring-ink aria-invalid:border-error"
+			class="w-full resize-y rounded-md border border-muted bg-paper px-3 py-2.5 text-ink transition-colors focus-visible:outline-hidden focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink aria-invalid:border-error"
 			data-testid="contact-message"
 		></textarea>
 		<p id="kontakt-message-blad" class="min-h-5 text-sm text-error" aria-live="polite"></p>
 	</div>
 
-	<!-- Honeypot antyspamowy Formspree: pole ma zostać puste. Ukryte przed ludźmi i czytnikami ekranu,
-	     ale prosty bot skanujący HTML często wypełni je automatycznie i zdradzi się w ten sposób. -->
+	<!-- Honeypot antyspamowy Formspree: pole ma zostać puste. Klasa hidden (display: none) chowa je przed
+	     ludźmi i czytnikami ekranu (aria-hidden niepotrzebne), ale prosty bot skanujący HTML często wypełni
+	     je automatycznie i zdradzi się w ten sposób. -->
 	<input
 		type="text"
 		name="_gotcha"
 		tabindex="-1"
 		autocomplete="off"
 		class="hidden"
-		aria-hidden="true"
 	/>
 
 	<!-- Temat maila od Formspree (pole specjalne `subject`, działa na darmowym planie). Imię dopisuje
@@ -254,7 +254,9 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 		},
 	};
 
-	// Prosty, ale skuteczny regex na email — dodatkowa warstwa poza type="email" z HTML5.
+	// Prosty regex na e-mail. Obok niego działa reguła przeglądarki dla type="email" (validity.typeMismatch):
+	// sam regex przepuszcza np. „a@b.com.” (kropka na końcu), a przeglądarka nie — błąd pokazujemy, gdy
+	// któraś z dwóch reguł odrzuci adres (patrz walidujPole).
 	const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 	// Link do plików: cały adres z https:// (albo http://), bez spacji.
@@ -272,7 +274,9 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 
 		if (klucz === "email") {
 			if (!wartosc) return { ok: false, komunikat: "Podaj adres e-mail." };
-			if (!regexEmail.test(wartosc)) return { ok: false, komunikat: "Ten adres e-mail wygląda na niepoprawny." };
+			if (!regexEmail.test(wartosc) || pola.email.input.validity.typeMismatch) {
+				return { ok: false, komunikat: "Ten adres e-mail wygląda na niepoprawny." };
+			}
 		}
 
 		// Link jest nieobowiązkowy — sprawdzamy go tylko wtedy, gdy coś wpisano.
@@ -376,6 +380,32 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 		return `Nie udało się wysłać wiadomości. Sprawdź dane i spróbuj jeszcze raz albo ${wskazowkaMail}.`;
 	}
 
+	// Limit czasu zapytania. AbortSignal.timeout() nie istnieje w Safari przed 16 (iPhone'y z iOS 15):
+	// wywołanie rzucałoby TypeError, a ten trafiał do catch jako fałszywe „Brak połączenia”, i wiadomość
+	// w ogóle nie wychodziła. Wersja zapasowa: AbortController + setTimeout. Safari 15.0–15.3 nie zna
+	// abort(powód), więc przekroczenie czasu rozpoznajemy własnym znacznikiem, a nie powodem przerwania.
+	function sygnalZLimitem(ms: number) {
+		if (typeof AbortSignal.timeout === "function") {
+			return {
+				signal: AbortSignal.timeout(ms),
+				// Po przerwaniu przez limit zapytanie kończy się błędem TimeoutError.
+				przekroczonoCzas: (blad: unknown) => blad instanceof DOMException && blad.name === "TimeoutError",
+				wyczysc: () => {},
+			};
+		}
+		const kontroler = new AbortController();
+		let przekroczono = false;
+		const timer = setTimeout(() => {
+			przekroczono = true;
+			kontroler.abort();
+		}, ms);
+		return {
+			signal: kontroler.signal,
+			przekroczonoCzas: () => przekroczono,
+			wyczysc: () => clearTimeout(timer),
+		};
+	}
+
 	formularz.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
@@ -405,6 +435,8 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 		przycisk.textContent = "Wysyłanie...";
 		ustawStatus("Wysyłanie...", "wysylanie");
 
+		const limitCzasu = sygnalZLimitem(15000);
+
 		try {
 			const dane = new FormData(formularz);
 			// Szczegóły zlecenia: puste pola usuwamy (w mailu nie ma pustych linijek), wypełnione — bez spacji na brzegach.
@@ -419,7 +451,7 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 				method: "POST",
 				body: dane,
 				headers: { Accept: "application/json" },
-				signal: AbortSignal.timeout(15000),
+				signal: limitCzasu.signal,
 			});
 
 			if (odpowiedz.ok) {
@@ -432,16 +464,20 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 				ustawStatus(komunikatBleduHttp(odpowiedz.status), "blad");
 			}
 		} catch (blad) {
-			const przekroczonoCzas = blad instanceof DOMException && blad.name === "TimeoutError";
 			ustawStatus(
-				przekroczonoCzas
+				limitCzasu.przekroczonoCzas(blad)
 					? `Wysyłka trwa zbyt długo. Spróbuj ponownie za chwilę albo ${wskazowkaMail}.`
 					: "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.",
 				"blad",
 			);
 		} finally {
+			limitCzasu.wyczysc();
 			przycisk.disabled = false;
 			przycisk.textContent = tekstPrzycisku;
+			// Wyłączony przycisk traci fokus (trafia na <body>) — osoba z klawiatury albo z czytnikiem ekranu
+			// gubiłaby miejsce w formularzu. Oddajemy go tylko wtedy, gdy fokus faktycznie spadł na <body>:
+			// jeśli ktoś w międzyczasie przeszedł do innego pola, nie zabieramy mu go.
+			if (document.activeElement === null || document.activeElement === document.body) przycisk.focus();
 			odnowTurnstile();
 		}
 	});

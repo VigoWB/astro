@@ -29,6 +29,35 @@ async function podstawFormspree(page: Page, reakcja: { status: number; body?: un
 	return wyslane;
 }
 
+// Jak podstawFormspree, ale odpowiedź (200) wychodzi dopiero po zwolnij() — test ma czas sprawdzić stan „w trakcie
+// wysyłki”. Gdy zapytanie zdążyło już przerwać przeglądarka (limit czasu), odpowiedź po zwolnieniu idzie w próżnię.
+async function podstawWstrzymanaFormspree(page: Page): Promise<{ wyslane: Wyslane[]; zwolnij: () => void }> {
+	let zwolnij = () => {};
+	const odpowiedzGotowa = new Promise<void>((gotowe) => (zwolnij = gotowe));
+	const wyslane: Wyslane[] = [];
+	await page.route('**/formspree.io/**', async (route) => {
+		wyslane.push({ adres: route.request().url(), tresc: route.request().postDataBuffer()?.toString('utf8') ?? '' });
+		await odpowiedzGotowa;
+		await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }).catch(() => {});
+	});
+	return { wyslane, zwolnij: () => zwolnij() };
+}
+
+// Udaje Safari przed 16 (iPhone'y z iOS 15): tam nie ma AbortSignal.timeout. Wywołać PRZED page.goto.
+// Skrypt startowy działa na każdej stronie otwartej w tym teście; sam test potwierdza po goto, że funkcji naprawdę nie ma.
+async function udawajSafari15(page: Page) {
+	await page.addInitScript(() => {
+		Reflect.deleteProperty(AbortSignal, 'timeout');
+	});
+}
+
+async function sprawdzBrakAbortSignalTimeout(page: Page) {
+	expect(
+		await page.evaluate(() => typeof AbortSignal.timeout),
+		'AbortSignal.timeout nadal istnieje — udawanie Safari 15 nie zadziałało, test niczego by nie sprawdzał'
+	).toBe('undefined');
+}
+
 // Zamienia treść wysyłki (multipart/form-data) na pary nazwa pola → wartość.
 function polaWysylki(tresc: string): Record<string, string> {
 	const pola: Record<string, string> = {};
@@ -165,6 +194,34 @@ test.describe('Formularz kontaktowy', () => {
 		await expect(status(page)).toBeEmpty();
 	});
 
+	test('walidacja: e-mail z kropką na końcu („a@b.com.”) jest odrzucany po wyjściu z pola i blokuje wysyłkę', async ({ page }) => {
+		// Sam regex formularza przepuszcza taki adres — odrzuca go dopiero reguła przeglądarki dla type="email" (typeMismatch).
+		const wyslane = await podstawFormspree(page, { status: 200 });
+		await otworzFormularz(page);
+		await wypelnijFormularz(page);
+		await poczekajNaTokenTurnstile(page);
+
+		const email = page.getByTestId('contact-email');
+		const blad = page.locator('#kontakt-email-blad');
+
+		await email.fill('a@b.com.');
+		await sprawdzBrakBleduWTrakciePisania(page, blad, email); // w trakcie pisania jeszcze bez błędu
+		await email.press('Tab'); // wyjście z pola pokazuje błąd
+		await expect(blad).toHaveText('Ten adres e-mail wygląda na niepoprawny.');
+		await expect(email).toHaveAttribute('aria-invalid', 'true');
+
+		// Próba wysyłki: nic nie wychodzi, fokus wraca do pola e-mail.
+		await page.getByTestId('contact-submit').click();
+		await expect(status(page)).toHaveText('Popraw zaznaczone pola powyżej.');
+		await expect(email).toBeFocused();
+		expect(wyslane).toHaveLength(0);
+
+		// Ten sam adres bez kropki na końcu przechodzi.
+		await email.fill('a@b.com');
+		await expect(blad).toBeEmpty();
+		await expect(email).not.toHaveAttribute('aria-invalid', 'true');
+	});
+
 	test('szczegóły zlecenia: puste pola nie idą do Formspree, wypełnione idą bez spacji, temat maila z imieniem', async ({ page }) => {
 		const wyslane = await podstawFormspree(page, { status: 200 });
 		await otworzFormularz(page);
@@ -270,6 +327,85 @@ test.describe('Formularz kontaktowy', () => {
 		if (adresMailowy) {
 			await expect(status(page)).toContainText(adresMailowy);
 		}
+	});
+});
+
+test.describe('Formularz kontaktowy: stary Safari i fokus po wysyłce', () => {
+	test('iOS 15 (bez AbortSignal.timeout): wiadomość wychodzi, a nie fałszywy błąd „Brak połączenia”', async ({ page }) => {
+		await udawajSafari15(page);
+		const wyslane = await podstawFormspree(page, { status: 200 });
+		await otworzFormularz(page);
+		await sprawdzBrakAbortSignalTimeout(page);
+		await sprawdzIdFormspree(page);
+		await wypelnijFormularz(page);
+		await poczekajNaTokenTurnstile(page);
+
+		await page.getByTestId('contact-submit').click();
+
+		await expect(status(page)).toContainText('Dziękuję! Wiadomość została wysłana');
+		await expect(status(page)).not.toContainText('Brak połączenia');
+		expect(wyslane).toHaveLength(1);
+		expect(polaWysylki(wyslane[0].tresc).name).toBe('Wiktor Testowy');
+	});
+
+	test('iOS 15: limit 15 s działa też w wersji zapasowej — „Wysyłka trwa zbyt długo”, a nie „Brak połączenia”', async ({ page }) => {
+		// Bez czekania 15 s naprawdę: zegar strony jest sztuczny (page.clock) i przesuwamy go po wysłaniu zapytania.
+		// Zegar instalujemy przed goto, żeby setTimeout z wersji zapasowej od początku był sztuczny.
+		// Kolejność ma znaczenie: page.clock sam podstawia własne AbortSignal.timeout, więc usunięcie tej funkcji
+		// (udawajSafari15) musi przyjść PO page.clock.install() — inaczej zegar przywraca ją i test sprawdzałby
+		// ścieżkę natywną zamiast zapasowej (pilnuje tego sprawdzBrakAbortSignalTimeout).
+		await page.clock.install();
+		await udawajSafari15(page);
+		const { wyslane, zwolnij } = await podstawWstrzymanaFormspree(page); // Formspree nie odpowiada
+		await otworzFormularz(page);
+		await sprawdzBrakAbortSignalTimeout(page);
+		await sprawdzIdFormspree(page);
+		await wypelnijFormularz(page);
+		await poczekajNaTokenTurnstile(page);
+
+		const przycisk = page.getByTestId('contact-submit');
+		await przycisk.click();
+		await expect(przycisk).toBeDisabled();
+		await expect(status(page)).toHaveText('Wysyłanie...');
+		// Zapytanie jest już w drodze, więc timer limitu (ustawiany tuż przed fetch) działa.
+		await expect.poll(() => wyslane.length).toBe(1);
+
+		// Przed upływem limitu nic się nie dzieje.
+		await page.clock.fastForward(14_000);
+		await expect(status(page)).toHaveText('Wysyłanie...');
+		await expect(przycisk).toBeDisabled();
+
+		await page.clock.fastForward(2_000); // razem 16 s > 15 s
+		await expect(status(page)).toContainText('Wysyłka trwa zbyt długo');
+		await expect(status(page)).not.toContainText('Brak połączenia');
+		await expect(przycisk).toBeEnabled();
+		// Wpisana wiadomość zostaje — można spróbować jeszcze raz.
+		await expect(page.getByTestId('contact-message')).toHaveValue('To jest testowa wiadomość o wystarczającej długości.');
+		zwolnij();
+	});
+
+	test('po wysyłce z klawiatury fokus wraca na przycisk (wyłączony przycisk gubi fokus)', async ({ page }) => {
+		const { wyslane, zwolnij } = await podstawWstrzymanaFormspree(page);
+		await otworzFormularz(page);
+		await sprawdzIdFormspree(page);
+		await wypelnijFormularz(page);
+		await poczekajNaTokenTurnstile(page);
+
+		const przycisk = page.getByTestId('contact-submit');
+		await przycisk.focus();
+		await expect(przycisk).toBeFocused();
+		await page.keyboard.press('Enter');
+
+		// W trakcie wysyłki przycisk jest wyłączony, a przeglądarka zdejmuje z niego fokus — to jest powód poprawki.
+		// Czekamy na to jawnie (odpowiedź jest wstrzymana), żeby nie sprawdzać po cichu zbyt krótkiego okna.
+		await expect(przycisk).toBeDisabled();
+		await expect(przycisk, 'Przeglądarka nie zdjęła fokusu z wyłączonego przycisku — test niczego by nie sprawdzał').not.toBeFocused();
+		expect(wyslane).toHaveLength(1);
+		zwolnij();
+
+		await expect(status(page)).toContainText('Dziękuję! Wiadomość została wysłana');
+		await expect(przycisk).toBeEnabled();
+		await expect(przycisk, 'Po wysyłce fokus ma wrócić na przycisk, a nie zostać na <body>').toBeFocused();
 	});
 });
 

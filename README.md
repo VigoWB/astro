@@ -1,6 +1,6 @@
 # Portfolio fotograficzne — balansbieli.pl
 
-Prywatna strona portfolio fotograficznego Wiktora: Astro 7 (w pełni statyczny), Tailwind CSS v4, hosting na Cloudflare Pages. Zdjęcia trzymane w Cloudflare R2, formularz kontaktowy przez Formspree z ochroną Cloudflare Turnstile.
+Prywatna strona portfolio fotograficznego Wiktora: Astro 7 (w pełni statyczny), Tailwind CSS v4, hosting na Cloudflare Pages. Wymaga Node.js 24 (dokładna wersja w `.node-version`). Zdjęcia trzymane w Cloudflare R2, formularz kontaktowy przez Formspree z ochroną Cloudflare Turnstile.
 
 Zasady pracy nad projektem i stos technologiczny opisuje [`AGENTS.md`](./AGENTS.md), a konwencje kodu — [`.claude/rules/konwencje-kodu.md`](./.claude/rules/konwencje-kodu.md).
 
@@ -26,7 +26,7 @@ Przed pierwszym uruchomieniem testów (i po każdej aktualizacji Playwrighta w `
 npx playwright install chromium
 ```
 
-Bez tego wszystkie testy padają od razu z komunikatem `Executable doesn't exist … Please run: npx playwright install`.
+Bez tego padają testy e2e (Playwright, ostatni etap `npm test`) z komunikatem `Executable doesn't exist … Please run: npx playwright install` — sprawdzanie typów i testy Vitesta przechodzą.
 
 Testy nie używają prawdziwych zdjęć. Testy jednostkowe i integracyjne (Vitest) podstawiają dane i atrapy w samym teście. Etap e2e (`npm run test:e2e`, ostatni w `npm test`) najpierw buduje stronę na danych testowych (`npm run build:testy`, wynik w `dist-testy/`): galeria z `tests/dane/galeria.json`, szare zdjęcia z atrapy R2 uruchamianej na chwilę na tym komputerze, wartości testowe Formspree i Turnstile. Dlatego testy działają bez sieci i bez pliku `.env`, a nowe zdjęcia w galerii ich nie zmieniają. Prawdziwy build (`npm run build`, `dist/`) zostaje nietknięty. Szczegóły: `AGENTS.md`, sekcja 7, „Dane testowe”.
 

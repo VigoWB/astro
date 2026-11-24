@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './pomocnicze';
 
 test.describe('Strona 404', () => {
 	test('nieistniejący adres zwraca kod 404 i pokazuje komunikat', async ({ page }) => {

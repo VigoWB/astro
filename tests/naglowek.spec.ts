@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from './pomocnicze';
 
 // Nagłówek ma dwa układy (Header.astro): na telefonie i tablecie pasek u góry, który
 // zwija się przy przewijaniu (96 → 60 px), a na komputerze (od 1024 px) pasek boczny.

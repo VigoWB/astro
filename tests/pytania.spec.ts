@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-import { podstawAtrapeTurnstile } from './pomocnicze';
+import { test, expect, podstawAtrapeTurnstile } from './pomocnicze';
 
 // Najczęstsze pytania na /faq/ (src/pages/faq.astro, treść w src/components/NajczestszePytania.astro):
 // rozwijane <details>/<summary>, bez JavaScriptu. Dostępność i CSP tej strony sprawdzają a11y.spec.ts

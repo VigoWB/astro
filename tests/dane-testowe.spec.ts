@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './pomocnicze';
 
 // Testy idą na stronie zbudowanej z danych testowych (`npm test` → scripts/build-testowy.mjs →
 // dist-testy/), a nie z prawdziwych zdjęć. Ten plik pilnuje dwóch rzeczy:

@@ -7,8 +7,10 @@
 //   pod testy: ponad 8 zdjęć, kategoria z jednym zdjęciem, zdjęcia z „przed” i bez, para do suwaka),
 // - zamiast R2 pyta mały serwer na tym komputerze (atrapa R2), który oddaje szare zdjęcia JPG
 //   w wymiarach z tego pliku — bez sieci i bez prawdziwych zdjęć,
-// - Formspree i Turnstile dostają stałe wartości testowe, a statystyki Cloudflare są wyłączone —
-//   testy nie zależą od pliku .env,
+// - Formspree, Turnstile i statystyki Cloudflare dostają stałe wartości testowe — testy nie zależą
+//   od pliku .env. Skrypt statystyk trafia do HTML (jak na prawdziwej stronie), ale testy nie łączą
+//   się z Cloudflare: podstawiają atrapę skryptu i odpowiedzi (podstawAtrapeAnalityki w tests/pomocnicze.ts),
+//   dzięki czemu Content-Security-Policy sprawdza się też dla statystyk,
 // - wynik trafia do dist-testy/, nie do dist/ — prawdziwy build zostaje nietknięty, a Cloudflare
 //   Pages (wdraża dist/) takiej strony i tak by nie opublikował.
 //
@@ -123,7 +125,7 @@ const daneTestoweZamiastGalerii = {
 process.env.PUBLIC_R2_URL = `http://127.0.0.1:${PORT_ATRAPY_R2}`;
 process.env.PUBLIC_FORMSPREE_ID = "formularz-testowy";
 process.env.PUBLIC_TURNSTILE_SITE_KEY = "1x00000000000000000000AA"; // klucz testowy Cloudflare: widżet zawsze przechodzi
-process.env.PUBLIC_CF_BEACON_TOKEN = "";
+process.env.PUBLIC_CF_BEACON_TOKEN = "token-testowy"; // skrypt statystyk trafia do HTML; testy podstawiają za niego atrapę
 
 await new Promise((gotowy, blad) => {
 	atrapaR2.once("error", (e) =>

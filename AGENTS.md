@@ -117,7 +117,7 @@ Plik `.env` z prawdziwymi wartościami jest tylko u Wiktora (sekcja 2, punkt 7).
 | Zmienna | Czy wymagana | Do czego |
 |---|---|---|
 | `PUBLIC_R2_URL` | **tak**, bez niej build się przerywa | adres bucketa R2 ze zdjęciami |
-| `PUBLIC_FORMSPREE_ID` | tak (formularz) | samo ID formularza, nie cały URL |
+| `PUBLIC_FORMSPREE_ID` | nie, ale zalecana — bez niej build przejdzie z ostrzeżeniem (`ZALECANE_ZMIENNE`), a formularz nie wyśle żadnej wiadomości | samo ID formularza, nie cały URL |
 | `PUBLIC_TURNSTILE_SITE_KEY` | nie | bez niej widget Turnstile się nie pokazuje |
 | `PUBLIC_CF_BEACON_TOKEN` | nie | analityka Cloudflare |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | tylko dla `sync-images` | **sekrety**, nigdy z przedrostkiem `PUBLIC_` |

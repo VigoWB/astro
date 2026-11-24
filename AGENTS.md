@@ -154,7 +154,7 @@ public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
   fonts/                   podzbiór Noto Sans (2 pliki .woff2) — patrz global.css i sekcja 10
   sw.js                    service worker (offline), ma ręczną listę stron
-  favicon.svg, manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
+  manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
   favicon.svg, icon-*.png, og-default.jpg   przygotowuje Claude z logo — nie edytuj ręcznie
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
@@ -340,7 +340,7 @@ Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA
 2. **`Astro.url` a `Astro.site`:** `Astro.url` to adres bieżącej strony, a `Astro.site` to domena z konfiguracji. Absolutne adresy buduj przez `Astro.site`.
 3. **W `public/_headers` komentarz to tylko `#`.** Styl `/* */` Cloudflare czyta jako wzorzec ścieżki i nagłówki przestają działać.
 4. **W `astro.config.mjs` nie ma `import.meta.env`.** Zmienne wczytuje `loadEnv` z Vite.
-5. **Service worker:** strony HTML pobiera najpierw z sieci (network-first), a pliki z `/_astro/` i zdjęcia najpierw z cache. Nie zmieniaj tego bez pytania — przy cache-first dla stron odwiedzający po deployu widzieli starą treść. Lista stron w `sw.js` służy tylko do trybu offline.
+5. **Service worker:** strony HTML pobiera najpierw z sieci (network-first), a pliki z `/_astro/` i zdjęcia najpierw z cache. Nie zmieniaj tego bez pytania — przy cache-first dla stron odwiedzający po deployu widzieli starą treść. Lista stron w `sw.js` służy tylko do trybu offline. Strony zapisuje i szuka w pamięci pod adresem bez części po „?” (np. `?fbclid=` z Facebooka) — HTML jest ten sam, a bez tego wejście z linku z parametrem offline pokazywało „Jesteś offline”.
 6. **Formspree ID** to sam identyfikator (np. `xzznnkyq`), a nie pełny URL.
 7. **Content-Security-Policy (CSP) w `public/_headers`.** Przeglądarka ładuje skrypty, style, ramki i połączenia tylko z miejsc z tej listy. Dlatego:
    - żadnych `onclick=` / `onload=`, `style="..."`, `<script>` z atrybutem `is:inline` ani `set:html` z kodem JS — wszystko, co wklejone w HTML, zostanie zablokowane (`set:html` z danymi JSON-LD jest w porządku),

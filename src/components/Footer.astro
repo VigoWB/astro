@@ -4,6 +4,8 @@ import Logo from "../assets/logo.svg";
 import { navLinks, linkiStopki } from "../data/nav.ts";
 
 const rok = new Date().getFullYear();
+// Adres bieżącej strony — link do niej w stopce dostaje aria-current="page", tak jak w Header.astro.
+const currentPath = Astro.url.pathname;
 
 // Wygląd linków w stopce (kolor, najechanie, obwódka przy Tab) — tylko klasami Tailwinda,
 // tak samo jak w Header.astro. Nie dublujemy tego w <style>: zwykły CSS z <style>
@@ -33,7 +35,7 @@ const klasyLinkuPrawnego =
         <ul class="footer-nav-list">
           {[...navLinks, ...linkiStopki].map((link) => (
             <li>
-              <a href={link.href} class={klasyLinku}>
+              <a href={link.href} class={klasyLinku} aria-current={link.href === currentPath ? "page" : undefined}>
                 {link.label}
               </a>
             </li>
@@ -43,7 +45,7 @@ const klasyLinkuPrawnego =
     </div>
 
     <div class="footer-legal">
-      <a href="/polityka-prywatnosci/" class={klasyLinkuPrawnego}>Polityka prywatności</a>
+      <a href="/polityka-prywatnosci/" class={klasyLinkuPrawnego} aria-current={currentPath === "/polityka-prywatnosci/" ? "page" : undefined}>Polityka prywatności</a>
     </div>
   </Container>
 </footer>

@@ -49,7 +49,7 @@ const currentPath = Astro.url.pathname;
 									<a
 										href={link.href}
 										class={isActive
-											? "underline decoration-2 underline-offset-8 pointer-events-none"
+											? "underline decoration-2 underline-offset-8 pointer-events-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
 											: "underline-offset-8 decoration-ink/40 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper"}
 										aria-current={isActive ? "page" : undefined}
 									>

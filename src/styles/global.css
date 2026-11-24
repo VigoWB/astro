@@ -62,3 +62,13 @@ html,body {
   background-color: var(--color-paper);
   color: var(--color-ink);
 }
+
+/* Przyklejony pasek u góry (telefon i tablet, do lg) ma po zwinięciu 60 px (h-15 w Header.astro).
+   Bez tego odstępu przeglądarka dosuwa element z fokusem — np. przy Shift+Tab w górę strony —
+   do samej górnej krawędzi okna, czyli pod pasek (WCAG 2.4.11). 4,5 rem = 3,75 rem paska + 0,75 rem zapasu.
+   Od lg nagłówek to pasek boczny i nic nie zasłania treści od góry. Zmieniasz wysokość paska — zmień i tu. */
+@media (width < 64rem) {
+  html {
+    scroll-padding-top: 4.5rem;
+  }
+}

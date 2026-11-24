@@ -2,10 +2,14 @@
 /**
  * sync-images.mjs
  *
- * Skanuje folder images/ w poszukiwaniu nowych zdjęć JPG (nazwa z numerem "DSC", np. DSC_1234.jpg
- * albo wrzesien_26_EDYCJA_DSC7062.jpg, bez "przed_" — parę "przed" znajduje po nazwie,
- * patrz nazwaWersjiPrzed(); PNG pomija z ostrzeżeniem),
- * odczytuje wymiary z samego pliku i dane z aparatu (EXIF), pyta o opis i kategorie,
+ * Skanuje folder images/ w poszukiwaniu nowych zdjęć JPG: bierze każdy JPG z "EDYCJA_" w nazwie
+ * (np. listopad_26_EDYCJA_IMG_1234.jpg, wrzesien_26_EDYCJA_DSC7062.jpg) albo z numerem "DSC"
+ * (dawny sposób: DSC_1234.jpg), bez "przed_" — parę "przed" znajduje po nazwie,
+ * patrz nazwaWersjiPrzed(). Niczego nie pomija po cichu: pliki w innych formatach niż JPG
+ * (PNG, HEIC, TIFF, WebP) i JPG bez "EDYCJA_" ani numeru DSC pomija z ostrzeżeniem, a gdy zdjęcie
+ * nie ma pliku "przed" (zwykle to literówka w nazwie), pyta, czy dodać je bez "przed" — pytanie
+ * pada, zanim cokolwiek trafi do R2, a odpowiedź inna niż "tak" zostawia zdjęcie w images/.
+ * Dla każdego zdjęcia odczytuje wymiary z samego pliku i dane z aparatu (EXIF), pyta o opis i kategorie,
  * wgrywa pliki (po + opcjonalnie przed) do Cloudflare R2 — każdy w dwóch wersjach:
  * czystej (klucz "zdjecia/...", tylko metadane z białej listy, piksele sprawdzone z oryginałem —
  * plikiDoWgrania() w sync-images-funkcje.mjs; z niej strona robi miniatury) i ze znakiem wodnym
@@ -48,6 +52,8 @@ import {
   wybierzPlikPrzed,
   czyJpg,
   wybierzZdjecia,
+  czyDodacBezPrzed,
+  podpowiedzDoBleduR2,
   plikiPrzedBezPary,
   odczytajOpcje,
   rozbijNaNumery,
@@ -79,6 +85,10 @@ class Przerwano extends Error {}
 
 // Czy w tym uruchomieniu galeria.json naprawdę się zmienił (do komunikatu na końcu).
 let zmienionoJson = false;
+
+// Opcja, z którą uruchomiono skrypt (ustawia main) — żeby błąd krytyczny na końcu pliku wiedział,
+// czy przerwała się podmiana.
+let opcjeUruchomienia = null;
 
 // --- Klient S3 (Cloudflare R2 jest S3-kompatybilne) ---
 // Tworzony dopiero przy pierwszym wgrywaniu — dzięki temu samo odświeżenie
@@ -409,7 +419,7 @@ async function wyslijBuforDoR2(bufor, kluczR2, contentType) {
 
   if (!odpowiedz.ok) {
     throw new BladGlobalny(
-      `R2 odrzuciło wgrywanie ${kluczR2} (${odpowiedz.status} ${odpowiedz.statusText}${await powodZOdpowiedzi(odpowiedz)}) — sprawdź klucze R2_* w .env.`
+      `R2 odrzuciło wgrywanie ${kluczR2} (${odpowiedz.status} ${odpowiedz.statusText}${await powodZOdpowiedzi(odpowiedz)})${podpowiedzDoBleduR2(odpowiedz.status)}`
     );
   }
 }
@@ -540,7 +550,7 @@ async function usunZR2(kluczR2) {
   // błędem jest więc tylko odpowiedź spoza zakresu 2xx.
   if (!odpowiedz.ok) {
     throw new BladGlobalny(
-      `R2 odrzuciło usuwanie ${kluczR2} (${odpowiedz.status} ${odpowiedz.statusText}${await powodZOdpowiedzi(odpowiedz)}).`
+      `R2 odrzuciło usuwanie ${kluczR2} (${odpowiedz.status} ${odpowiedz.statusText}${await powodZOdpowiedzi(odpowiedz)})${podpowiedzDoBleduR2(odpowiedz.status)}`
     );
   }
 }
@@ -558,11 +568,18 @@ function ostrzezOPlikachPrzedBezPary(zdjecia, nazwyPo) {
   }
 }
 
-// PNG nie wysyłamy (tylko JPG umiemy wyczyścić bez ponownej kompresji) — ale nie po cichu.
-function ostrzezOPlikachPng(pominiete) {
-  if (pominiete.length === 0) return;
-  console.warn(`⚠️  Pomijam pliki PNG (do R2 wysyłamy tylko JPG): ${pominiete.join(', ')}`);
-  console.warn('   Wyeksportuj je jako JPG i uruchom skrypt jeszcze raz.');
+// Pliki w innych formatach niż JPG (PNG, HEIC, TIFF, WebP) nie idą do R2 — tylko JPG umiemy wyczyścić
+// bez ponownej kompresji. JPG bez "EDYCJA_" ani numeru DSC też zostaje w images/ (zwykle literówka
+// w nazwie). Żaden z tych plików nie jest pomijany po cichu.
+function ostrzezOPominietych(pominiete, bezOznaczenia) {
+  if (pominiete.length > 0) {
+    console.warn(`⚠️  Pomijam pliki, które nie są JPG (do R2 wysyłamy tylko JPG): ${pominiete.join(', ')}`);
+    console.warn('   Wyeksportuj je jako JPG i uruchom skrypt jeszcze raz.');
+  }
+  if (bezOznaczenia.length > 0) {
+    console.warn(`⚠️  Pomijam JPG bez „EDYCJA_” ani numeru DSC w nazwie: ${bezOznaczenia.join(', ')}`);
+    console.warn('   Zdjęcie „po” nazwij np. październik_26_EDYCJA_DSC7102.jpg, a „przed” — z PRZED_ w miejscu EDYCJA_.');
+  }
 }
 
 async function dodajNoweZdjecia(db) {
@@ -573,9 +590,9 @@ async function dodajNoweZdjecia(db) {
   }
 
   const wszystkiePliki = existsSync(IMAGES_DIR) ? await readdir(IMAGES_DIR) : [];
-  const { zdjecia, kandydaci, pominiete } = wybierzZdjecia(wszystkiePliki);
+  const { zdjecia, kandydaci, bezOznaczenia, pominiete } = wybierzZdjecia(wszystkiePliki);
 
-  ostrzezOPlikachPng(pominiete);
+  ostrzezOPominietych(pominiete, bezOznaczenia);
   ostrzezOPlikachPrzedBezPary(zdjecia, [...kandydaci, ...wgrane]);
 
   const doWgrania = kandydaci.filter((f) => !wgrane.has(f));
@@ -600,6 +617,7 @@ async function dodajNoweZdjecia(db) {
 
   let dodanoLiczba = 0;
   let bledyLiczba = 0;
+  let bezPrzedPominiete = 0; // zdjęcia bez "przed", na których dodanie Wiktor nie zgodził się (zostają w images/)
 
   for (const nazwaPliku of doWgrania) {
     if (przerwano) {
@@ -613,10 +631,23 @@ async function dodajNoweZdjecia(db) {
     const sciezkaPrzed = `${IMAGES_DIR}/${nazwaPrzed}`;
     const maWersjePrzed = existsSync(sciezkaPrzed);
 
-    console.log(maWersjePrzed ? `   Znaleziono wersję "przed": ${nazwaPrzed}` : `   Bez wersji "przed" (nie ma pliku ${nazwaPrzed}).`);
-
     let wpisane = null;
     try {
+      if (maWersjePrzed) {
+        console.log(`   Znaleziono wersję "przed": ${nazwaPrzed}`);
+      } else {
+        // Pytamy zaraz po ustaleniu, że "przed" nie ma — zanim odczytamy wymiary, wyczyścimy pliki
+        // i zapytamy o opis (nic jeszcze nie idzie do R2). Pytanie jest w try, więc Ctrl+C trafia
+        // w ten sam catch (Przerwano) co przy pytaniu o opis. Tylko "tak" dodaje zdjęcie bez "przed".
+        console.warn(`   ⚠️  Brak wersji „przed” — szukałem pliku ${nazwaPrzed}.`);
+        console.warn('   Jeśli to literówka w nazwie pliku, odpowiedz „nie”, popraw nazwę i uruchom skrypt jeszcze raz.');
+        if (!czyDodacBezPrzed(await zapytaj('   Dodać bez „przed”? (tak/nie): '))) {
+          console.log('   Pominięto — zdjęcie zostaje w images/ i skrypt zapyta o nie przy następnym uruchomieniu.');
+          bezPrzedPominiete++;
+          continue;
+        }
+      }
+
       const kluczR2Po = `zdjecia/${nazwaPliku}`;
       const kluczR2Przed = maWersjePrzed ? `zdjecia/${nazwaPrzed}` : null;
 
@@ -676,7 +707,8 @@ async function dodajNoweZdjecia(db) {
     }
   }
 
-  const nieruszone = doWgrania.length - dodanoLiczba - bledyLiczba;
+  // Zdjęć pominiętych na pytanie o brak "przed" nie liczymy jako nieruszone: mają własny wiersz.
+  const nieruszone = doWgrania.length - dodanoLiczba - bledyLiczba - bezPrzedPominiete;
   if (bledyLiczba > 0) process.exitCode = 1;
 
   console.log('\n' + '─'.repeat(40));
@@ -684,7 +716,9 @@ async function dodajNoweZdjecia(db) {
   console.log(`   Dodano:       ${dodanoLiczba}`);
   console.log(`   Błędy:        ${bledyLiczba}`);
   if (nieruszone > 0) console.log(`   Nieruszone:   ${nieruszone} (zostaną dodane przy następnym uruchomieniu)`);
-  if (pominiete.length > 0) console.log(`   Pominięte PNG: ${pominiete.length}`);
+  if (pominiete.length > 0) console.log(`   Pominięte (nie JPG): ${pominiete.length}`);
+  if (bezOznaczenia.length > 0) console.log(`   Pominięte (zła nazwa): ${bezOznaczenia.length}`);
+  if (bezPrzedPominiete > 0) console.log(`   Bez „przed” (pominięte): ${bezPrzedPominiete}`);
   console.log(`   Już w bazie:  ${juzWgrane}`);
   console.log('─'.repeat(40) + '\n');
 }
@@ -1008,6 +1042,7 @@ async function main() {
     console.error(`❌ ${err.message}`);
     process.exit(1);
   }
+  opcjeUruchomienia = opcje;
 
   const db = initDb();
 
@@ -1048,6 +1083,15 @@ async function main() {
 
 main().catch((err) => {
   console.error('❌ Błąd krytyczny:', err.message);
+  // Baza i galeria.json zmieniają się w podmienPlik() dopiero po wgraniu WSZYSTKICH plików do R2
+  // (UPDATE po wgrajDoR2), a PUT do R2 można bezpiecznie powtórzyć — więc przerwaną podmianę
+  // wystarczy uruchomić jeszcze raz. Gdyby JSON jednak się zmienił (zmienionoJson), tego zdania nie piszemy.
+  if (opcjeUruchomienia?.opcja === '--podmien' && !zmienionoJson) {
+    console.error(
+      '   Podmiana nie skończyła się — baza i galeria.json są bez zmian. ' +
+      `Uruchom to samo polecenie jeszcze raz: npm run sync-images -- --podmien ${opcjeUruchomienia.plik}`
+    );
+  }
   if (zmienionoJson) {
     console.error(`   Zmiany sprzed błędu są zapisane w ${JSON_PATH} — pamiętaj o commicie.`);
   }

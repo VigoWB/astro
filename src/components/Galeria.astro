@@ -25,8 +25,10 @@ const NA_STRONE = pokazZaladujWiecej ? 8 : zdjecia.length;
 const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 ---
 
+<!-- Filtry i "Załaduj więcej" bez JS nic nie robią, a bez JS wszystkie zdjęcia i tak są widoczne
+     (Karta.astro) — noscript:hidden (media query scripting: none) chowa oba. -->
 {pokazFiltry && (
-	<div class="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
+	<div class="mb-6 flex flex-wrap gap-2 noscript:hidden" role="group" aria-label="Filtruj galerię" data-testid="gallery-filters">
 		{kategorie.map((kat) => (
 			<button
 				type="button"
@@ -40,6 +42,10 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		))}
 	</div>
 )}
+
+<!-- Komunikat dla czytnika ekranu po zmianie filtra i po "Załaduj więcej" (wpisuje go skrypt niżej).
+     Jest w HTML od początku i pusty — region, który dopiero się pojawia, bywa przez czytniki pomijany. -->
+<p id="galeria-komunikat" role="status" class="sr-only"></p>
 
 <!-- Wszystkie zdjęcia są w HTML od razu; te poza pierwszą porcją mają klasę "hidden"
      (miniatury i tak ładują się dopiero po pokazaniu — loading="lazy").
@@ -62,7 +68,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 {pokazZaladujWiecej && (
 	<div
 		id="load-more-container"
-		class:list={["text-center mt-8", { hidden: poczatkowoPozostalo === 0 }]}
+		class:list={["text-center mt-8 noscript:hidden", { hidden: poczatkowoPozostalo === 0 }]}
 		data-testid="load-more-container"
 	>
 		<button
@@ -130,7 +136,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 				id="lightbox-przelacznik"
 				aria-pressed="false"
 				data-testid="lightbox-przelacznik"
-				class="hidden rounded-md border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-ink"
+				class="hidden min-h-11 min-w-11 rounded-md border-2 border-paper/50 px-4 py-1.5 text-sm font-semibold text-paper transition-colors hover:border-paper focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien aria-pressed:border-przycisk aria-pressed:bg-przycisk aria-pressed:text-ink"
 			>
 				Pokaż przed
 			</button>
@@ -146,6 +152,8 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 </div>
 
 <script>
+	import { odmienZdjecia } from "../lib/odmiana.ts";
+
 	const grid = document.getElementById("galeria-grid")!;
 	const NA_STRONE = Number(grid.dataset.naStrone) || 8;
 
@@ -156,6 +164,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	const loadMoreBtn = document.getElementById("load-more-btn");
 	const loadMoreCount = document.getElementById("load-more-count");
 	const loadMoreContainer = document.getElementById("load-more-container");
+	const komunikat = document.getElementById("galeria-komunikat")!;
 
 	let aktywnyFiltr = "Wszystkie";
 	let limit = NA_STRONE; // ile zdjęć (spełniających filtr) ma być teraz widocznych
@@ -228,7 +237,8 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		return kategorieKarty.includes(aktywnyFiltr);
 	}
 
-	function odswiez() {
+	// Zwraca, ile zdjęć pasuje do aktualnego filtra (widocznych albo czekających na "Załaduj więcej").
+	function odswiez(): number {
 		let pasujace = 0;
 
 		wszystkieKarty.forEach((el) => {
@@ -245,13 +255,17 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		loadMoreContainer?.classList.toggle("hidden", pozostalo === 0);
 
 		przygotujAnimacje();
+		return pasujace;
 	}
 
 	loadMoreBtn?.addEventListener("click", () => {
 		const bylo = aktualnaLista().length;
 		const zKlawiatury = document.activeElement?.matches(":focus-visible") ?? false;
 		limit += NA_STRONE;
-		odswiez();
+		const pasujace = odswiez();
+		// Dla czytnika ekranu: ile doszło i ile jest teraz widocznych (po zmianie stanu, nie przed).
+		const doszlo = aktualnaLista().length - bylo;
+		komunikat.textContent = `Wczytano ${doszlo} ${odmienZdjecia(doszlo)} więcej, razem ${aktualnaLista().length} z ${pasujace}.`;
 		// Ostatnia porcja chowa przycisk — fokus spadłby na <body>, a następny Tab do stopki.
 		if (zKlawiatury && loadMoreContainer?.classList.contains("hidden")) {
 			aktualnaLista()[bylo]?.focus();
@@ -274,7 +288,10 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 			b.classList.add(...(aktywny ? KLASY_AKTYWNY : KLASY_NIEAKTYWNY));
 		});
 
-		odswiez();
+		const pasujace = odswiez();
+		// Dla czytnika ekranu: wynik filtra. Wpisujemy go tu, po zmianie stanu — przy View Transitions
+		// ta funkcja rusza dopiero chwilę po kliknięciu, a nie od razu.
+		komunikat.textContent = `Filtr „${aktywnyFiltr}”: ${pasujace} ${odmienZdjecia(pasujace)}.`;
 	}
 
 	// --- Płynna zmiana filtra (View Transitions, wbudowane w przeglądarkę) ---
@@ -371,7 +388,10 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	}
 
 	const current: { po: WersjaZdjecia | null; przed: WersjaZdjecia | null } = { po: null, przed: null };
-	let lastFocusedElement: HTMLElement | null = null;
+	// Karta, z której otwarto podgląd — zapasowy cel fokusu po zamknięciu (patrz kartaDoFokusu).
+	let kartaOtwarcia: HTMLElement | null = null;
+	// Opis zdjęcia, wspólny dla wersji "po" i "przed". Wersja "przed" dostaje do niego dopisek (pokazPrzed).
+	let altZdjecia = "";
 
 	// Przeglądanie w lightboxie: lista i pozycja liczone tylko wśród zdjęć aktualnie
 	// widocznych w galerii (po filtrze i "Załaduj więcej"), nie wśród wszystkich.
@@ -417,8 +437,8 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		current.po = wersjaZKarty(item, "po");
 		current.przed = wersjaZKarty(item, "przed");
 
+		altZdjecia = item.dataset.opis || "Zdjęcie z portfolio fotograficznego Wiktora";
 		pokazPo();
-		lightboxImg.alt = item.dataset.opis || "Zdjęcie z portfolio fotograficznego Wiktora";
 		lightboxOpis.textContent = item.dataset.opis || "";
 		// Pusty opis byłby pustym przystankiem Tab (0×0 px) — chowamy go całkiem.
 		lightboxOpis.classList.toggle("hidden", !item.dataset.opis);
@@ -495,8 +515,9 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 
 		zaladujDane(item);
 
-		// Zapisz element, który miał focus przed otwarciem
-		lastFocusedElement = document.activeElement as HTMLElement;
+		// Zapamiętujemy kartę, a nie document.activeElement: w Safari i z VoiceOverem na iPhonie
+		// kliknięcie nie daje karcie fokusu, więc activeElement to <body> i fokus po zamknięciu by przepadł.
+		kartaOtwarcia = item;
 
 		lightbox.classList.remove("hidden");
 		lightbox.classList.add("flex");
@@ -522,10 +543,16 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		// Usuń focus trap
 		document.removeEventListener("keydown", handleFocusTrap);
 
-		// Przywróć focus na karcie, z której otworzono
-		if (lastFocusedElement) {
-			lastFocusedElement.focus();
-		}
+		kartaDoFokusu()?.focus();
+	}
+
+	// Gdzie wraca fokus po zamknięciu podglądu: na kartę zdjęcia pokazanego na końcu (ktoś przeglądał
+	// strzałkami), a gdy jest niewidoczna — na kartę, z której otwarto podgląd, a gdy i tej nie ma —
+	// na pierwszą widoczną.
+	function kartaDoFokusu(): HTMLElement | undefined {
+		const widoczne = aktualnaLista();
+		const kandydaci = [aktualnaListaZdjec[aktualnyIndeks], kartaOtwarcia];
+		return kandydaci.find((karta): karta is HTMLElement => !!karta && widoczne.includes(karta)) ?? widoczne[0];
 	}
 
 	// Podmiana zdjęcia w lightboksie. Jeśli nowy plik nie wczyta się w 150 ms, stare zdjęcie
@@ -546,10 +573,13 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	lightboxImg.addEventListener("error", pokazWczytane);
 
 	function pokazPrzed() {
-		if (current.przed) pokazWLightboksie(current.przed);
+		if (!current.przed) return;
+		lightboxImg.alt = `${altZdjecia} — przed retuszem`;
+		pokazWLightboksie(current.przed);
 	}
 
 	function pokazPo() {
+		lightboxImg.alt = altZdjecia;
 		if (current.po) pokazWLightboksie(current.po);
 	}
 
@@ -625,12 +655,15 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		// zabierałyby focus stronie (np. strzałki przewijające zwykłą galerię).
 		if (lightbox.classList.contains("hidden")) return;
 
+		// Strzałki z Alt, Ctrl, Meta albo Shift zostają przeglądarce (Alt+← to "Wstecz") — nie przechwytujemy ich.
+		const bezModyfikatorow = !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+
 		if (e.key === "Escape") {
 			zamknij();
-		} else if (e.key === "ArrowLeft") {
+		} else if (e.key === "ArrowLeft" && bezModyfikatorow) {
 			e.preventDefault();
 			poprzednie();
-		} else if (e.key === "ArrowRight") {
+		} else if (e.key === "ArrowRight" && bezModyfikatorow) {
 			e.preventDefault();
 			nastepne();
 		}

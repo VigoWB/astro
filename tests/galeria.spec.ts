@@ -1,4 +1,7 @@
-import { test, expect, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { test, expect, type Locator, type Page } from '@playwright/test';
+import { odmienZdjecia } from '../src/lib/odmiana.ts';
 import { poczekajNaZdjecie, pokazanyPlik, plikiWersji } from './pomocnicze';
 
 // Oczekiwane liczby test liczy sam — z atrybutów kart (data-kategoria) i z data-na-strone —
@@ -502,5 +505,202 @@ test.describe('Galeria', () => {
 		await expect(lightbox).toBeVisible();
 		await lightbox.click({ position: { x: 5, y: 5 } }); // róg czarnego tła, poza zdjęciem i przyciskami
 		await expect(lightbox).toBeHidden();
+	});
+	// Otwiera podgląd tak, jak w Safari i z VoiceOverem na iPhonie: kliknięcie nie daje karcie fokusu,
+	// więc w chwili otwarcia aktywny element to <body>.
+	async function otworzBezFokusu(karta: Locator) {
+		const fokusNaBody = await karta.evaluate((el) => {
+			(document.activeElement as HTMLElement | null)?.blur();
+			(el as HTMLElement).click();
+			return document.activeElement === document.body;
+		});
+		expect(fokusNaBody, 'Sens testu: w chwili otwarcia podglądu fokus ma być na <body>, jak w Safari').toBe(true);
+	}
+
+	const lightbox = (page: Page) => page.getByRole('dialog', { name: 'Podgląd zdjęcia' });
+
+	const SPOSOBY_ZAMKNIECIA: [string, (page: Page) => Promise<void>][] = [
+		['Esc', (page) => page.keyboard.press('Escape')],
+		['przycisk „Zamknij podgląd”', (page) => page.getByRole('button', { name: 'Zamknij podgląd' }).click()],
+		['kliknięcie w tło', (page) => lightbox(page).click({ position: { x: 5, y: 5 } })],
+	];
+
+	for (const [nazwa, zamknij] of SPOSOBY_ZAMKNIECIA) {
+		test(`lightbox: po zamknięciu (${nazwa}) fokus wraca na kartę ostatnio oglądanego zdjęcia, nawet gdy otwarto bez fokusu`, async ({ page }) => {
+			const lista = widoczneKarty(page);
+			const ile = await lista.count();
+			expect(ile, 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(3);
+
+			await otworzBezFokusu(lista.first());
+			await expect(page.locator('#lightbox-close')).toBeFocused();
+			await page.keyboard.press('ArrowRight');
+			await expect(page.getByTestId('lightbox-licznik')).toHaveText(`2 / ${ile}`);
+
+			await zamknij(page);
+			await expect(lightbox(page)).toBeHidden();
+			// Fokus na drugiej karcie (tej, którą było widać na końcu), a nie na pierwszej ani na <body>.
+			await expect(lista.nth(1)).toBeFocused();
+		});
+	}
+
+	test('lightbox: gdy karta ostatniego zdjęcia jest niewidoczna, fokus idzie na kartę otwarcia, a potem na pierwszą widoczną', async ({ page }) => {
+		expect(await widoczneKarty(page).count(), 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(4);
+		// Karty wybieramy z pełnej listy (nie z widocznych) — po schowaniu karty numeracja widocznych by się przesunęła.
+		const [pierwsza, , otwarcia, ostatnia] = [0, 1, 2, 3].map((i) => karty(page).nth(i));
+		const ukryj = (...lista: Locator[]) => Promise.all(lista.map((karta) => karta.evaluate((el) => el.classList.add('hidden'))));
+
+		// Podgląd otwarty z 3. karty, przejście na 4.; karta 4. znika (np. filtr zmieniony w innej karcie) → fokus na 3.
+		await otworzBezFokusu(otwarcia);
+		await page.keyboard.press('ArrowRight');
+		await ukryj(ostatnia);
+		await page.keyboard.press('Escape');
+		await expect(lightbox(page)).toBeHidden();
+		await expect(otwarcia).toBeFocused();
+
+		// Znikają obie karty (otwarcia i ostatnia) → fokus na pierwszej widocznej.
+		await ostatnia.evaluate((el) => el.classList.remove('hidden'));
+		await otworzBezFokusu(otwarcia);
+		await page.keyboard.press('ArrowRight');
+		await ukryj(otwarcia, ostatnia);
+		await page.keyboard.press('Escape');
+		await expect(lightbox(page)).toBeHidden();
+		await expect(pierwsza).toBeFocused();
+	});
+
+	test('lightbox: strzałki z Alt, Ctrl, Meta albo Shift nie zmieniają zdjęcia i zostają przeglądarce (bez preventDefault)', async ({ page }) => {
+		const ile = await widoczneKarty(page).count();
+		expect(ile, 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(3);
+		await widoczneKarty(page).first().click();
+		const licznik = page.getByTestId('lightbox-licznik');
+		await page.keyboard.press('ArrowRight');
+		await expect(licznik).toHaveText(`2 / ${ile}`);
+
+		// Nasłuch na window działa po tym z document (bąbelkowanie), więc widzi, czy galeria zrobiła preventDefault.
+		await page.evaluate(() => {
+			window.addEventListener('keydown', (e) => {
+				document.documentElement.dataset.keydownAnulowany = String(e.defaultPrevented);
+			});
+		});
+		for (const modyfikator of ['Alt', 'Control', 'Meta', 'Shift']) {
+			for (const strzalka of ['ArrowLeft', 'ArrowRight']) {
+				await page.keyboard.press(`${modyfikator}+${strzalka}`);
+				await expect(licznik, `${modyfikator}+${strzalka} zmieniło zdjęcie`).toHaveText(`2 / ${ile}`);
+				await expect(page.locator('html'), `${modyfikator}+${strzalka}: galeria wywołała preventDefault`).toHaveAttribute('data-keydown-anulowany', 'false');
+			}
+		}
+
+		// Zwykłe strzałki dalej działają.
+		await page.keyboard.press('ArrowLeft');
+		await expect(licznik).toHaveText(`1 / ${ile}`);
+	});
+
+	test('komunikat dla czytnika ekranu: pusty na starcie, po filtrze i po "Załaduj więcej" mówi, ile jest zdjęć', async ({ page }) => {
+		const komunikat = page.locator('#galeria-komunikat');
+		await expect(komunikat).toHaveAttribute('role', 'status');
+		await expect(komunikat).toBeEmpty();
+
+		const porcja = await naStrone(page);
+		const wszystkie = await karty(page).count();
+		const kategorie = await nazwyKategorii(page);
+		expect(kategorie.length, 'Pasek filtrów bez kategorii — dane testowe je mają, więc zgubiła je strona (sprawdź Galeria.astro i kategorie.ts)').toBeGreaterThan(0);
+
+		// Filtr: liczba wszystkich zdjęć z kategorii, a nie tylko widocznych w pierwszej porcji.
+		for (const kategoria of [...kategorie, 'Wszystkie']) {
+			const przycisk = przyciskFiltra(page, kategoria);
+			await przycisk.click();
+			await expect(przycisk).toHaveAttribute('aria-pressed', 'true');
+			const pasujace = kategoria === 'Wszystkie' ? wszystkie : await liczbaWKategorii(page, kategoria);
+			await expect(komunikat).toHaveText(`Filtr „${kategoria}”: ${pasujace} ${odmienZdjecia(pasujace)}.`);
+		}
+
+		// „Załaduj więcej”: ile doszło i ile jest teraz widocznych z ilu pasujących.
+		expect(wszystkie, 'Dane testowe mają więcej zdjęć niż jedna porcja, a strona pokazuje ich mniej — sprawdź Galeria.astro i galeria.ts').toBeGreaterThan(porcja);
+		await page.getByTestId('load-more-btn').click();
+		const widocznych = Math.min(wszystkie, porcja * 2);
+		const doszlo = widocznych - porcja;
+		await expect(komunikat).toHaveText(
+			`Wczytano ${doszlo} ${odmienZdjecia(doszlo)} więcej, razem ${widocznych} z ${wszystkie}.`
+		);
+	});
+
+	test('karta: podpis pokazuje się też przy fokusie z klawiatury, na tle co najmniej cien/70', async ({ page }) => {
+		// Klawiatura: z ostatniego filtra jeden Tab na pierwszą kartę.
+		await page.getByTestId('gallery-filters').getByRole('button').last().focus();
+		const podpis = karty(page).first().getByTestId('podpis-karty');
+		const naklada = podpis.locator('xpath=..');
+		const przezroczystoscTla = () =>
+			naklada.evaluate((el) => {
+				const kolor = getComputedStyle(el).backgroundColor;
+				const alfa = kolor.match(/\/\s*([\d.]+)\s*\)/);
+				return alfa ? Number(alfa[1]) : 1;
+			});
+		await expect(podpis).toHaveCSS('opacity', '0');
+
+		await page.keyboard.press('Tab');
+		await expect(karty(page).first()).toBeFocused();
+		await expect(podpis).toHaveCSS('opacity', '1');
+		await expect.poll(przezroczystoscTla).toBeGreaterThanOrEqual(0.7);
+		await expect(podpis).toHaveText((await karty(page).first().getAttribute('data-opis')) ?? '');
+	});
+
+	test('lightbox: „Pokaż przed” ma co najmniej 44×44 px, a wersja „przed” dostaje własny alt', async ({ page }) => {
+		const karta = karty(page).first();
+		const opis = (await karta.getAttribute('data-opis')) ?? '';
+		expect(await karta.getAttribute('data-przed'), 'Pierwsze zdjęcie bez wersji "przed" — dane testowe ją mają, więc zgubiła ją strona (sprawdź Karta.astro)').toBeTruthy();
+		await karta.click();
+
+		const przelacznik = page.getByTestId('lightbox-przelacznik');
+		await expect(przelacznik).toBeVisible();
+		const ramka = await przelacznik.boundingBox();
+		expect(ramka!.height).toBeGreaterThanOrEqual(44);
+		expect(ramka!.width).toBeGreaterThanOrEqual(44);
+
+		await expect(zdjecieLightboxa(page)).toHaveAttribute('alt', opis);
+		await przelacznik.click();
+		await expect(zdjecieLightboxa(page)).toHaveAttribute('alt', `${opis} — przed retuszem`);
+		await przelacznik.click();
+		await expect(zdjecieLightboxa(page)).toHaveAttribute('alt', opis);
+	});
+});
+
+// Bez JavaScriptu galeria ma pokazać wszystkie zdjęcia (karty i miniatury startują przezroczyste, a część kart ukryta
+// do "Załaduj więcej" — bez skryptu nic by ich nie odkryło). Warianty noscript: w Karta.astro i Galeria.astro
+// to media query scripting: none, a nie <noscript><style> (blokuje je CSP).
+test.describe('Galeria bez JavaScriptu', () => {
+	test.use({ javaScriptEnabled: false });
+
+	const dane = JSON.parse(readFileSync(join(process.cwd(), 'tests', 'dane', 'galeria.json'), 'utf8')) as unknown[];
+
+	// Karty i miniatury w pełni widoczne: opacity 1, bez przesunięcia i rozmycia.
+	async function sprawdzKartyWidoczne(page: Page) {
+		for (const karta of await karty(page).all()) {
+			await expect(karta).toBeVisible();
+			await expect(karta).toHaveCSS('opacity', '1');
+			await expect(karta).toHaveCSS('translate', /^(none|0px( 0px)*)$/);
+			await expect(karta.locator('img')).toHaveCSS('opacity', '1');
+			await expect(karta.locator('img')).toHaveCSS('filter', 'none');
+		}
+	}
+
+	test('/galeria/: widać wszystkie zdjęcia z danych, a filtry i "Załaduj więcej" są ukryte', async ({ page }) => {
+		await page.goto('/galeria/');
+		const porcja = await naStrone(page);
+		expect(dane.length, 'Dane testowe mają więcej zdjęć niż jedna porcja — inaczej test nie sprawdza zdjęć z "Załaduj więcej"').toBeGreaterThan(porcja);
+
+		await expect(karty(page)).toHaveCount(dane.length);
+		await expect(widoczneKarty(page)).toHaveCount(dane.length);
+		await sprawdzKartyWidoczne(page);
+		await expect(page.getByTestId('gallery-filters')).toBeHidden();
+		await expect(page.getByTestId('load-more-container')).toBeHidden();
+	});
+
+	test('strona główna: karty "Wybrane prace" są widoczne, bez filtrów i "Załaduj więcej"', async ({ page }) => {
+		await page.goto('/');
+		expect(await karty(page).count(), 'Strona główna bez kart z galerii — dane testowe mają zdjęcia wyróżnione').toBeGreaterThan(0);
+
+		await expect(widoczneKarty(page)).toHaveCount(await karty(page).count());
+		await sprawdzKartyWidoczne(page);
+		await expect(page.getByTestId('gallery-filters')).toBeHidden();
+		await expect(page.getByTestId('load-more-container')).toBeHidden();
 	});
 });

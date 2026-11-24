@@ -39,7 +39,10 @@ test.db
 # Oryginały zdjęć — tylko lokalnie, źródło dla sync-images
 /images/
 
-data/*.db
+data/*.db*
+
+# Pliki tymczasowe (np. src/data/galeria.json.tmp po przerwanym zapisie)
+*.tmp
 
 # Opis pull requesta przygotowany przez wykonawcę (gh pr create --body-file opis-pr.md)
 /opis-pr.md

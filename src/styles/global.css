@@ -49,7 +49,7 @@
 
   /* Zaokrąglenia — tylko trzy stopnie: 4 / 8 / 12 px (wielokrotności podstawowego odstępu 4 px).
      „--radius-*: initial” wyłącza resztę skali Tailwinda, więc rounded-xs, rounded-xl, rounded-2xl…
-     nie dają żadnego efektu. rounded-full — tylko prawdziwe koła (AGENTS.md, sekcja 8). */
+     nie dają żadnego efektu. rounded-full — tylko prawdziwe koła (.claude/rules/konwencje-kodu.md). */
   --radius-*: initial;
   --radius-sm: 4px;   /* małe: etykiety na zdjęciach, obwódka fokusu wokół logo */
   --radius-md: 8px;   /* przyciski, pola formularza, filtry, miniatury */

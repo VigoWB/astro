@@ -67,7 +67,7 @@ function sprawdzZmienneSrodowiskowe(logger) {
   if (brakujaceWymagane.length > 0) {
     const lista = brakujaceWymagane.map(({ klucz, powod }) => `  - ${klucz}: ${powod}`).join('\n');
     throw new Error(
-      `Brak wymaganych zmiennych środowiskowych:\n${lista}\n\nUstaw je w pliku .env (lokalnie) oraz w ustawieniach Cloudflare Pages (produkcja). Zob. .env.example.`
+      `Brak wymaganych zmiennych środowiskowych:\n${lista}\n\nUstaw je w pliku .env (lokalnie) oraz w ustawieniach Cloudflare Pages (produkcja). Zob. .env.example.\nJeśli jesteś wykonawcą (Claude Code, OpenCode): nie uruchamiaj prawdziwego buildu — użyj \`npm run build:testy\` (dane testowe i atrapa R2, bez \`.env\`).`
     );
   }
 

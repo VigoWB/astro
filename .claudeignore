@@ -12,6 +12,7 @@ node_modules/
 
 # Wygenerowany build — odtwarzalny z kodu źródłowego
 dist/
+dist-testy/
 .astro/
 
 # Ogromny, automatycznie generowany plik — nieczytelny i nieprzydatny dla AI

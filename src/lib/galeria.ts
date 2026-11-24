@@ -11,7 +11,7 @@ const adresZdjec = (import.meta.env.PUBLIC_R2_URL ?? "").replace(/\/+$/, "");
 if (!adresZdjec) {
 	// Lepiej przerwać budowanie z jasnym komunikatem niż wypuścić pustą stronę.
 	throw new Error(
-		"Brak zmiennej PUBLIC_R2_URL — ustaw adres bucketa R2 w pliku .env (lokalnie) oraz w ustawieniach Cloudflare Pages (produkcja). Zob. .env.example."
+		"Brak zmiennej PUBLIC_R2_URL — ustaw adres bucketa R2 w pliku .env (lokalnie) oraz w ustawieniach Cloudflare Pages (produkcja). Zob. .env.example. Jeśli jesteś wykonawcą (Claude Code, OpenCode): nie uruchamiaj prawdziwego buildu — użyj `npm run build:testy` (dane testowe i atrapa R2, bez `.env`)."
 	);
 }
 

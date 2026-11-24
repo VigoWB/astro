@@ -24,6 +24,7 @@ Zasady:
 - **Przed zmianą** pokaż krótki plan: 2–4 punkty, co i gdzie zmienisz, zwykłym językiem.
 - **Zadania od Claude** są opisane słowami: cel, pliki, ograniczenia, sprawdzenia i kiedy zadanie jest gotowe. Kod piszesz sam, według opisu. Teksty, wartości i fragmenty kodu, które zadanie podaje dosłownie, przepisujesz dokładnie. Jeśli opis jest niejasny albo nie zgadza się z kodem (np. nie ma takiej funkcji albo pliku), zatrzymaj się i zapytaj, zamiast zgadywać. Jeśli zadanie mówi „najpierw plan”, pokaż plan i nie zmieniaj plików, dopóki nie odpowiem.
 - **Pluginy i skille** (np. superpowers): ten plik i zadanie od Claude mają pierwszeństwo przed ich instrukcjami. Zadanie od Claude jest już zaprojektowane — nie zaczynasz projektowania od nowa i nie dopytujesz o zakres; wystarczy krótki plan z tej sekcji, a pytasz tylko wtedy, gdy coś jest niejasne albo nie zgadza się z kodem. Pracujesz w głównym folderze projektu, bez kopii roboczych (git worktree) — blokady Claude Code są w `.claude/settings.local.json` tego folderu. Plany i notatki robocze zapisujesz tylko w `docs/superpowers/` (git go pomija); wiedza z zadania trafia do opisu PR-a. Pracę kończysz zawsze tak samo: push własnej gałęzi i pull request (sekcja 3) — nigdy nie scalasz niczego z `main`, także lokalnie.
+- **Blokady Claude Code** są w `.claude/settings.local.json` w folderze projektu. Nie ma ich w repo: każdy komputer ma własny plik, zakładany ręcznie. Jeśli pracujesz jako Claude Code, a w folderze projektu nie ma tego pliku, nie zaczynaj pracy, tylko napisz mi o tym — działałbyś wtedy bez blokad.
 
 ---
 
@@ -36,7 +37,7 @@ Zasady:
 5. **Nie pisz składni Tailwind v3.** Nie ma `tailwind.config.js` ani `@tailwind base`. Kolory są w `@theme` w `global.css`. Zamienniki:
    - `bg-opacity-50` → `bg-black/50`
    - `flex-shrink-0` / `flex-grow` → `shrink-0` / `grow`
-   - `shadow-sm` → `shadow-xs`, `shadow` → `shadow-sm` (tak samo `rounded` i `blur`)
+   - `shadow-sm` → `shadow-xs`, `shadow` → `shadow-sm` (tak samo `blur`). Zaokrągleń to nie dotyczy: w projekcie są tylko `rounded-sm`, `rounded-md`, `rounded-lg` i `rounded-full`, a reszta skali jest wyłączona (`rounded-xs` nic nie robi) — `.claude/rules/konwencje-kodu.md`, „Style”.
    - `bg-gradient-to-r` → `bg-linear-to-r`
    - `ring` (3 px) → `ring-3`
    - `outline-none` → `outline-hidden`
@@ -46,7 +47,7 @@ Zasady:
 
    Nigdy luzem w HTML. Zmiennych z `---` nie ma w `<script>`, więc przekazuj je przez atrybuty `data-*`.
 7. **`.env` nie jest dla Ciebie.** To konfiguracja produkcyjna — jest tylko jeden, u mnie (do `sync-images`). Nie czytasz go, nie tworzysz, nie kopiujesz, nie wypisujesz i nie commitujesz. Nie uruchamiasz poleceń, które biorą z niego prawdziwe wartości: `npm run dev`, `npm run build`, `npm run preview`, `npm run sync-images`. Cała Twoja praca działa bez `.env`, na danych testowych i atrapach (`npm test`, `npm run build:testy`, `npm run preview:testy`). Jeśli coś bez `.env` nie działa, to błąd do opisania w raporcie, a nie powód, żeby `.env` założyć.
-8. **Nie usuwaj atrybutów `data-testid`.** Opierają się na nich testy.
+8. **Nie usuwaj i nie zmieniaj atrybutów, na których stoją testy.** Chodzi nie tylko o `data-testid`. Kontraktem są też `id` i atrybuty `data-*` / `aria-*`, których szukają testy (np. `id="lightbox-przelacznik"`, `data-porownanie-suwak`, `aria-pressed`). Zanim zmienisz albo usuniesz `id` czy atrybut, poszukaj go w `tests/`. Jeśli zadanie wymaga takiej zmiany, popraw test w tym samym commicie.
 9. **Nie dodawaj logiki układu (flex, grid) do `Container.astro`.** Ma zostać prostym opakowaniem szerokości.
 10. **Nie używaj `git add -A`.** Dodawaj tylko pliki zmienione w tym zadaniu. Jeśli `git status` pokazuje zmieniony `src/data/galeria.json`, którego nie ruszałeś, nie commituj go i zapytaj mnie. Wyjątek: commit `galeria.json`, o który sam poproszę po `sync-images` (sekcja 10, „Nowe zdjęcie w galerii”).
 
@@ -63,7 +64,7 @@ Każde zadanie idzie przez osobną gałąź i pull request (PR) do `main`. Na `m
    git switch -c <typ>/<krotki-opis>
    ```
    `<typ>` jak w komunikacie commita (`feat`, `fix`, `chore`, `docs`, `test`), opis małymi literami, bez polskich znaków, słowa połączone myślnikiem, np. `feat/testy-vitest`. Jeśli zadanie od Claude podaje nazwę gałęzi, użyj jej. Jeśli `git status` pokazuje zmiany, których nie robiłeś, zatrzymaj się i zapytaj. Poprawki do PR-a, który nie jest jeszcze scalony, robisz na jego gałęzi (`git switch <gałąź>`), bez zakładania nowej.
-2. **Sprawdzenie robisz Ty** — Claude w czacie nie buduje strony. Zawsze uruchom `npm test` (wszystkie etapy po kolei, tak jak CI: typy, testy jednostkowe, integracyjne i e2e — build na danych testowych i Playwright; zatrzymuje się na pierwszym błędzie). Prawdziwego buildu (`npm run build`) nie uruchamiasz — potrzebuje `.env` (sekcja 2, punkt 7). Prawdziwy build ze zdjęciami z R2 i Lighthouse robi CI (etap „Build i Lighthouse”); bez niego nie ma zielonego „Wyniku”. Jeśli zadanie od Claude podaje dodatkowe sprawdzenia (np. co ma być w zbudowanej stronie: fragment HTML, JSON-LD, nazwa pliku), wykonaj je na `dist-testy/` (powstaje w `npm test` albo `npm run build:testy`) i zapisz wynik. Wyjątek: gdy zmieniasz tylko pliki `.md`, testy pomijasz — napisz to w raporcie.
+2. **Sprawdzenie robisz Ty** — Claude w czacie nie buduje strony. Zawsze uruchom `npm test` (wszystkie etapy po kolei, tak jak CI: typy, testy jednostkowe, integracyjne i e2e — build na danych testowych i Playwright; zatrzymuje się na pierwszym błędzie). Prawdziwego buildu (`npm run build`) nie uruchamiasz — potrzebuje `.env` (sekcja 2, punkt 7). Prawdziwy build ze zdjęciami z R2 i Lighthouse robi CI (etap „Build i Lighthouse”); bez niego nie ma zielonego „Wyniku”. Jeśli zadanie od Claude podaje dodatkowe sprawdzenia (np. co ma być w zbudowanej stronie: fragment HTML, JSON-LD, nazwa pliku), wykonaj je na `dist-testy/` (powstaje w `npm test` albo `npm run build:testy`) i zapisz wynik. Wyjątek: gdy zmieniasz tylko pliki `.md` poza `src/` (np. `AGENTS.md`, `README.md`, `.claude/`), testy pomijasz — napisz to w raporcie. Plik `.md` w `src/pages/` (np. `polityka-prywatnosci.md`) to strona, więc testy uruchamiasz jak zwykle.
 3. **Jeśli check, build albo testy nie przechodzą, nie commituj.** Napraw błąd albo opisz mi problem.
 4. `git status`, żeby zobaczyć, co się zmieniło.
 5. `git add <konkretne pliki>`.
@@ -104,7 +105,7 @@ PR: [link do pull requesta]
 
 ## 5. Projekt w skrócie
 
-- **Stos:** Astro 7, Tailwind CSS v4 (`@tailwindcss/vite`), TypeScript strict, Node 24 (dokładna wersja w `.node-version`; minimum 22.13, bo skrypty używają wbudowanego `node:sqlite`)
+- **Stos:** Astro 7, Tailwind CSS v4 (`@tailwindcss/vite`), TypeScript strict, Node 24 — minimum i wersja, na której budują CI i Cloudflare Pages (dokładnie w `.node-version`); starszego nie używamy, na komputerach Wiktora bywa nowszy
 - **Hosting:** Cloudflare Pages, automatyczny deploy z brancha `main`, statyczny `dist/`
 - **Usługi:** Cloudflare R2 (zdjęcia), Formspree (formularz), Cloudflare Turnstile (ochrona formularza), Cloudflare Web Analytics
 - **Poza zakresem:** blog i pobieranie zdjęć przez odwiedzających (celowo utrudniamy kopiowanie). Opinie klientów i link do Instagrama są odłożone na później.
@@ -116,13 +117,14 @@ Plik `.env` z prawdziwymi wartościami jest tylko u Wiktora (sekcja 2, punkt 7).
 | Zmienna | Czy wymagana | Do czego |
 |---|---|---|
 | `PUBLIC_R2_URL` | **tak**, bez niej build się przerywa | adres bucketa R2 ze zdjęciami |
-| `PUBLIC_FORMSPREE_ID` | tak (formularz) | samo ID formularza, nie cały URL |
+| `PUBLIC_FORMSPREE_ID` | nie, ale zalecana — bez niej build przejdzie z ostrzeżeniem (`ZALECANE_ZMIENNE`), a formularz nie wyśle żadnej wiadomości | samo ID formularza, nie cały URL |
 | `PUBLIC_TURNSTILE_SITE_KEY` | nie | bez niej widget Turnstile się nie pokazuje |
 | `PUBLIC_CF_BEACON_TOKEN` | nie | analityka Cloudflare |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | tylko dla `sync-images` | **sekrety**, nigdy z przedrostkiem `PUBLIC_` |
 
 ### Komendy
 
+- `npm run check`: sprawdzanie typów (`astro check`) — pierwszy etap `npm test`, działa bez `.env`
 - `npm run dev`: serwer deweloperski (localhost:4321) — tylko Wiktor, potrzebuje `.env`
 - `npm run build`: prawdziwy build do `dist/` — tylko Wiktor i CI (prawdziwe wartości z `.env` albo z sekretów GitHuba)
 - `npm run preview`: podgląd `dist/` (localhost:4322) — tylko Wiktor
@@ -134,6 +136,8 @@ Plik `.env` z prawdziwymi wartościami jest tylko u Wiktora (sekcja 2, punkt 7).
 - `npm run sync-images`: dodaje nowe zdjęcia z `images/`, tylko JPG (uruchamiam ja, nie Ty)
 - `npm run sync-images -- --uzupelnij`: dopytuje o brakujące opisy i kategorie
 - `npm run sync-images -- --wyroznij`: wybór zdjęć na stronę główną — które pokazują się w sekcji "Wybrane prace" i która jedna para trafia do suwaka przed/po
+- `npm run sync-images -- --podmien <plik>`: ponownie wgrywa zdjęcie, które już jest w galerii (nowa wersja „po” albo „przed”) — uruchamiam ja
+- `npm run sync-images -- --usun <plik>`: TRWALE usuwa zdjęcie z R2, z bazy i z `galeria.json` — uruchamiam ja
 - `node scripts/sprawdz-czyszczenie.mjs`: tylko odczyt — pokazuje, co czyszczenie zostawi w zdjęciach z `images/` (wszystkie JPG albo plik podany na końcu), zanim trafią do R2; bez R2, `.env` i zapisu plików, kod wyjścia 1 przy problemach (uruchamiam ja przed `--podmien`, nie Ty)
 
 ---
@@ -145,11 +149,13 @@ Plik `.env` z prawdziwymi wartościami jest tylko u Wiktora (sekcja 2, punkt 7).
 .claude/rules/             konwencje kodu, wczytywane przy pracy na plikach z src/ (sekcja 8)
 .github/workflows/ci.yml   etapy po kolei: typy i testy jednostkowe → testy integracyjne → testy e2e → build + Lighthouse → „Wynik” (wymagany do scalenia PR)
 .github/pull_request_template.md   szablon opisu PR: co i po co, wiedza z zadania, jak sprawdzone
+.github/dependabot.yml     cotygodniowe PR-y z aktualizacjami npm i akcji GitHuba
 public/
   _headers                 nagłówki HTTP Cloudflare (komentarze TYLKO przez "#")
   fonts/                   podzbiór Noto Sans (2 pliki .woff2) — patrz global.css i sekcja 10
   sw.js                    service worker (offline), ma ręczną listę stron
-  manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
+  favicon.svg, manifest.webmanifest, offline.html + offline.css, ikony, og-default.jpg, robots.txt
+  favicon.svg, icon-*.png, og-default.jpg   przygotowuje Claude z logo — nie edytuj ręcznie
 scripts/
   sync-images.mjs          images/ → R2 + data/galeria.db → src/data/galeria.json
   sync-images-funkcje.mjs   czyste funkcje sync-images (nazwy par, klucze R2, opcje, numery, czyszczenie plików do R2 z porównaniem pikseli, galeria.json ↔ baza) — bez skutków przy imporcie, z testami Vitesta
@@ -163,7 +169,7 @@ src/
     Header.astro           logo i menu: pasek u góry (telefon, tablet) albo pasek boczny (od lg)
     Footer.astro
     SEO.astro              meta, Open Graph, Twitter, canonical
-    Schema.astro           dane strukturalne JSON-LD
+    Schema.astro           dane strukturalne JSON-LD: Person, ProfessionalService, WebSite (zawsze), ImageGallery i BreadcrumbList (gdy strona je przekaże)
     Galeria.astro          siatka, filtry, "Załaduj więcej", lightbox (używana też na / bez filtrów/"Załaduj więcej")
     PorownanieSuwak.astro  suwak przed/po (albo zastępczy przełącznik) na pierwszym ekranie /
     ContactForm.astro      formularz Formspree + walidacja + Turnstile
@@ -177,16 +183,18 @@ src/
     nav.ts                 linki w menu i w stopce (`navLinks`) oraz tylko w stopce (`linkiStopki`)
     siteConfig.json        dane osoby i firmy dla Schema/SEO, lista usług do formularza (`uslugi`)
   lib/galeria.ts           wczytywanie zdjęć (adresy R2, wersje do lightboxa) — wspólne dla / i /galeria
+  lib/odmiana.ts           odmiana słowa „zdjęcie” przez liczebnik (1 zdjęcie, 2 zdjęcia, 5 zdjęć)
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, faq.astro, o-mnie.astro, 404.astro
   pages/oferta.astro       szkic oferty — UKRYTY do czasu cen (sekcja 10, „Ukryta podstrona”)
+  pages/polityka-prywatnosci.md  polityka prywatności (ArticleLayout) — to strona: zmiana = testy (sekcja 3, krok 2)
   styles/global.css        Tailwind v4, @theme (kolory), font Noto Sans
 tests/404.spec.ts, a11y.spec.ts, csp.spec.ts, dane-testowe.spec.ts, galeria.spec.ts, kontakt.spec.ts, naglowek.spec.ts, oferta.spec.ts, offline.spec.ts, pytania.spec.ts, suwak.spec.ts; pomocnicze.ts (wspólna lista stron STRONY i funkcje dla testów)
 tests/dane/galeria.json    dane testowe galerii (edytowane ręcznie) — z nich powstaje strona do testów
 tests/piexifjs.d.ts   typy dla piexifjs (paczka ich nie ma) — tylko dla testu EXIF-u
-tests/jednostkowe/         testy jednostkowe Vitesta (*.test.ts): kategorie.test.ts, nawigacja.test.ts, sync-images.test.ts
-tests/integracyjne/        testy integracyjne Vitesta (*.test.ts): galeria.test.ts (src/lib/galeria.ts z atrapą R2), seo-i-schema.test.ts, sync-images.test.ts
+tests/jednostkowe/         testy jednostkowe Vitesta (*.test.ts): kategorie.test.ts, nawigacja.test.ts, odmiana.test.ts, sync-images.test.ts
+tests/integracyjne/        testy integracyjne Vitesta (*.test.ts): galeria.test.ts (src/lib/galeria.ts z atrapą R2), porownanie-suwak.test.ts, seo-i-schema.test.ts, sync-images.test.ts
 vitest.config.ts           konfiguracja Vitesta: dwa projekty, „jednostkowe” i „integracyjne”
 images/, data/galeria.db   TYLKO na moim komputerze, poza gitem
 ```
@@ -261,14 +269,14 @@ Konwencje kodu (TypeScript, komponenty i importy, style i kolory, zaokrąglenia,
 - Dane bierze z `wczytajZdjecia()` (`src/lib/galeria.ts`), tak jak `/galeria`.
 - Para do suwaka: `wybierzBohatera()` szuka zdjęcia z `paraSuwaka: true`. Jeśli go nie ma, albo jego „przed”/„po” mają różne proporcje (tolerancja 2%, `proporcjeZgodne()`), build **nie przerywa się** — loguje ostrzeżenie (`console.warn`, widoczne przy `npm run build`) i pokazuje zastępcze zdjęcie z przełącznikiem „Pokaż przed” zamiast suwaka. Realny suwak wymaga pary w identycznym kadrze.
 - Sekcja „Wybrane prace”: `wybierzWyroznione()` bierze zdjęcia z `wyroznione: true` (max 6, bez zdjęcia użytego jako bohater). Gdy żadne nie jest oznaczone, tymczasowo pokazuje pierwsze zdjęcia z `galeria.json` (z ostrzeżeniem w logu) — żeby strona nie była pusta, zanim ktoś uruchomi `npm run sync-images -- --wyroznij`.
-- Sekcja „Jak zamówić retusz” (`KROKI_ZAMOWIENIA`): 4 kroki w `<ol>`. Te same warunki (przesyłanie plików, bezpłatna wycena, termin 5–7 dni, poprawki: uwagi w 7 dni, do 25% zdjęć) są w najczęstszych pytaniach na `/faq/` (`NajczestszePytania.astro`), a część z nich (bezpłatna wycena, JPG w pełnej rozdzielczości, poprawki do 25% zdjęć) także w pasku „W skrócie” na `/o-mnie/` (`FAKTY` w `o-mnie.astro`). Zmieniasz jedno miejsce — zmień wszystkie w tym samym commicie.
+- Sekcja „Jak zamówić retusz” (`KROKI_ZAMOWIENIA`): 4 kroki w `<ol>`. Te same warunki są też w innych miejscach — lista w sekcji 10, „Treści powtórzone w kilku miejscach”.
 - Treść sekcji „Co poprawiam przy retuszu” (`PUNKTY_RETUSZU`) i zaproszenia do kontaktu to na razie tekst tymczasowy — do potwierdzenia.
 
 **PorownanieSuwak.astro:** „po” zawsze w tle (`loading="eager"`, `fetchpriority="high"` — LCP), „przed” nałożone przez `object-cover` i odsłaniane `clip-path` (tryb suwaka; połowa odsłonięta już w CSS, zanim zadziała skrypt) albo pokazywane w całości (`object-contain`) zwykłym przełącznikiem `aria-pressed` (tryb zastępczy) — wybór trybu przychodzi z propa `trybSuwaka` z `index.astro`. W trybie suwaka widać tylko pionową linię z okrągłym uchwytem, etykiety „Przed” / „Po” w górnych rogach i podpowiedź „Przesuń linię, żeby porównać” na dole (`data-porownanie-podpowiedz`) — skrypt chowa ją (`opacity-0`) przy pierwszym ruchu linii myszą, palcem albo klawiaturą. Linię przeciąga się w dowolnym miejscu zdjęcia: zdarzenia `pointerdown` / `pointermove` / `pointerup` / `pointercancel` na kontenerze z `touch-pan-y touch-pinch-zoom`. Przeciąga jeden wskaźnik naraz (mysz albo pierwszy palec). Palcem linia rusza dopiero przy ruchu w poziomie (próg 8 px) albo po stuknięciu — ruch w pionie przewija stronę i linii nie przesuwa (zanim przeglądarka wyśle `pointercancel`, przychodzą jeszcze 1–2 `pointermove`, stąd sprawdzanie kierunku), a dwoma palcami można powiększyć zdjęcie. Przeciąganie myszą i palcem sprawdza `tests/suwak.spec.ts`. Pod spodem zostaje `<input type="range">` z klasą `sr-only` (`data-porownanie-suwak`): obsługuje klawiaturę (strzałki) i czytniki ekranu, a jego wartość steruje linią (skrypt dopisuje `aria-valuetext`, np. „50% zdjęcia przed retuszem, 50% po retuszu”, żeby czytnik nie czytał samej liczby); fokus z klawiatury widać jako obwódkę na uchwycie (`group-has-[input:focus-visible]:ring-2`). Nie usuwaj tego suwaka i nie rób go widocznym — opiera się na nim test dostępności w `tests/a11y.spec.ts`. Pozycję linii i `clip-path` ustawia skrypt przez `element.style.*` (CSP, pułapka 7 niżej), nie atrybut `style=`.
 
 **ContactForm.astro:** walidacja w JS (`noValidate`), komunikaty po polsku w `aria-live`. Wysyłka `fetch` do Formspree. Honeypot `_gotcha`. Turnstile włącza się, gdy jest `PUBLIC_TURNSTILE_SITE_KEY`: skrypt ładuje `Layout.astro` przez prop `turnstile`, a token weryfikuje Formspree. Bez JS formularz wysyła się zwykłym POST-em. Pola pod wycenę (wszystkie nieobowiązkowe) są w `<fieldset id="szczegoly-zlecenia">`: rodzaj usługi (lista z `uslugi` w `siteConfig.json` + „Inne / jeszcze nie wiem”; pusta lista = pole znika), liczba zdjęć, termin i link do plików (sprawdzany tylko, gdy coś wpisano). Puste pola z tego fieldsetu skrypt usuwa przed wysyłką. Ukryte pole `subject` („Zapytanie o wycenę”) ustawia temat maila od Formspree, a skrypt dopisuje do niego imię (cały temat sprawdza test w `tests/kontakt.spec.ts`).
 
-**Schema.astro:** zawsze `Person` i `ProfessionalService`. `ImageGallery` pojawia się, gdy strona przekaże `zdjecia`, a `BreadcrumbList`, gdy przekaże `breadcrumbs`. Dane pochodzą z `siteConfig.json`, a adresy są absolutne przez `Astro.site`.
+**Schema.astro:** zawsze `Person`, `ProfessionalService` i `WebSite`. `ImageGallery` pojawia się, gdy strona przekaże `zdjecia`, a `BreadcrumbList`, gdy przekaże `breadcrumbs`. Dane pochodzą z `siteConfig.json`, a adresy są absolutne przez `Astro.site`.
 
 **SEO.astro:** canonical z propa albo z `Astro.url.pathname` + `Astro.site`. Obraz OG domyślnie `/og-default.jpg`. Locale `pl_PL`. Prop `bezIndeksowania` (podawany przez `Layout`) dodaje `<meta name="robots" content="noindex">` — tylko dla stron-szkiców.
 
@@ -281,7 +289,7 @@ Konwencje kodu (TypeScript, komponenty i importy, style i kolory, zaokrąglenia,
 **Nowa podstrona:**
 1. Utwórz `src/pages/nazwa.astro` (albo `.md` z `layout: ../layouts/ArticleLayout.astro`) i przekaż `title` oraz `description` do `Layout`.
 2. Dodaj link w `src/data/nav.ts`: `navLinks` (menu i stopka) albo `linkiStopki` (tylko stopka).
-3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (np. `foto-v4` → `foto-v5`).
+3. Dopisz stronę do listy w `public/sw.js` i podbij `CACHE_NAME` (numer o jeden w górę — aktualny sprawdź w pliku).
 4. Dopisz adres do `STRONY` w `tests/pomocnicze.ts` (z tej listy korzystają testy dostępności i CSP) i do `url` w `lighthouserc.json`.
 
 **Ukryta podstrona (szkic, np. `/oferta/` przed podaniem cen):**
@@ -291,12 +299,16 @@ Konwencje kodu (TypeScript, komponenty i importy, style i kolory, zaokrąglenia,
 
 Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA`, dodaj link w `nav.ts`, stronę w `public/sw.js` (i podbij `CACHE_NAME`) oraz w `lighthouserc.json`, a `tests/oferta.spec.ts` zmień tak, żeby sprawdzał link w menu i obecność w sitemapie.
 
-**Nowa zmienna środowiskowa:**
-1. Dodaj ją do `src/env.d.ts` (z opisem po polsku) i do `.env.example`. Prawdziwą wartość do `.env` wpisuje Wiktor — Ty dopisujesz tylko `.env.example`.
-2. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` w `.github/workflows/ci.yml`. Testy mają osobny build: jeśli zmienna włącza coś, co sprawdzają testy, dopisz jej wartość testową w `scripts/build-testowy.mjs` (tam, gdzie `PUBLIC_FORMSPREE_ID`).
-3. Przypomnij mi, żebym dodał ją w ustawieniach Cloudflare Pages.
+**Nowa zmienna środowiskowa** (ten przepis jest zgodą na zmiany w wymienionych plikach, także w `astro.config.mjs` i `.github/` — jeśli zadanie od Claude polega na dodaniu zmiennej, o te pliki osobno nie pytasz):
+1. Dodaj ją do `src/env.d.ts` (z opisem po polsku), do `.env.example` i do tabeli w sekcji 5. Prawdziwą wartość do `.env` wpisuje Wiktor — Ty dopisujesz tylko `.env.example`.
+2. Jeśli bez niej build nie może powstać, dopisz ją do `WYMAGANE_ZMIENNE` w `astro.config.mjs`. Jeśli bez niej wyłącza się tylko jakaś funkcja — do `ZALECANE_ZMIENNE` (build przejdzie z ostrzeżeniem).
+3. Jeśli jest potrzebna przy buildzie, dodaj ją do `env:` w kroku `Build` w `.github/workflows/ci.yml`. Testy mają osobny build: jeśli zmienna włącza coś, co sprawdzają testy, dopisz jej wartość testową w `scripts/build-testowy.mjs` (tam, gdzie `PUBLIC_FORMSPREE_ID`).
+4. W raporcie wypisz mi, co mam zrobić sam: wartość w `.env`, zmienna w ustawieniach Cloudflare Pages, sekret w GitHubie (Settings → Secrets and variables → Actions) i — jeśli zmiennej potrzebuje prawdziwy build w CI — także sekret Dependabota (Settings → Secrets and variables → Dependabot; przebiegi Dependabota nie widzą zwykłych sekretów).
 
-**Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Sprawdź kontrast (min. 4,5:1 dla tekstu). Te same kolory są też wpisane na sztywno w `public/offline.css`, `public/manifest.webmanifest` (`theme_color`, `background_color`) i `src/components/SEO.astro` (`theme-color`) — zmień je razem i podbij `CACHE_NAME` w `public/sw.js`.
+**Zmiana kolorów:** blok `@theme` w `src/styles/global.css`. Kontrast według konwencji (`.claude/rules/konwencje-kodu.md`): zwykły tekst co najmniej 7:1, minimum WCAG AA 4,5:1 — sprawdź każdą parę (kontrasty są w komentarzach w `global.css`). Te same kolory są wpisane na sztywno także w:
+- `public/offline.css`, `public/manifest.webmanifest` (`theme_color`, `background_color`) i `src/components/SEO.astro` (`theme-color`) — zmień je razem i podbij `CACHE_NAME` w `public/sw.js`;
+- `public/favicon.svg`, ikonach `public/icon-*.png` i `public/og-default.jpg` — te pliki przygotowuje Claude, nie edytujesz ich; napisz mi, że trzeba je zrobić od nowa;
+- znaku wodnym: `ZNAK_NA_JASNYM` i `ZNAK_NA_CIEMNYM` w `scripts/sync-images.mjs` — zmiana działa tylko na nowo wgrywane zdjęcia; już wgrane trzeba wgrać ponownie przez `npm run sync-images -- --podmien <plik>` (każde zdjęcie; robię to ja) — napisz mi o tym w raporcie.
 
 **Brakujący znak w czcionce (np. rzadki symbol, znak nowego języka):**
 1. Jeśli w przeglądarce znak wygląda na zastępczy krój systemowy — to nie naprawi sam nowy zakres w `unicode-range` (`src/styles/global.css`), skoro glifu nie ma w pliku `.woff2`.
@@ -311,6 +323,14 @@ Pokazanie ukrytej strony: usuń `bezIndeksowania` i wpis w `STRONY_POZA_SITEMAPA
 5. Pole nieobowiązkowe wstaw do `<fieldset id="szczegoly-zlecenia">` (wtedy puste nie trafi do Formspree). Jeśli ma regułę, sprawdzaj je tylko wtedy, gdy coś wpisano — jak link do plików. Nowe pole zbierające dane dopisz też do `src/pages/polityka-prywatnosci.md`.
 
 **Dane dla Google (Schema.org):** `src/data/siteConfig.json`.
+
+**Treści powtórzone w kilku miejscach** (zmieniasz jedno — zmień wszystkie w tym samym commicie; przy wątpliwości szukaj fragmentu zdania w `src/`):
+- przesyłanie plików (SwissTransfer albo Dysk Google): `/faq/` (`NajczestszePytania.astro`), `KROKI_ZAMOWIENIA` w `src/pages/index.astro`, podpowiedź pod polem „Link do plików” w `ContactForm.astro`, `src/pages/polityka-prywatnosci.md`;
+- bezpłatna wycena: `/faq/`, `KROKI_ZAMOWIENIA`, zdanie pod nagłówkiem strony głównej (`index.astro`), `FAKTY` w `o-mnie.astro`, `src/pages/oferta.astro` (opis meta i tekst);
+- termin „5–7 dni roboczych”: `/faq/`, `KROKI_ZAMOWIENIA`;
+- JPG w pełnej rozdzielczości: `/faq/`, `KROKI_ZAMOWIENIA`, `FAKTY`;
+- poprawki (uwagi w ciągu 7 dni, do 25% zdjęć): `/faq/`, `KROKI_ZAMOWIENIA`, `FAKTY`;
+- zdanie „Retuszuję zdjęcia produktów do sklepów internetowych i reklam…”: pod nagłówkiem strony głównej i na `/oferta/`.
 
 ---
 

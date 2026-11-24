@@ -4,6 +4,7 @@ import * as modul from "../../scripts/sync-images-funkcje.mjs";
 import {
 	bezBom,
 	bezPolskichLiter,
+	czyDodacBezPrzed,
 	czyJpg,
 	kluczZnak,
 	liczbaLubNull,
@@ -11,6 +12,7 @@ import {
 	odczytajOpcje,
 	parsujKategorie,
 	plikiPrzedBezPary,
+	podpowiedzDoBleduR2,
 	podsumowanieSprawdzenia,
 	rozbijNaNumery,
 	segmentyJpeg,
@@ -61,6 +63,17 @@ describe("nazwyWersjiPrzed()", () => {
 			"listopad_26_edycja_przed_dsc8001.JPG",
 		]);
 	});
+
+	test("zdjęcie z telefonu (IMG) i z Fuji (DSCF): PRZED_ w miejscu EDYCJA_", () => {
+		expect(nazwyWersjiPrzed("listopad_26_EDYCJA_IMG_1234.jpg")).toEqual([
+			"listopad_26_PRZED_IMG_1234.jpg",
+			"przed_listopad_26_EDYCJA_IMG_1234.jpg",
+		]);
+		expect(nazwyWersjiPrzed("listopad_26_EDYCJA_DSCF1234.jpg")).toEqual([
+			"listopad_26_PRZED_DSCF1234.jpg",
+			"przed_listopad_26_EDYCJA_DSCF1234.jpg",
+		]);
+	});
 });
 
 describe("wybierzPlikPrzed()", () => {
@@ -94,6 +107,14 @@ describe("wybierzPlikPrzed()", () => {
 	test("bez pliku zwraca pierwszą oczekiwaną nazwę", () => {
 		expect(wybierzPlikPrzed("DSC_5.jpg", [])).toBe("przed_DSC_5.jpg");
 	});
+
+	test("znajduje plik przed dla zdjęcia z telefonu (IMG) i z Fuji (DSCF); bez pliku podaje nazwę do komunikatu", () => {
+		const po = ["listopad_26_EDYCJA_IMG_1234.jpg", "listopad_26_EDYCJA_DSCF1234.jpg"];
+		const pliki = [...po, "listopad_26_PRZED_IMG_1234.jpg", "listopad_26_PRZED_DSCF1234.jpg"];
+		expect(wybierzPlikPrzed(po[0], pliki)).toBe("listopad_26_PRZED_IMG_1234.jpg");
+		expect(wybierzPlikPrzed(po[1], pliki)).toBe("listopad_26_PRZED_DSCF1234.jpg");
+		expect(wybierzPlikPrzed(po[0], po)).toBe("listopad_26_PRZED_IMG_1234.jpg");
+	});
 });
 
 describe("wybierzZdjecia()", () => {
@@ -108,6 +129,17 @@ describe("wybierzZdjecia()", () => {
 		"DSC_2.PNG",
 		"DSC_3.jpeg",
 		"DSC_4.tif",
+		"listopad_26_EDYCJA_IMG_1234.jpg",
+		"listopad_26_PRZED_IMG_1234.jpg",
+		"listopad_26_EDYCJA_DSCF1234.jpg",
+		"listopad_26_PRZED_DSCF1234.jpg",
+		"IMG_5678.jpg",
+		"logo.jpg",
+		"._IMG_9.jpg",
+		"DSC_5.HEIC",
+		"DSC_6.heif",
+		"DSC_7.TIFF",
+		"foto.webp",
 	];
 
 	test("pomija pliki ukryte i inne niż JPG", () => {
@@ -118,20 +150,121 @@ describe("wybierzZdjecia()", () => {
 			"październik_26_PRZED_DSC7102.jpg",
 			"zegarek.jpg",
 			"DSC_3.jpeg",
+			"listopad_26_EDYCJA_IMG_1234.jpg",
+			"listopad_26_PRZED_IMG_1234.jpg",
+			"listopad_26_EDYCJA_DSCF1234.jpg",
+			"listopad_26_PRZED_DSCF1234.jpg",
+			"IMG_5678.jpg",
+			"logo.jpg",
 		]);
 	});
 
-	test("kandydaci: z numerem DSC, bez przed, posortowani", () => {
-		expect(wybierzZdjecia(pliki).kandydaci).toEqual(["DSC_1.jpg", "DSC_3.jpeg", "październik_26_EDYCJA_DSC7102.jpg"]);
+	test("kandydaci: z EDYCJA_ albo numerem DSC, bez przed, posortowani", () => {
+		expect(wybierzZdjecia(pliki).kandydaci).toEqual([
+			"DSC_1.jpg",
+			"DSC_3.jpeg",
+			"listopad_26_EDYCJA_DSCF1234.jpg",
+			"listopad_26_EDYCJA_IMG_1234.jpg",
+			"październik_26_EDYCJA_DSC7102.jpg",
+		]);
+	});
+
+	test("kandydaci: zdjęcie z telefonu (IMG) i z Fuji (DSCF) z EDYCJA_ — nie tylko z numerem DSC", () => {
+		const { kandydaci } = wybierzZdjecia(pliki);
+		expect(kandydaci).toContain("listopad_26_EDYCJA_IMG_1234.jpg");
+		expect(kandydaci).toContain("listopad_26_EDYCJA_DSCF1234.jpg");
+		expect(kandydaci).toContain("DSC_1.jpg"); // dawny sposób działa dalej
+	});
+
+	test("kandydaci: bez plików przed i bez ukrytych", () => {
+		const { kandydaci } = wybierzZdjecia(pliki);
+		expect(kandydaci).not.toContain("listopad_26_PRZED_IMG_1234.jpg");
+		expect(kandydaci).not.toContain("przed_DSC_1.jpg");
+		expect(kandydaci).not.toContain("._DSC_1.jpg");
+	});
+
+	test("kandydaci: wielkość liter w EDYCJA_ i rozszerzeniu bez znaczenia", () => {
+		expect(wybierzZdjecia(["listopad_26_edycja_img_1.JPG", "listopad_26_Edycja_img_2.JPEG"]).kandydaci).toEqual([
+			"listopad_26_Edycja_img_2.JPEG",
+			"listopad_26_edycja_img_1.JPG",
+		]);
+	});
+
+	test("bezOznaczenia: JPG bez EDYCJA_ i numeru DSC, posortowane, bez plików przed i ukrytych", () => {
+		expect(wybierzZdjecia(pliki).bezOznaczenia).toEqual(["IMG_5678.jpg", "logo.jpg", "zegarek.jpg"]);
+	});
+
+	test("bezOznaczenia: pusta, gdy każdy JPG ma oznaczenie albo jest plikiem przed", () => {
+		expect(wybierzZdjecia(["DSC_1.jpg", "przed_DSC_1.jpg", "listopad_26_EDYCJA_IMG_1.jpg", "listopad_26_PRZED_IMG_1.jpg"]).bezOznaczenia).toEqual(
+			[]
+		);
 	});
 
 	test("PNG na liście pominiętych (także przed_ i bez numeru DSC), posortowane, bez ukrytych", () => {
-		expect(wybierzZdjecia(pliki).pominiete).toEqual(["DSC_2.PNG"]);
-		expect(wybierzZdjecia([...pliki, "przed_DSC_2.png", "._DSC_9.png", "logo.png"]).pominiete).toEqual([
+		expect(wybierzZdjecia(["DSC_1.jpg", "DSC_2.PNG"]).pominiete).toEqual(["DSC_2.PNG"]);
+		expect(wybierzZdjecia(["DSC_2.PNG", "przed_DSC_2.png", "._DSC_9.png", "logo.png"]).pominiete).toEqual([
 			"DSC_2.PNG",
 			"logo.png",
 			"przed_DSC_2.png",
 		]);
+	});
+
+	test("pominiete: PNG, HEIC, HEIF, TIFF i WebP (wielkość liter bez znaczenia), posortowane, bez ukrytych", () => {
+		expect(wybierzZdjecia([...pliki, "._ukryty.heic", "a.TIF", "b.png"]).pominiete).toEqual([
+			"DSC_2.PNG",
+			"DSC_4.tif",
+			"DSC_5.HEIC",
+			"DSC_6.heif",
+			"DSC_7.TIFF",
+			"a.TIF",
+			"b.png",
+			"foto.webp",
+		]);
+	});
+
+	test("pominiete: nie zawiera JPG ani plików innych rodzajów (txt)", () => {
+		const { pominiete } = wybierzZdjecia(pliki);
+		expect(pominiete).not.toContain("notatki.txt");
+		expect(pominiete).not.toContain("zegarek.jpg");
+	});
+});
+
+describe("czyDodacBezPrzed()", () => {
+	test.each(["tak", " TAK ", "Tak", "tAk", "\ttak\n"])("zgoda: %j", (odpowiedz) => {
+		expect(czyDodacBezPrzed(odpowiedz)).toBe(true);
+	});
+
+	test.each(["", " ", "nie", "t", "tak tak", "taak", "yes", "tak.", "n"])("nie zgoda (także sam Enter): %j", (odpowiedz) => {
+		expect(czyDodacBezPrzed(odpowiedz)).toBe(false);
+	});
+});
+
+describe("podpowiedzDoBleduR2()", () => {
+	const KLUCZE = " — sprawdź klucze R2_* w .env.";
+	const BUCKET = " — sprawdź nazwę bucketu (R2_BUCKET_NAME) w .env.";
+	const CHWILOWY =
+		" — chwilowy kłopot po stronie Cloudflare R2. Odczekaj kilka minut i uruchom to samo polecenie jeszcze raz (to, co już zapisane, zostaje).";
+	const NIEZNANY = " — wklej ten komunikat do czatu z Claude.";
+
+	test.each([
+		[401, KLUCZE],
+		[403, KLUCZE],
+		[404, BUCKET],
+		[429, CHWILOWY],
+		[500, CHWILOWY],
+		[503, CHWILOWY],
+		[599, CHWILOWY],
+		[400, NIEZNANY],
+		[409, NIEZNANY],
+		[600, NIEZNANY],
+	])("status %i", (status, dopisek) => {
+		expect(podpowiedzDoBleduR2(status)).toBe(dopisek);
+	});
+
+	test("awaria po stronie Cloudflare nie odsyła do kluczy w .env", () => {
+		for (const status of [429, 500, 502, 503, 504]) {
+			expect(podpowiedzDoBleduR2(status)).not.toContain("klucze");
+		}
 	});
 });
 
@@ -290,6 +423,12 @@ describe("plikiPrzedBezPary()", () => {
 			{ plik: "listopad_26_PRZED_DSC8000.jpg", pasujacePo: "listopad_26_EDYCJA_DSC8000.jpg" },
 			{ plik: "wrzesień_26_EDYCJA_przed_DSC7062.jpg", pasujacePo: "wrzesień_26_EDYCJA_DSC7062.jpg" },
 		]);
+	});
+
+	test("zdjęcie z telefonu (IMG) i z Fuji (DSCF) z plikiem przed ma parę", () => {
+		const para = ["listopad_26_PRZED_IMG_1234.jpg", "listopad_26_PRZED_DSCF1234.jpg"];
+		const po = ["listopad_26_EDYCJA_IMG_1234.jpg", "listopad_26_EDYCJA_DSCF1234.jpg"];
+		expect(plikiPrzedBezPary([...po, ...para], po)).toEqual([]);
 	});
 
 	test("pomija przed, którego po jest już w bazie", () => {
@@ -492,6 +631,33 @@ describe("Skrypt korzysta z modułu poprawnie", () => {
 		expect(definicje).toHaveLength(1);
 		expect(wystapienia.length - definicje.length).toBe(1);
 		expect(cialo("wgrajDoR2")).toMatch(/\bwyslijBuforDoR2\s*\(/);
+	});
+
+	// Decyzje (czy dodać zdjęcie bez „przed”, co podpowiedzieć przy błędzie R2) są w module i mają testy
+	// wyżej — skrypt ma z nich korzystać, a nie rozstrzygać na własną rękę.
+	test("pytanie o brak „przed” rozstrzyga czyDodacBezPrzed()", () => {
+		expect(cialo("dodajNoweZdjecia")).toMatch(/\bczyDodacBezPrzed\s*\(/);
+	});
+
+	test("błędy R2 dostają dopisek z podpowiedzDoBleduR2(), bez kluczy R2 wpisanych na sztywno", () => {
+		for (const nazwa of ["wyslijBuforDoR2", "usunZR2"]) {
+			expect(cialo(nazwa), `${nazwa}: podpowiedzDoBleduR2`).toMatch(/\bpodpowiedzDoBleduR2\s*\(/);
+			expect(cialo(nazwa), `${nazwa}: tekst na sztywno`).not.toContain("sprawdź klucze R2_* w .env");
+		}
+		expect(kodBezKomentarzy).not.toContain("sprawdź klucze R2_*");
+	});
+
+	test("zwykłe dodawanie wypisuje pominięte pliki i JPG bez oznaczenia, a nie tylko PNG", () => {
+		const dodawanie = cialo("dodajNoweZdjecia");
+		expect(dodawanie).toMatch(/\bbezOznaczenia\b/);
+		expect(dodawanie).toMatch(/\bostrzezOPominietych\s*\(\s*pominiete\s*,\s*bezOznaczenia\s*\)/);
+		expect(kodBezKomentarzy).not.toContain("Pominięte PNG");
+		expect(kodBezKomentarzy).not.toContain("Pomijam pliki PNG");
+	});
+
+	test("przerwana --podmien mówi, że wystarczy uruchomić to samo polecenie jeszcze raz", () => {
+		expect(kodBezKomentarzy).toContain("Podmiana nie skończyła się — baza i galeria.json są bez zmian.");
+		expect(kodBezKomentarzy).toMatch(/npm run sync-images -- --podmien \$\{opcjeUruchomienia\.plik\}/);
 	});
 });
 

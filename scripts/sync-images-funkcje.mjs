@@ -1,7 +1,8 @@
 /**
  * sync-images-funkcje.mjs
  *
- * Czyste funkcje skryptu sync-images: nazwy par przed/po, klucze R2, opcje wiersza poleceń,
+ * Czyste funkcje skryptu sync-images: nazwy par przed/po, wybór plików z images/, odpowiedź na pytanie
+ * o brak „przed”, klucze R2 i podpowiedzi do błędów R2, opcje wiersza poleceń,
  * numery w --wyroznij, czyszczenie plików do R2 (biała lista metadanych, porównanie pikseli)
  * i zamiana galeria.json ↔ baza SQLite.
  * Importują go scripts/sync-images.mjs, scripts/sprawdz-czyszczenie.mjs i testy Vitesta
@@ -87,20 +88,63 @@ export function czyJpg(nazwaPliku) {
   return /\.jpe?g$/i.test(nazwaPliku);
 }
 
+// Formaty, których do R2 nie wysyłamy (tylko JPG umiemy wyczyścić bez ponownej kompresji),
+// a które zwykle są zdjęciami: skrypt wypisze je z podpowiedzią, zamiast pominąć po cichu.
+const FORMATY_INNE_NIZ_JPG = /\.(png|heic|heif|tiff?|webp)$/i;
+
 /**
- * Zdjęcia z listy plików w images/, kandydaci do dodania jako "po" i pominięte PNG.
+ * Zdjęcia z listy plików w images/: kandydaci do dodania jako "po", JPG bez oznaczenia w nazwie
+ * i pliki w innych formatach niż JPG.
  * @param {string[]} pliki wszystkie nazwy plików z images/
- * @returns {{ zdjecia: string[], kandydaci: string[], pominiete: string[] }} zdjecia — JPG bez plików
- *   ukrytych; kandydaci — zdjęcia z numerem DSC, bez "przed_", posortowane; pominiete — PNG, posortowane
+ * @returns {{ zdjecia: string[], kandydaci: string[], bezOznaczenia: string[], pominiete: string[] }}
+ *   zdjecia — JPG bez plików ukrytych; kandydaci — JPG bez "przed_", z "EDYCJA_" albo numerem DSC
+ *   w nazwie, posortowani; bezOznaczenia — JPG bez "przed_", który nie ma ani "EDYCJA_", ani numeru
+ *   DSC (zwykle literówka w nazwie), posortowane; pominiete — PNG, HEIC, HEIF, TIFF i WebP, posortowane
  */
 export function wybierzZdjecia(pliki) {
   // Pliki ukryte (np. "._DSC_1234.jpg", które macOS zostawia na pendrive'ach) to nie zdjęcia.
   const widoczne = pliki.filter((f) => !f.startsWith('.'));
   const zdjecia = widoczne.filter((f) => czyJpg(f));
-  const kandydaci = zdjecia.filter((f) => /DSC_?\d/i.test(f) && !/przed_/i.test(f)).sort();
-  // PNG nie wysyłamy, ale też nie pomijamy go po cichu — skrypt wypisze tę listę z podpowiedzią.
-  const pominiete = widoczne.filter((f) => /\.png$/i.test(f)).sort();
-  return { zdjecia, kandydaci, pominiete };
+  const bezPrzed = zdjecia.filter((f) => !/przed_/i.test(f));
+  // "EDYCJA_" (obecny sposób, także zdjęcia z telefonu: IMG_1234, i z Fuji: DSCF1234) albo numer DSC
+  // (dawny sposób: DSC_1234.jpg).
+  const maOznaczenie = (f) => /EDYCJA_/i.test(f) || /DSC_?\d/i.test(f);
+  const kandydaci = bezPrzed.filter(maOznaczenie).sort();
+  // JPG, którego skrypt nie weźmie, też nie znika po cichu — skrypt wypisze tę listę z podpowiedzią.
+  const bezOznaczenia = bezPrzed.filter((f) => !maOznaczenie(f)).sort();
+  const pominiete = widoczne.filter((f) => FORMATY_INNE_NIZ_JPG.test(f)).sort();
+  return { zdjecia, kandydaci, bezOznaczenia, pominiete };
+}
+
+// Zdjęcie bez pliku "przed" to najczęściej literówka w nazwie jednego z plików, a nie zamiar.
+// Dlatego skrypt pyta, zamiast dodać je po cichu — i tylko wyraźne "tak" dodaje: sam Enter
+// (odruch) albo literówka w odpowiedzi to "nie", które niczego nie wgrywa ani nie zapisuje.
+/**
+ * Czy odpowiedź na pytanie „Dodać bez „przed”?" to zgoda: tylko "tak" (spacje na brzegach i
+ * wielkość liter bez znaczenia).
+ * @param {string} odpowiedz wpisana odpowiedź
+ * @returns {boolean}
+ */
+export function czyDodacBezPrzed(odpowiedz) {
+  return typeof odpowiedz === 'string' && odpowiedz.trim().toLowerCase() === 'tak';
+}
+
+// --- Błędy R2 ---
+
+/**
+ * Dopisek do komunikatu o błędzie R2 (wgrywanie, usuwanie) zależny od statusu odpowiedzi: złe klucze,
+ * zła nazwa bucketu, chwilowa awaria po stronie Cloudflare albo nieznana przyczyna. Zaczyna się od
+ * " — " i kończy kropką.
+ * @param {number} status kod HTTP odpowiedzi R2
+ * @returns {string}
+ */
+export function podpowiedzDoBleduR2(status) {
+  if (status === 401 || status === 403) return ' — sprawdź klucze R2_* w .env.';
+  if (status === 404) return ' — sprawdź nazwę bucketu (R2_BUCKET_NAME) w .env.';
+  if (status === 429 || (status >= 500 && status <= 599)) {
+    return ' — chwilowy kłopot po stronie Cloudflare R2. Odczekaj kilka minut i uruchom to samo polecenie jeszcze raz (to, co już zapisane, zostaje).';
+  }
+  return ' — wklej ten komunikat do czatu z Claude.';
 }
 
 // Pliki "przed", których skrypt nie sparuje z żadnym "po" — np. "po" ma dopisek "-Edytuj",

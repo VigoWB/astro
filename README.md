@@ -2,7 +2,7 @@
 
 Prywatna strona portfolio fotograficznego Wiktora: Astro 7 (w pełni statyczny), Tailwind CSS v4, hosting na Cloudflare Pages. Wymaga Node.js 24 (dokładna wersja w `.node-version`). Zdjęcia trzymane w Cloudflare R2, formularz kontaktowy przez Formspree z ochroną Cloudflare Turnstile.
 
-Zasady pracy nad projektem i stos technologiczny opisuje [`AGENTS.md`](./AGENTS.md), a konwencje kodu — [`.claude/rules/konwencje-kodu.md`](./.claude/rules/konwencje-kodu.md).
+Zasady pracy nad projektem i stos technologiczny opisuje [`AGENTS.md`](./AGENTS.md), a konwencje kodu — [`.claude/rules/konwencje-kodu.md`](./.claude/rules/konwencje-kodu.md). Pozostałe zasady (struktura plików, testy, przepisy na typowe zmiany i inne) leżą w osobnych plikach w [`.claude/rules/`](./.claude/rules/) — Claude Code wczytuje każdy z nich sam, gdy praca dotyczy pasujących plików.
 
 ## Komendy
 

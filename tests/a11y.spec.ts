@@ -48,40 +48,25 @@ test('a11y: Skip link pozwala pominąć nawigację klawiaturą', async ({ page }
 	await expect(page.locator('#glowna-tresc')).toBeFocused();
 });
 
-// Zależnie od tego, czy w galeria.json jest oznaczona para do suwaka (npm run sync-images
-// -- --wyroznij) z pasującymi proporcjami "przed"/"po", strona główna pokazuje suwak albo
-// zastępczy przełącznik "Pokaż przed" — test sprawdza to, co faktycznie jest na stronie.
+// Dane testowe (tests/dane/galeria.json) mają parę do suwaka, więc na stronie głównej zawsze jest suwak.
+// Tryb przełącznika sprawdza tests/integracyjne/porownanie-suwak.test.ts (HTML), a przełączanie
+// w przeglądarce — lightbox w galerii.
 test('a11y: Strona główna – porównanie przed/po działa klawiaturą i naprawdę zmienia obraz', async ({ page }) => {
 	await page.goto('/');
 
 	const przed = page.locator('[data-porownanie-przed]');
 	const suwak = page.locator('[data-porownanie-suwak]');
-	if ((await suwak.count()) > 0) {
-		await suwak.focus();
-		await expect(suwak).toBeFocused();
-		await expect(suwak).toHaveValue('50');
-		await page.keyboard.press('ArrowRight');
-		await expect(suwak).toHaveValue('51');
-		// Wartość suwaka zmienia sama przeglądarka — sprawdzamy, że nasz skrypt przesunął
-		// też odsłonięcie zdjęcia "przed" (clip-path) i linię podziału.
-		await expect(przed).toHaveAttribute('style', /49%/);
-		await expect(page.locator('[data-porownanie-linia]')).toHaveAttribute('style', /left: 51%/);
-		return;
-	}
+	await expect(suwak, 'Dane testowe (tests/dane/galeria.json) mają parę do suwaka — bez niej porównanie na stronie głównej nie jest sprawdzane').toHaveCount(1);
 
-	const przelacznik = page.locator('[data-porownanie-przelacznik]');
-	await przelacznik.focus();
-	await expect(przelacznik).toBeFocused();
-	await expect(przelacznik).toHaveAttribute('aria-pressed', 'false');
-	await expect(przed).toBeHidden();
-
-	await page.keyboard.press('Enter');
-	await expect(przelacznik).toHaveAttribute('aria-pressed', 'true');
-	await expect(przed).toBeVisible();
-
-	await page.keyboard.press('Space');
-	await expect(przelacznik).toHaveAttribute('aria-pressed', 'false');
-	await expect(przed).toBeHidden();
+	await suwak.focus();
+	await expect(suwak).toBeFocused();
+	await expect(suwak).toHaveValue('50');
+	await page.keyboard.press('ArrowRight');
+	await expect(suwak).toHaveValue('51');
+	// Wartość suwaka zmienia sama przeglądarka — sprawdzamy, że nasz skrypt przesunął
+	// też odsłonięcie zdjęcia "przed" (clip-path) i linię podziału.
+	await expect(przed).toHaveAttribute('style', /49%/);
+	await expect(page.locator('[data-porownanie-linia]')).toHaveAttribute('style', /left: 51%/);
 });
 
 test('a11y: Galeria – filtry działają klawiaturą (Tab, Enter, Spacja)', async ({ page }) => {

@@ -152,7 +152,7 @@ async function adresZWersjaWR2(adres: string): Promise<string | null> {
 // dodane przed tą zmianą nie mają jeszcze wersji w "znak/", dopóki ktoś nie uruchomi
 // dla nich `sync-images -- --podmien`. Zamiast wywalać cały build (jak przy prawdziwym
 // braku pliku), pokazujemy czysty oryginał i ostrzegamy w logu — tak samo, jak build
-// radzi sobie dziś z brakiem "wyroznione"/"paraSuwaka" (patrz index.astro).
+// radzi sobie dziś z brakiem "wyroznione"/"paraSuwaka" (patrz src/lib/stronaGlowna.ts).
 async function wersjaDoLightboxaZFallbackiem(
 	adresZnak: string,
 	adresCzysty: string,

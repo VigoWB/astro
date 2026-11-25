@@ -151,17 +151,14 @@ test('CSP: statystyki Cloudflare (atrapa beacona) – skrypt i wysyłka nie są 
 	await sprawdzBrakNaruszen(page, 'statystyki Cloudflare');
 });
 
-test('CSP: strona główna – suwak/przełącznik przed-po i lightbox wybranych prac – brak naruszeń', async ({ page }) => {
+test('CSP: strona główna – suwak przed-po i lightbox wybranych prac – brak naruszeń', async ({ page }) => {
 	await page.goto('/', { waitUntil: 'load' });
 
-	// Pozycję suwaka i podmianę zdjęcia w przełączniku ustawia skrypt przez
-	// element.style.* (AGENTS.md pułapka 7) — to jest tu właśnie sprawdzane.
+	// Pozycję suwaka ustawia skrypt przez element.style.* (AGENTS.md pułapka 7) —
+	// to jest tu właśnie sprawdzane.
 	const suwak = page.locator('[data-porownanie-suwak]');
-	if ((await suwak.count()) > 0) {
-		await suwak.fill('80');
-	} else {
-		await page.locator('[data-porownanie-przelacznik]').click();
-	}
+	await expect(suwak, 'Dane testowe (tests/dane/galeria.json) mają parę do suwaka — bez niej porównanie na stronie głównej nie jest sprawdzane').toHaveCount(1);
+	await suwak.fill('80');
 
 	const karta = page.getByTestId('gallery-item').first();
 	if ((await karta.count()) > 0) {

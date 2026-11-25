@@ -12,7 +12,7 @@ Dawna sekcja 6 `AGENTS.md`. Claude Code wczytuje ten plik sam, gdy czyta albo zm
 
 ```
 .claude/skills/            skille Astro: docs-lookup, astro-best-practices, create-component (sekcja 11)
-.claude/rules/             konwencje kodu, wczytywane przy pracy na plikach z src/ (sekcja 8)
+.claude/rules/             7 plików reguł (konwencje kodu, struktura, testy, przepisy, elementy strony, zdjęcia, funkcje AI), każdy wczytywany przy pracy na pasujących plikach (`paths` na górze pliku)
 .github/workflows/ci.yml   etapy po kolei: typy i testy jednostkowe → testy integracyjne → testy e2e → build + Lighthouse → „Wynik” (wymagany do scalenia PR)
 .github/pull_request_template.md   szablon opisu PR: co i po co, wiedza z zadania, jak sprawdzone
 .github/dependabot.yml     cotygodniowe PR-y z aktualizacjami npm i akcji GitHuba
@@ -50,6 +50,8 @@ src/
     siteConfig.json        dane osoby i firmy dla Schema/SEO, lista usług do formularza (`uslugi`)
   lib/galeria.ts           wczytywanie zdjęć (adresy R2, wersje do lightboxa) — wspólne dla / i /galeria
   lib/odmiana.ts           odmiana słowa „zdjęcie” przez liczebnik (1 zdjęcie, 2 zdjęcia, 5 zdjęć)
+  lib/stronaGlowna.ts      wybór zdjęć na stronę główną: para do suwaka (wybierzBohatera) i „Wybrane prace” (wybierzWyroznione)
+  lib/exif.ts              podpis z danych aparatu do lightboxa (formatujExif, używa Karta.astro)
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, faq.astro, o-mnie.astro, 404.astro

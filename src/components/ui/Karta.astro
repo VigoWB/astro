@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import type { ExifZdjecia, WersjaLightboxa } from '../../lib/galeria.ts';
+import { formatujExif } from '../../lib/exif.ts';
 
 interface Props {
 	/** Oryginał z R2 — źródło miniatury. */
@@ -21,22 +22,6 @@ const { po, lightbox, opis = "", kategoria = [], exif = {}, priority = false, uk
 // proporcji zdjęcia — dzięki temu miniatura nie jest przycinana.
 const SZEROKOSC_MINIATURY = 600;
 const wysokoscMiniatury = Math.round((SZEROKOSC_MINIATURY * po.height) / po.width);
-
-// Krótki podpis z danych aparatu, np. "ISO 100 • f/2.8 • 50mm • 1/200s".
-	// Składamy go już podczas budowania strony — lightbox dostaje gotowy tekst.
-	function formatujExif(dane: Props["exif"]): string {
-		if (!dane) return "";
-		const czesci: string[] = [];
-		if (dane.iso) czesci.push(`ISO ${dane.iso}`);
-		if (dane.przyslona) czesci.push(`f/${Number(dane.przyslona.toFixed(1))}`);
-		if (dane.ogniskowa) czesci.push(`${Math.round(dane.ogniskowa)}mm`);
-		if (dane.czasNaswietlania) {
-			const t = dane.czasNaswietlania;
-			// Od 0,3 s dziesiętnie (0.4s, 0.8s, 1.3s), jak w aparacie i Lightroomie.
-			czesci.push(t < 0.3 ? `1/${Math.round(1 / t)}s` : `${Number(t.toFixed(1))}s`);
-		}
-		return czesci.join(" • ");
-	}
 ---
 <button
 	type="button"

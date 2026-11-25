@@ -3,7 +3,8 @@ import Layout from "../layouts/Layout.astro";
 import Galeria from "../components/Galeria.astro";
 import PorownanieSuwak from "../components/PorownanieSuwak.astro";
 import { kategorie } from "../data/kategorie.ts";
-import { wczytajZdjecia, type Zdjecie } from "../lib/galeria.ts";
+import { wczytajZdjecia } from "../lib/galeria.ts";
+import { wybierzBohatera, wybierzWyroznione } from "../lib/stronaGlowna.ts";
 
 // Strona główna — wizytówka retuszu produktowego:
 // (1) suwak przed/po z jedną mocną parą, (2) co poprawiam przy retuszu,
@@ -12,63 +13,10 @@ import { wczytajZdjecia, type Zdjecie } from "../lib/galeria.ts";
 const zdjecia = await wczytajZdjecia();
 
 // --- (1) Para do suwaka ---
-// Suwak wymaga identycznego kadru "przed" i "po". Dopóki Wiktor takiej pary nie oznaczy
-// (npm run sync-images -- --wyroznij), strona i tak działa: pokazuje zastępcze
-// zdjęcie ze zwykłym przełącznikiem "Pokaż przed", zamiast przerywać build.
-const TOLERANCJA_PROPORCJI = 0.02;
-
-function proporcjeZgodne(zdjecie: Zdjecie): boolean {
-	if (!zdjecie.lightbox.przed) return false;
-	const proporcjaPo = zdjecie.po.width / zdjecie.po.height;
-	const proporcjaPrzed = zdjecie.lightbox.przed.szerokosc / zdjecie.lightbox.przed.wysokosc;
-	return Math.abs(proporcjaPo - proporcjaPrzed) / proporcjaPo <= TOLERANCJA_PROPORCJI;
-}
-
-function wybierzBohatera(lista: Zdjecie[]): { zdjecie: Zdjecie; trybSuwaka: boolean } | null {
-	if (lista.length === 0) return null;
-
-	const oznaczone = lista.filter((z) => z.paraSuwaka);
-	if (oznaczone.length > 1) {
-		console.warn(
-			`index: ${oznaczone.length} zdjęć oznaczonych jako "paraSuwaka" w galeria.json — użyto pierwszego (npm run sync-images -- --wyroznij, żeby zostawić tylko jedno).`
-		);
-	}
-
-	const kandydat = oznaczone[0];
-	if (!kandydat) {
-		const zastepcze = lista.find((z) => z.wyroznione) ?? lista[0];
-		console.warn(
-			'index: brak zdjęcia oznaczonego jako "paraSuwaka" w galeria.json — na pierwszym ekranie pokazano zastępcze zdjęcie z przełącznikiem "Pokaż przed" zamiast suwaka (npm run sync-images -- --wyroznij, żeby je ustawić).'
-		);
-		return { zdjecie: zastepcze, trybSuwaka: false };
-	}
-
-	if (!proporcjeZgodne(kandydat)) {
-		console.warn(
-			`index: zdjęcie oznaczone jako "paraSuwaka" (${kandydat.opis || kandydat.po.src}) ma inne proporcje "przed" i "po" — pokazano przełącznik zamiast suwaka. Przygotuj parę w identycznym kadrze.`
-		);
-		return { zdjecie: kandydat, trybSuwaka: false };
-	}
-
-	return { zdjecie: kandydat, trybSuwaka: true };
-}
-
+// Wybór (i ostrzeżenia w logu buildu) robi src/lib/stronaGlowna.ts.
 const bohater = wybierzBohatera(zdjecia);
 
 // --- (3) Wybrane prace niżej na stronie ---
-const LIMIT_WYROZNIONYCH = 6;
-
-function wybierzWyroznione(lista: Zdjecie[], pominiete?: Zdjecie): Zdjecie[] {
-	let wynik = lista.filter((z) => z.wyroznione && z !== pominiete);
-	if (wynik.length === 0) {
-		console.warn(
-			'index: żadne zdjęcie nie ma ustawionego "wyroznione" w galeria.json — tymczasowo pokazano pierwsze zdjęcia z galerii (npm run sync-images -- --wyroznij, żeby wybrać właściwe).'
-		);
-		wynik = lista.filter((z) => z !== pominiete);
-	}
-	return wynik.slice(0, LIMIT_WYROZNIONYCH);
-}
-
 const wybranePrace = wybierzWyroznione(zdjecia, bohater?.zdjecie);
 
 // Treść tymczasowa (placeholder) — do potwierdzenia przez Wiktora.

@@ -120,14 +120,17 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	</button>
 
 	<div class="flex max-h-full max-w-full flex-col items-center gap-4">
+		<!-- Wysokość zdjęcia = okno minus miejsce na to, co pod nim: wiersz z opisem, „Pokaż przed” i linkiem „Zapytaj o podobny retusz”,
+		     licznik i dane z aparatu. Na telefonie wiersz zawija się do 2–3 linii, więc zapas jest większy (15rem);
+		     od md mieści się w jednej linii i zostaje 10rem. Zmieniasz zawartość pod zdjęciem — sprawdź test „mieszczą się w oknie” w tests/galeria.spec.ts. -->
 		<img
 			id="lightbox-img"
 			alt=""
 			draggable="false"
 			tabindex="0"
-			class="max-h-[calc(100dvh-10rem)] max-w-full object-contain select-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien"
+			class="max-h-[calc(100dvh-15rem)] md:max-h-[calc(100dvh-10rem)] max-w-full object-contain select-none focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien"
 		/>
-		<div class="flex items-center gap-4 text-paper">
+		<div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-paper">
 			<span id="lightbox-opis" class="font-bold" tabindex="0"></span>
 			<!-- Widoczny przełącznik zamiast najechania myszką/przytrzymania palca —
 			     działa z klawiatury i czytnika ekranu. -->
@@ -140,6 +143,17 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 			>
 				Pokaż przed
 			</button>
+			<!-- Zwykły link, nie przycisk ze skryptem: działa środkowy klik, „otwórz w nowej karcie” i kopiowanie adresu.
+			     Adres (z opisem zdjęcia w ?zdjecie=) ustawia skrypt w zaladujDane przy każdym zdjęciu; bez skryptu
+			     zostaje /kontakt/. Strona kontaktu wpisuje z niego tekst do wiadomości (ContactForm.astro). -->
+			<a
+				id="lightbox-zapytaj"
+				data-testid="lightbox-zapytaj"
+				href="/kontakt/"
+				class="inline-flex min-h-11 items-center rounded-md bg-przycisk px-4 text-sm font-semibold text-ink transition-colors hover:bg-przycisk-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-przycisk focus-visible:ring-offset-2 focus-visible:ring-offset-cien"
+			>
+				Zapytaj o podobny retusz
+			</a>
 		</div>
 		<!-- Licznik "3 / 10" — tylko wśród zdjęć aktualnie widocznych (filtr, "Załaduj więcej").
 		     Czytnik ekranu go pomija — pełne ogłoszenie (numer i opis) jest w spanie niżej. -->
@@ -153,6 +167,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 
 <script>
 	import { odmienZdjecia } from "../lib/odmiana.ts";
+	import { adresZapytania } from "../lib/zapytanie.ts";
 
 	const grid = document.getElementById("galeria-grid")!;
 	const NA_STRONE = Number(grid.dataset.naStrone) || 8;
@@ -373,6 +388,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	const lightboxImg = document.getElementById("lightbox-img") as HTMLImageElement;
 	const lightboxOpis = document.getElementById("lightbox-opis")!;
 	const przelacznikBtn = document.getElementById("lightbox-przelacznik") as HTMLButtonElement;
+	const lightboxZapytaj = document.getElementById("lightbox-zapytaj") as HTMLAnchorElement;
 	const lightboxExif = document.getElementById("lightbox-exif")!;
 	const closeBtn = document.getElementById("lightbox-close")!;
 	const poprzednieBtn = document.getElementById("lightbox-poprzednie") as HTMLButtonElement;
@@ -426,7 +442,7 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 	function elementyFokusowalne(): HTMLElement[] {
 		return Array.from(
 			lightbox.querySelectorAll<HTMLElement>(
-				"#lightbox-close, #lightbox-poprzednie, #lightbox-nastepne, #lightbox-img, #lightbox-opis, #lightbox-przelacznik"
+				"#lightbox-close, #lightbox-poprzednie, #lightbox-nastepne, #lightbox-img, #lightbox-opis, #lightbox-przelacznik, #lightbox-zapytaj"
 			)
 		).filter((el) => el.getClientRects().length > 0 && !(el as HTMLButtonElement).disabled);
 	}
@@ -442,6 +458,10 @@ const poczatkowoPozostalo = Math.max(zdjecia.length - NA_STRONE, 0);
 		lightboxOpis.textContent = item.dataset.opis || "";
 		// Pusty opis byłby pustym przystankiem Tab (0×0 px) — chowamy go całkiem.
 		lightboxOpis.classList.toggle("hidden", !item.dataset.opis);
+
+		// Link „Zapytaj o podobny retusz”: opis tego zdjęcia w adresie (adresZapytania koduje go i czyści).
+		// Bez opisu link zostaje i prowadzi na samo /kontakt/. To zwykła nawigacja — bez preventDefault i bez nowej karty.
+		lightboxZapytaj.setAttribute("href", adresZapytania(item.dataset.opis || ""));
 
 		przelacznikBtn.classList.toggle("hidden", !current.przed);
 		// Przełącznik "Pokaż przed" resetuje się przy każdej zmianie zdjęcia.

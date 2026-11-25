@@ -118,6 +118,12 @@ export function wczytajStronyPozaSitemapa(): string[] {
 	return [...dopasowanie[1].matchAll(/(['"])(.*?)\1/g)].map(([, , adres]) => adres);
 }
 
+/**
+ * Opisy zdjęć z danych testowych (tests/dane/galeria.json) ze znakami, które w adresie linku „Zapytaj o podobny retusz”
+ * trzeba zakodować: „&” (uciąłby parametr) i cudzysłów „ ” (znaki spoza ASCII). Używają ich galeria.spec.ts i dane-testowe.spec.ts.
+ */
+export const OPISY_ZE_ZNAKAMI_DO_ZAKODOWANIA = ['Zestaw: zegarek & spinki', 'Spinki testowe z monogramem „AB”'];
+
 /** Wpisuje do formularza kontaktowego poprawne dane. */
 export async function wypelnijFormularz(page: Page) {
 	await page.getByTestId('contact-name').fill('Wiktor Testowy');

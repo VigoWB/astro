@@ -52,6 +52,7 @@ src/
   lib/odmiana.ts           odmiana słowa „zdjęcie” przez liczebnik (1 zdjęcie, 2 zdjęcia, 5 zdjęć)
   lib/stronaGlowna.ts      wybór zdjęć na stronę główną: para do suwaka (wybierzBohatera) i „Wybrane prace” (wybierzWyroznione)
   lib/exif.ts              podpis z danych aparatu do lightboxa (formatujExif, używa Karta.astro)
+  lib/zapytanie.ts         link „Zapytaj o podobny retusz” z lightboxa: adres /kontakt/?zdjecie= i tekst wpisywany do wiadomości (tylko przez .value)
   env.d.ts                 typy zmiennych środowiskowych
   layouts/Layout.astro, ArticleLayout.astro
   pages/index.astro, galeria.astro, kontakt.astro, faq.astro, o-mnie.astro, 404.astro

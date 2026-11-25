@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect } from './pomocnicze';
+import { test, expect, OPISY_ZE_ZNAKAMI_DO_ZAKODOWANIA } from './pomocnicze';
 
 // Testy idą na stronie zbudowanej z danych testowych (`npm test` → scripts/build-testowy.mjs →
 // dist-testy/), a nie z prawdziwych zdjęć. Ten plik pilnuje dwóch rzeczy:
@@ -41,6 +41,10 @@ test.describe('Dane testowe', () => {
 		expect(dane[1].kluczPrzed, 'drugie zdjęcie z wersją „przed” (reset przełącznika po przejściu dalej)').toBeTruthy();
 		expect(dane.some((zdjecie) => !zdjecie.kluczPrzed), 'zdjęcie bez wersji „przed”').toBe(true);
 		expect(dane.filter((zdjecie) => zdjecie.paraSuwaka), 'dokładnie jedna para do suwaka').toHaveLength(1);
+		// Link „Zapytaj o podobny retusz” (tests/galeria.spec.ts): opisy ze znakami, które w adresie trzeba zakodować („&”, cudzysłów „ ”).
+		for (const opis of OPISY_ZE_ZNAKAMI_DO_ZAKODOWANIA) {
+			expect(dane.map((zdjecie) => zdjecie.opis), `zdjęcie z opisem „${opis}” (link „Zapytaj o podobny retusz” — kodowanie adresu)`).toContain(opis);
+		}
 
 		await page.goto('/');
 		await expect(page.locator('[data-porownanie-suwak]'), 'suwak przed/po na stronie głównej (para w tych samych proporcjach)').toHaveCount(1);

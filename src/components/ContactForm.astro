@@ -203,6 +203,8 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 </form>
 
 <script>
+	import { tekstZapytania } from "../lib/zapytanie.ts";
+
 	// Szuka elementu po id. Gdy go nie ma, od razu rzuca czytelny błąd
 	// (zamiast niezrozumiałego „Cannot read properties of null").
 	function znajdz<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -253,6 +255,14 @@ const PRZEDZIALY_ZDJEC = ["1–5", "6–20", "21–50", "ponad 50", "Jeszcze nie
 			blad: znajdz("kontakt-message-blad"),
 		},
 	};
+
+	// Link „Zapytaj o podobny retusz” z podglądu zdjęcia (Galeria.astro) prowadzi tu z ?zdjecie=<opis zdjęcia>.
+	// To tekst od obcej osoby (każdy może podać dowolny link), więc wstawiamy go WYŁĄCZNIE przez .value:
+	// przeglądarka traktuje wtedy wszystko jako zwykły tekst. Nigdy innerHTML, insertAdjacentHTML, outerHTML,
+	// document.write, szablon HTML ani atrybut. Pole wypełniamy tylko, gdy jest puste: po „Wstecz” przeglądarka
+	// przywraca to, co klient już napisał. Bez fokusu (na telefonie wyskoczyłaby klawiatura). Z adresu nie czytamy nic więcej.
+	const tekst = tekstZapytania(new URLSearchParams(window.location.search).get("zdjecie"));
+	if (tekst && !pola.message.input.value) pola.message.input.value = tekst;
 
 	// Prosty regex na e-mail. Obok niego działa reguła przeglądarki dla type="email" (validity.typeMismatch):
 	// sam regex przepuszcza np. „a@b.com.” (kropka na końcu), a przeglądarka nie — błąd pokazujemy, gdy

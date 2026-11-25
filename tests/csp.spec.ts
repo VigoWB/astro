@@ -198,6 +198,30 @@ test('CSP: galeria – filtr, "Załaduj więcej", lightbox z "Pokaż przed" i pr
 	await sprawdzBrakNaruszen(page, 'galeria z lightboksem');
 });
 
+test('CSP: link „Zapytaj o podobny retusz” z lightboxa i strona kontaktu z ?zdjecie= – brak naruszeń', async ({ page }) => {
+	// Atrapa Turnstile: strona kontaktu nie woła Cloudflare, a jej ramka sprawdza frame-src.
+	await podstawAtrapeTurnstile(page);
+	await page.goto('/galeria/', { waitUntil: 'load' });
+	const karta = page.getByTestId('gallery-item').first();
+	const opis = (await karta.getAttribute('data-opis')) ?? '';
+	await karta.click();
+	const link = page.getByTestId('lightbox-zapytaj');
+	await expect(link).toBeVisible();
+	await sprawdzBrakNaruszen(page, 'galeria z lightboksem i linkiem „Zapytaj o podobny retusz”');
+
+	// Przejście linkiem: zwykła nawigacja na nową stronę (lista naruszeń zaczyna się od nowa, więc sprawdzamy ją znowu).
+	await link.click();
+	await expect(page).toHaveURL(/\/kontakt\/\?zdjecie=/);
+	await expect(page.getByTestId('contact-message')).toHaveValue(`Interesuje mnie retusz podobny do: ${opis}\n\n`);
+	await expect(page.locator('iframe[title="Atrapa Turnstile"]')).toHaveCount(1);
+	await sprawdzBrakNaruszen(page, '/kontakt/ po przejściu linkiem z lightboxa');
+
+	// Parametr z kodem HTML trafia do pola jako tekst: gdyby trafił do HTML-a, <img onerror> złamałby CSP (script-src-attr, img-src).
+	await page.goto(`/kontakt/?zdjecie=${encodeURIComponent('<img src=x onerror=alert(1)>')}`, { waitUntil: 'load' });
+	await expect(page.getByTestId('contact-message')).toHaveValue('Interesuje mnie retusz podobny do: <img src=x onerror=alert(1)>\n\n');
+	await sprawdzBrakNaruszen(page, '/kontakt/ z kodem HTML w ?zdjecie=');
+});
+
 test('CSP: wysyłka formularza kontaktowego do Formspree – brak naruszeń', async ({ page }) => {
 	// Odpowiedź Formspree jest podstawiona (nic nie wychodzi do internetu), ale polityka
 	// i tak sprawdza sam adres: bez https://formspree.io w connect-src przeglądarka

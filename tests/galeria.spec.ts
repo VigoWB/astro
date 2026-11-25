@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { odmienZdjecia } from '../src/lib/odmiana.ts';
-import { test, expect, poczekajNaZdjecie, pokazanyPlik, plikiWersji } from './pomocnicze';
+import { adresZapytania } from '../src/lib/zapytanie.ts';
+import { test, expect, poczekajNaZdjecie, pokazanyPlik, plikiWersji, podstawAtrapeTurnstile, OPISY_ZE_ZNAKAMI_DO_ZAKODOWANIA } from './pomocnicze';
 
 // Oczekiwane liczby test liczy sam — z atrybutów kart (data-kategoria) i z data-na-strone —
 // zamiast wpisywać dzisiejsze dane na sztywno. Przypadki potrzebne testom (kategorie, wersje „przed”,
@@ -22,6 +23,8 @@ const widoczneKarty = (page: Page) => karty(page).filter({ visible: true });
 const przyciskFiltra = (page: Page, nazwa: string) =>
 	page.getByTestId('gallery-filters').getByRole('button', { name: nazwa, exact: true });
 const zdjecieLightboxa = (page: Page) => page.locator('#lightbox-img');
+const linkZapytaj = (page: Page) => page.getByTestId('lightbox-zapytaj');
+const NAPIS_LINKU_ZAPYTAJ = 'Zapytaj o podobny retusz';
 
 async function naStrone(page: Page): Promise<number> {
 	return Number(await page.locator('#galeria-grid').getAttribute('data-na-strone'));
@@ -676,6 +679,169 @@ test.describe('Galeria', () => {
 		await expect(zdjecieLightboxa(page)).toHaveAttribute('alt', `${opis} — przed retuszem`);
 		await przelacznik.click();
 		await expect(zdjecieLightboxa(page)).toHaveAttribute('alt', opis);
+	});
+
+	// --- Link „Zapytaj o podobny retusz” (src/lib/zapytanie.ts, ContactForm.astro) ---
+
+	test('lightbox: link „Zapytaj o podobny retusz” prowadzi na /kontakt/ z opisem zdjęcia i zmienia się razem ze zdjęciem', async ({ page }) => {
+		const lista = widoczneKarty(page);
+		expect(await lista.count(), 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(3);
+		const opisPierwszego = (await lista.nth(0).getAttribute('data-opis')) ?? '';
+		const opisDrugiego = (await lista.nth(1).getAttribute('data-opis')) ?? '';
+		expect(opisPierwszego, 'Pierwsze zdjęcie bez opisu — dane testowe go mają').not.toBe('');
+		expect(adresZapytania(opisDrugiego), 'Dwa pierwsze zdjęcia mają ten sam opis — test nie odróżniłby zmiany linku').not.toBe(adresZapytania(opisPierwszego));
+		// Trzeciemu zdjęciu „zabieramy” opis na czas testu (lightbox czyta atrybuty karty dopiero przy pokazaniu zdjęcia).
+		await lista.nth(2).evaluate((el) => el.setAttribute('data-opis', ''));
+
+		await lista.first().click();
+		const link = linkZapytaj(page);
+		await expect(link).toBeVisible();
+		await expect(link).toHaveText(NAPIS_LINKU_ZAPYTAJ);
+		// Porównujemy z opisem zapisanym w karcie (data-opis), a nie z tekstem wpisanym w teście.
+		await expect(link).toHaveAttribute('href', adresZapytania(opisPierwszego));
+		// Zwykła nawigacja w tej samej karcie: bez target, więc działa też środkowy klik i „otwórz w nowej karcie”.
+		await expect(link).not.toHaveAttribute('target', /.+/);
+
+		// Następne zdjęcie: adres z jego opisem.
+		await page.getByTestId('lightbox-nastepne').click();
+		await expect(link).toHaveAttribute('href', adresZapytania(opisDrugiego));
+
+		// Zdjęcie bez opisu: link zostaje i prowadzi na samo /kontakt/.
+		await page.keyboard.press('ArrowRight');
+		await expect(page.getByTestId('lightbox-licznik')).toHaveText(/^3 \//);
+		await expect(link).toBeVisible();
+		await expect(link).toHaveAttribute('href', '/kontakt/');
+
+		// Poprzednie: znowu adres drugiego zdjęcia.
+		await page.getByTestId('lightbox-poprzednie').click();
+		await expect(link).toHaveAttribute('href', adresZapytania(opisDrugiego));
+	});
+
+	// Opisy ze znakami, które w adresie trzeba zakodować („&”, cudzysłów „ ”): pełna droga od kliknięcia w kartę
+	// do tekstu w polu „Wiadomość”. Opisy są w tests/pomocnicze.ts, a ich obecność w danych pilnuje też dane-testowe.spec.ts.
+	for (const opis of OPISY_ZE_ZNAKAMI_DO_ZAKODOWANIA) {
+		test(`lightbox: klik w link „Zapytaj o podobny retusz” przy zdjęciu „${opis}” otwiera formularz z tym opisem w wiadomości`, async ({ page }) => {
+			await podstawAtrapeTurnstile(page);
+			const karta = page.locator(`[data-gallery-item][data-opis=${JSON.stringify(opis)}]`);
+			await expect(karta, `Na stronie nie ma karty z opisem „${opis}” — dane testowe go mają, więc strona gubi zdjęcie`).toHaveCount(1);
+			// Zdjęcia poza pierwszą porcją czekają na „Załaduj więcej”.
+			if (!(await karta.isVisible())) await page.getByTestId('load-more-btn').click();
+			await expect(karta).toBeVisible();
+			const opisKarty = (await karta.getAttribute('data-opis')) ?? '';
+			expect(opisKarty).toBe(opis);
+
+			await karta.click();
+			const link = linkZapytaj(page);
+			await expect(link).toHaveAttribute('href', adresZapytania(opisKarty));
+			await link.click();
+
+			await expect(page).toHaveURL(/\/kontakt\/\?zdjecie=/);
+			// Parametr po odczytaniu to dokładnie opis zdjęcia (nic nie zginęło przy kodowaniu: „&” nie ucina parametru, „ ” zostają).
+			expect(new URL(page.url()).searchParams.get('zdjecie')).toBe(opisKarty);
+			await expect(page.getByTestId('contact-message')).toHaveValue(`Interesuje mnie retusz podobny do: ${opisKarty}\n\n`);
+		});
+	}
+
+	test('lightbox: Tab krąży po lightboksie i trafia na link „Zapytaj o podobny retusz”, a Enter na linku przechodzi na /kontakt/', async ({ page }) => {
+		await podstawAtrapeTurnstile(page);
+		const karta = karty(page).first();
+		expect(await karta.getAttribute('data-przed'), 'Pierwsze zdjęcie bez wersji "przed" — dane testowe ją mają, więc zgubiła ją strona (sprawdź Karta.astro)').toBeTruthy();
+		const opis = (await karta.getAttribute('data-opis')) ?? '';
+		await karta.click();
+		await expect(page.locator('#lightbox-close')).toBeFocused();
+
+		// Kolejność Tab z „Zamknij” (na pierwszym zdjęciu „Poprzednie” jest wyłączone i wypada z kolejności):
+		// link jest ostatni, a po nim fokus wraca na „Zamknij” — nigdy na stronę pod spodem.
+		const idFokusu = () => page.evaluate(() => document.activeElement?.id ?? '');
+		const kolejnosc: string[] = [];
+		for (let i = 0; i < 10 && kolejnosc.at(-1) !== 'lightbox-close'; i++) {
+			await page.keyboard.press('Tab');
+			kolejnosc.push(await idFokusu());
+		}
+		expect(kolejnosc, 'Tab nie dochodzi do linku „Zapytaj o podobny retusz” albo wychodzi poza lightbox (selektor w elementyFokusowalne, Galeria.astro)').toEqual([
+			'lightbox-nastepne',
+			'lightbox-img',
+			'lightbox-opis',
+			'lightbox-przelacznik',
+			'lightbox-zapytaj',
+			'lightbox-close',
+		]);
+
+		// Shift+Tab z pierwszego elementu idzie na ostatni — czyli na link.
+		await page.keyboard.press('Shift+Tab');
+		await expect(linkZapytaj(page)).toBeFocused();
+
+		// Enter na linku to zwykła nawigacja.
+		await page.keyboard.press('Enter');
+		await expect(page).toHaveURL(/\/kontakt\/\?zdjecie=/);
+		await expect(page.getByTestId('contact-message')).toHaveValue(`Interesuje mnie retusz podobny do: ${opis}\n\n`);
+	});
+
+	// Wszystko w podglądzie (zdjęcie, opis, „Pokaż przed”, link, licznik, EXIF) ma się mieścić w oknie bez przewijania.
+	// Telefon (projekt mobile-chrome): Pixel 5, iPhone SE (375×667) i Android 360×640 — w najwęższym oknie wiersz z linkiem
+	// zawija się do trzech linii (opis, „Pokaż przed”, link osobno), czyli zajmuje najwięcej miejsca. Komputer: laptop 1366×768
+	// i 1280×720 — tam wiersz mieści się w jednej linii. Sprawdzamy każde widoczne zdjęcie, także pionowe i z „przed” (najwyższe).
+	// Zapas wysokości zdjęcia (max-h na #lightbox-img w Galeria.astro) jest dobrany do tych okien.
+	test('lightbox: zdjęcie, wiersz z linkiem, licznik i EXIF mieszczą się w oknie bez przewijania', async ({ page, isMobile }) => {
+		const rozmiaryOkien = isMobile
+			? [page.viewportSize()!, { width: 375, height: 667 }, { width: 360, height: 640 }]
+			: [{ width: 1366, height: 768 }, { width: 1280, height: 720 }];
+		const lista = widoczneKarty(page);
+		const ile = await lista.count();
+		expect(ile, 'Za mało widocznych zdjęć — dane testowe mają ich więcej, więc strona je gubi (sprawdź Galeria.astro)').toBeGreaterThanOrEqual(2);
+		const elementy = ['#lightbox-img', '#lightbox-opis', '#lightbox-przelacznik', '#lightbox-zapytaj', '#lightbox-licznik', '#lightbox-exif'];
+
+		for (const rozmiar of rozmiaryOkien) {
+			await page.setViewportSize(rozmiar);
+			await lista.first().click();
+			const okno = await page.evaluate(() => ({ szerokosc: window.innerWidth, wysokosc: window.innerHeight }));
+
+			for (let i = 0; i < ile; i++) {
+				if (i > 0) await page.keyboard.press('ArrowRight');
+				await expect(page.getByTestId('lightbox-licznik')).toHaveText(`${i + 1} / ${ile}`);
+				await poczekajNaZdjecie(zdjecieLightboxa(page));
+				const opis = (await lista.nth(i).getAttribute('data-opis')) ?? '';
+
+				for (const selektor of elementy) {
+					const element = page.locator(selektor);
+					if (!(await element.isVisible())) continue; // np. „Pokaż przed” przy zdjęciu bez „przed”
+					const ramka = await element.boundingBox();
+					expect(ramka, `${selektor}: brak ramki (zdjęcie ${i + 1}: ${opis})`).not.toBeNull();
+					const gdzie = `${selektor} (zdjęcie ${i + 1}: ${opis}, okno ${okno.szerokosc}×${okno.wysokosc}): ${JSON.stringify(ramka)}`;
+					expect(ramka!.x, `Wychodzi poza lewą krawędź okna — ${gdzie}`).toBeGreaterThanOrEqual(0);
+					expect(ramka!.y, `Wychodzi poza górną krawędź okna — ${gdzie}`).toBeGreaterThanOrEqual(0);
+					expect(ramka!.x + ramka!.width, `Wychodzi poza prawą krawędź okna — ${gdzie}`).toBeLessThanOrEqual(okno.szerokosc);
+					expect(ramka!.y + ramka!.height, `Wychodzi poza dolną krawędź okna — ${gdzie}`).toBeLessThanOrEqual(okno.wysokosc);
+				}
+			}
+
+			// Link nie jest przykryty przez inny element (trial: sprawdza, że kliknięcie trafiłoby w link, ale go nie klika).
+			await linkZapytaj(page).click({ trial: true });
+			await page.keyboard.press('Escape');
+			await expect(lightbox(page)).toBeHidden();
+		}
+	});
+});
+
+// Strona główna: „Wybrane prace” to ta sama galeria i ten sam podgląd — link ma tam działać tak samo.
+test.describe('Galeria na stronie głównej', () => {
+	test('lightbox „Wybranych prac”: link „Zapytaj o podobny retusz” z opisem zdjęcia prowadzi na /kontakt/', async ({ page }) => {
+		await podstawAtrapeTurnstile(page);
+		await page.goto('/');
+		const karta = karty(page).first();
+		expect(await karta.count(), 'Strona główna bez kart z galerii — dane testowe mają zdjęcia wyróżnione').toBe(1);
+		const opis = (await karta.getAttribute('data-opis')) ?? '';
+		expect(opis, 'Pierwsza karta na stronie głównej bez opisu — dane testowe go mają').not.toBe('');
+
+		await karta.click();
+		const link = linkZapytaj(page);
+		await expect(link).toBeVisible();
+		await expect(link).toHaveText(NAPIS_LINKU_ZAPYTAJ);
+		await expect(link).toHaveAttribute('href', adresZapytania(opis));
+
+		await link.click();
+		await expect(page).toHaveURL(/\/kontakt\/\?zdjecie=/);
+		await expect(page.getByTestId('contact-message')).toHaveValue(`Interesuje mnie retusz podobny do: ${opis}\n\n`);
 	});
 });
 

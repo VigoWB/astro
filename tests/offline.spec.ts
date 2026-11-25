@@ -1,5 +1,5 @@
 import type { BrowserContext, Page } from '@playwright/test';
-import { test, expect } from './pomocnicze';
+import { test, expect, podstawAtrapeTurnstile } from './pomocnicze';
 
 // Tryb offline (public/sw.js). Zwykłe "offline" Playwrighta (context.setOffline) nie odcina
 // zapytań, które wysyła sam service worker, więc sieć odcinamy (albo podmieniamy) przez context.route —
@@ -128,4 +128,37 @@ test('service worker: sieć wolna, a strony nie ma w pamięci — czeka na sieć
 	await page.goto('/oferta/');
 	await expect(page.getByRole('heading', { level: 1, name: 'Oferta' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Jesteś offline' })).toHaveCount(0);
+});
+
+// Link „Zapytaj o podobny retusz” prowadzi na /kontakt/?zdjecie=<opis>. Worker zapisuje i szuka kopii strony pod adresem
+// bez części po „?” (obsluzNawigacje w sw.js), a skrypt formularza czyta parametr z paska adresu — więc pole „Wiadomość”
+// ma tekst z parametru także bez sieci, a w pamięci nie ląduje osobna kopia dla każdego zdjęcia.
+test('offline: /kontakt/ z parametrem ?zdjecie= otwiera się z pamięci, a pole wiadomości ma tekst z parametru', async ({ page, context }) => {
+	await podstawAtrapeTurnstile(page);
+	await uruchomPodWorkerem(page);
+
+	// Wizyta online pod adresem z parametrem: worker zapisuje stronę i jej skrypty (kopia bez „?”).
+	await page.goto('/kontakt/?zdjecie=Online');
+	await expect(page.getByTestId('contact-message')).toHaveValue('Interesuje mnie retusz podobny do: Online\n\n');
+	const zapisaneAdresy = await page.evaluate(async () => {
+		const adresy: string[] = [];
+		for (const nazwa of await caches.keys()) {
+			for (const zapytanie of await (await caches.open(nazwa)).keys()) adresy.push(zapytanie.url);
+		}
+		return adresy;
+	});
+	expect(
+		zapisaneAdresy.filter((adres) => adres.includes('zdjecie')),
+		'Worker zapisał kopię strony pod adresem z ?zdjecie= (sw.js, obsluzNawigacje: klucz bez „?”)'
+	).toEqual([]);
+	expect(zapisaneAdresy.some((adres) => new URL(adres).pathname === '/kontakt/'), 'Strony /kontakt/ nie ma w pamięci workera').toBe(true);
+
+	await context.route('**/*', (route) => route.abort('internetdisconnected'));
+
+	// Inny parametr niż online: strona kontaktu jest w pamięci, więc nie może wyjść „Jesteś offline”.
+	await page.goto('/kontakt/?zdjecie=Test');
+	await expect(page.getByRole('heading', { name: 'Kontakt', level: 1 })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Jesteś offline' })).toHaveCount(0);
+	// Skrypt formularza też jest z pamięci i czyta parametr z paska adresu.
+	await expect(page.getByTestId('contact-message')).toHaveValue('Interesuje mnie retusz podobny do: Test\n\n');
 });

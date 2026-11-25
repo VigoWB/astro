@@ -409,6 +409,133 @@ test.describe('Formularz kontaktowy: stary Safari i fokus po wysyłce', () => {
 	});
 });
 
+// --- Wiadomość z linku „Zapytaj o podobny retusz” (/kontakt/?zdjecie=<opis>, src/lib/zapytanie.ts) ---
+// Parametr z adresu to tekst od obcej osoby: do pola trafia wyłącznie przez textarea.value, jako zwykły tekst.
+
+const PREFIKS_ZAPYTANIA = 'Interesuje mnie retusz podobny do: ';
+
+// Parametr podajemy odkodowany — adres składa funkcja encodeURIComponent, tak jak robi to link w lightboksie.
+async function otworzZParametrem(page: Page, opis: string | null) {
+	await podstawAtrapeTurnstile(page);
+	await page.goto(opis === null ? '/kontakt/' : `/kontakt/?zdjecie=${encodeURIComponent(opis)}`);
+}
+
+test.describe('Formularz kontaktowy: wiadomość z linku „Zapytaj o podobny retusz”', () => {
+	test('bez parametru, z pustym i z samymi spacjami pole „Wiadomość” zostaje puste', async ({ page }) => {
+		const wiadomosc = page.getByTestId('contact-message');
+		await podstawAtrapeTurnstile(page);
+		for (const adres of ['/kontakt/', '/kontakt/?zdjecie=', '/kontakt/?zdjecie=%20%20', '/kontakt/?zdjecie=%0A%09%20']) {
+			await page.goto(adres);
+			await expect(wiadomosc, `Pole nie jest puste pod adresem ${adres}`).toHaveValue('');
+		}
+	});
+
+	for (const opis of ['Złoty zegarek', 'Zestaw: zegarek & spinki', 'Spinki testowe z monogramem „AB”', 'Zegarek 50% #1 — czy to ten?']) {
+		test(`parametr „${opis}” trafia do pola jako zdanie z dwiema nowymi liniami na końcu, bez błędu i bez fokusu`, async ({ page }) => {
+			await otworzZParametrem(page, opis);
+			const wiadomosc = page.getByTestId('contact-message');
+
+			await expect(wiadomosc).toHaveValue(`${PREFIKS_ZAPYTANIA}${opis}\n\n`);
+			// Wpisanie z adresu nie pokazuje błędu (to nie jest pisanie klienta) i nie otwiera klawiatury na telefonie.
+			await expect(page.locator('#kontakt-message-blad')).toBeEmpty();
+			await expect(wiadomosc).not.toHaveAttribute('aria-invalid', 'true');
+			await expect(wiadomosc).not.toBeFocused();
+			expect(await page.evaluate(() => document.activeElement === document.body), 'Fokus nie jest na <body> — coś go przeniosło po wejściu na stronę').toBe(true);
+		});
+	}
+
+	test('nowe linie i znaki sterujące w parametrze zamieniają się na spacje, a pozostałych pól formularza adres nie rusza', async ({ page }) => {
+		await podstawAtrapeTurnstile(page);
+		// Poza ?zdjecie= adres ma „podpowiedzi” do innych pól — formularz ma je ignorować.
+		await page.goto(
+			`/kontakt/?zdjecie=${encodeURIComponent('Pierwsza linia\nDruga\tlinia\u0000')}&name=Obca%20Osoba&email=obca@example.com&usluga=Inne%20%2F%20jeszcze%20nie%20wiem&liczba_zdjec=ponad%2050&termin=jutro&link_do_plikow=https%3A%2F%2Fexample.com%2Fa`
+		);
+
+		await expect(page.getByTestId('contact-message')).toHaveValue(`${PREFIKS_ZAPYTANIA}Pierwsza linia Druga linia\n\n`);
+		for (const pole of ['contact-name', 'contact-email', 'contact-usluga', 'contact-liczba-zdjec', 'contact-termin', 'contact-link']) {
+			await expect(page.getByTestId(pole), `Pole ${pole} zostało wypełnione z adresu`).toHaveValue('');
+		}
+	});
+
+	test('bardzo długi parametr (1000 znaków) daje w polu prefiks i najwyżej 200 znaków opisu', async ({ page }) => {
+		await otworzZParametrem(page, 'ab'.repeat(500));
+		await expect(page.getByTestId('contact-message')).toHaveValue(`${PREFIKS_ZAPYTANIA}${'ab'.repeat(100)}\n\n`);
+	});
+
+	// Kod HTML w parametrze ma zostać zwykłym tekstem. Gdyby ktoś wstawił go jako HTML (innerHTML, insertAdjacentHTML…),
+	// <img onerror> wykonałby kod, a w formularzu pojawiłyby się nowe elementy.
+	for (const ladunek of ['<img src=x onerror=alert(1)>', '</textarea><img src=x onerror=alert(1)>', '"><svg onload=alert(1)>']) {
+		test(`kod HTML w parametrze (${ladunek}) zostaje tekstem w polu: nic się nie wykonuje i nie przybywa elementów`, async ({ page }) => {
+			const okna: string[] = [];
+			page.on('dialog', async (okno) => {
+				okna.push(okno.message());
+				await okno.dismiss();
+			});
+
+			// Punkt odniesienia: ile elementów ma formularz bez parametru (razem z tym, co dokłada atrapa Turnstile).
+			await otworzZParametrem(page, null);
+			await poczekajNaTokenTurnstile(page);
+			const elementowBezParametru = await page.locator('#formularz-kontaktowy *').count();
+
+			await otworzZParametrem(page, ladunek);
+			await poczekajNaTokenTurnstile(page);
+			await expect(page.getByTestId('contact-message')).toHaveValue(`${PREFIKS_ZAPYTANIA}${ladunek}\n\n`);
+			await expect(page.locator('#formularz-kontaktowy img'), 'W formularzu pojawił się <img> z parametru — tekst trafił do HTML-a').toHaveCount(0);
+			await expect(page.locator('img[src="x"]')).toHaveCount(0);
+			expect(await page.locator('#formularz-kontaktowy *').count(), 'Formularz ma więcej elementów niż bez parametru').toBe(elementowBezParametru);
+
+			// onerror odpala się dopiero po nieudanym pobraniu obrazka — dajemy mu czas, zanim stwierdzimy, że nic się nie wykonało.
+			await page.waitForLoadState('networkidle');
+			await page.evaluate(() => new Promise<void>((gotowe) => requestAnimationFrame(() => requestAnimationFrame(() => gotowe()))));
+			expect(okna, 'Parametr z adresu wykonał kod (okno dialogowe)').toEqual([]);
+		});
+	}
+
+	// Po „Wstecz” przeglądarka przywraca to, co klient wpisał w pole, a tekst z adresu nie może tego nadpisać. Samo
+	// page.goBack() niczego tu nie dowodzi: Chromium przywraca pole dopiero PO skrypcie formularza, więc wynik jest ten sam
+	// z warunkiem „tylko do pustego pola” i bez niego. Dlatego tekst wpisujemy sami, po zakończeniu parsowania strony
+	// (readyState „interactive”), ale przed skryptami modułowymi, które startują dopiero potem — pole ma już zawartość,
+	// gdy skrypt formularza dochodzi do głosu.
+	test('nie nadpisuje tekstu, który już jest w polu, gdy startuje skrypt formularza (tak jak po „Wstecz”)', async ({ page }) => {
+		const wlasnyTekst = 'Mój własny tekst, który zdążyłem już napisać.';
+		await page.addInitScript((tekst) => {
+			document.addEventListener('readystatechange', () => {
+				if (document.readyState !== 'interactive') return;
+				const pole = document.getElementById('kontakt-message');
+				if (pole instanceof HTMLTextAreaElement) pole.value = tekst;
+			});
+		}, wlasnyTekst);
+		const wiadomosc = page.getByTestId('contact-message');
+
+		// Kontrola: bez parametru pole ma wpisany tekst — czyli skrypt startowy działa i skrypt formularza go nie rusza.
+		await otworzZParametrem(page, null);
+		await expect(wiadomosc, 'Skrypt startowy testu nie wpisał tekstu do pola — test niczego by nie sprawdził').toHaveValue(wlasnyTekst);
+
+		await otworzZParametrem(page, 'Złoty zegarek');
+		await expect(wiadomosc, 'Tekst z adresu nadpisał to, co już było w polu').toHaveValue(wlasnyTekst);
+	});
+
+	test('formularz z tekstem z adresu przechodzi walidację, wiadomość idzie do Formspree, a po wysyłce pole jest puste', async ({ page }) => {
+		const wyslane = await podstawFormspree(page, { status: 200 });
+		await otworzZParametrem(page, 'Złoty zegarek');
+		await sprawdzIdFormspree(page);
+		// Wiadomości klient nie dopisuje — wystarczy imię i e-mail.
+		await page.getByTestId('contact-name').fill('Wiktor Testowy');
+		await page.getByTestId('contact-email').fill('wiktor@example.com');
+		await poczekajNaTokenTurnstile(page);
+
+		await page.getByTestId('contact-submit').click();
+
+		await expect(status(page)).toContainText('Dziękuję! Wiadomość została wysłana');
+		expect(wyslane).toHaveLength(1);
+		// Multipart zapisuje nowe linie jako CRLF — przed porównaniem sprowadzamy je do zwykłych.
+		expect(polaWysylki(wyslane[0].tresc).message.replace(/\r\n/g, '\n')).toBe(`${PREFIKS_ZAPYTANIA}Złoty zegarek\n\n`);
+
+		// formularz.reset() czyści pole (ustawiliśmy .value, nie wartość domyślną), więc po wysyłce nie wraca tekst z adresu.
+		await expect(page.getByTestId('contact-message')).toHaveValue('');
+	});
+});
+
 test.describe('Turnstile (prawdziwy widżet Cloudflare)', () => {
 	test('widżet wczytuje się i wydaje token', async ({ page }) => {
 		await page.goto('/kontakt/');
